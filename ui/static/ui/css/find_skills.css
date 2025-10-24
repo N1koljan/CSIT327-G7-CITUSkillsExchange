@@ -1,0 +1,190 @@
+
+.container {
+  display: flex;
+  max-width: 1400px;
+  margin: 30px auto;
+  gap: 30px;
+  padding: 0 2rem;
+  align-items: flex-start;
+}
+
+.main-content {
+  flex: 3;
+}
+
+.page-title-section {
+    margin-bottom: 20px;
+}
+
+.page-title-section h1 {
+  font-size: 2.2rem;
+  color: #333;
+  margin: 0 0 5px 0;
+  font-weight: 700;
+}
+
+.page-title-section p {
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Search Bar */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  background: #fff;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.search-bar .search-icon {
+    color: #888;
+    margin-right: 5px;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+}
+
+/* General Button Styles */
+.btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background-color: #a10f0f;
+  color: white;
+}
+.btn-primary:hover {
+  background-color: #800000;
+}
+
+.btn-secondary {
+  background-color: #ffcc00;
+  color: #800000;
+}
+.btn-secondary:hover {
+  background-color: #e6b800;
+}
+
+.btn-outline {
+    background-color: #fff;
+    color: #a10f0f;
+    border: 1px solid #a10f0f;
+    width: 100%;
+}
+.btn-outline:hover {
+    background-color: #fffaf0;
+}
+
+/* Results Header */
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 25px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.skills-found {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.sort-by label {
+    margin-right: 8px;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.sort-by select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+/* Empty State for Results */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #fff;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  color: #777;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  color: #a10f0f;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: #555;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Sidebar */
+.sidebar {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 20px;
+  border-radius: 8px;
+  height: fit-content;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  color: #a10f0f;
+  font-size: 1.3rem;
+}
+
+.sidebar .sidebar-subtitle {
+    font-size: 0.9rem;
+    color: #777;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.match-card {
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.match-card h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.match-card p {
+    font-size: 0.9rem;
+    color: #777;
+    margin-bottom: 15px;
+}

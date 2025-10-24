@@ -4,11 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- This will be the default title, which child templates can override -->
   <title>{% block title %}CIT-U Peer-to-Peer Skills Exchange{% endblock %}</title>
-  <!-- This loads the main stylesheet for the navbar and body -->
+
+  <!-- Your base.css file, which is already correct -->
   <link rel="stylesheet" href="{% static 'ui/css/base.css' %}">
-  <!-- This is the placeholder where page-specific stylesheets will be inserted -->
+
   {% block styles %}
   {% endblock %}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,22 +17,57 @@
   <header>
     <div class="logo">CIT-U Peer to Peer Skills Exchange</div>
     <nav>
-      <a href="{% url 'dashboard' %}" class="active"><i class="fa-solid fa-house"></i> Dashboard</a>
-      <a href="#"><i class="fa-solid fa-book"></i> My Skills</a>
-      <a href="#"><i class="fa-solid fa-list"></i> Requests</a>
-      <a href="#"><i class="fa-solid fa-search"></i> Find Skills</a>
-      <a href="#"><i class="fa-solid fa-calendar-days"></i> Schedule</a>
-      <a href="#"><i class="fa-solid fa-comment"></i> Feedback</a>
-      <a href="#"><i class="fa-solid fa-bell"></i> Notifications</a>
-      <a href="{% url 'profile' %}"><i class="fa-solid fa-user"></i> Profile</a>
+      <!-- === NAVBAR WITH DYNAMIC ACTIVE LINKS === -->
+      <!-- This logic checks the URL name and adds your "active" class -->
+
+      <a href="{% url 'dashboard' %}"
+         {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
+         <i class="fa-solid fa-house"></i> Dashboard
+      </a>
+
+      <a href="{% url 'my_skills' %}"
+         {% if request.resolver_match.url_name == 'my_skills' %}class="active"{% endif %}>
+         <i class="fa-solid fa-book"></i> My Skills
+      </a>
+
+      <a href="{% url 'requests' %}"
+         {% if request.resolver_match.url_name == 'requests' %}class="active"{% endif %}>
+         <i class="fa-solid fa-list"></i> Requests
+      </a>
+
+      <a href="{% url 'find_skills' %}"
+         {% if request.resolver_match.url_name == 'find_skills' %}class="active"{% endif %}>
+         <i class="fa-solid fa-search"></i> Find Skills
+      </a>
+
+      <a href="#"
+         {% if request.resolver_match.url_name == 'schedule' %}class="active"{% endif %}>
+         <i class="fa-solid fa-calendar-days"></i> Schedule
+      </a>
+
+      <a href="#"
+         {% if request.resolver_match.url_name == 'feedback' %}class="active"{% endif %}>
+         <i class="fa-solid fa-comment"></i> Feedback
+      </a>
+
+      <a href="#"
+         {% if request.resolver_match.url_name == 'notifications' %}class="active"{% endif %}>
+         <i class="fa-solid fa-bell"></i> Notifications
+      </a>
+
+      <a href="{% url 'profile' %}"
+         {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_profile' %}class="active"{% endif %}>
+         <i class="fa-solid fa-user"></i> Profile
+      </a>
+
+      <!-- === END OF LINKS === -->
     </nav>
   </header>
 
-  <!-- This is the main content area where other pages will insert their content -->
   <main>
     {% block content %}
-      <!-- The content from dashboard.html will go here -->
     {% endblock %}
   </main>
 </body>
 </html>
+

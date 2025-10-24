@@ -81,12 +81,18 @@ def logout_view(request):
     messages.info(request, "You have successfully logged out.")
     return redirect('login')
 
+@login_required
 def my_skill_view(request):
     return render(request, 'ui/student/my_skills.html')
+
+@login_required
 def request_view(request):
     return render(request, 'ui/student/request.html')
+
+@login_required
 def find_skill_view(request):
     return render(request, 'ui/student/find_skills.html')
+
 def session_view(request):
     return render(request, 'ui/student/session.html')
 def skill_view(request):

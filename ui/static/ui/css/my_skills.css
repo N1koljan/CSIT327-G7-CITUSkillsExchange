@@ -1,0 +1,344 @@
+
+.skills-container {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.skills-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
+}
+
+.skills-header h1 {
+  font-size: 2.2rem;
+  color: #333;
+  margin: 0;
+}
+
+.skills-header p {
+  color: #666;
+  font-size: 1rem;
+  margin-top: 5px;
+}
+
+.add-skill-btn {
+  display: inline-block;
+  background-color: #a10f0f;
+  color: white;
+  text-decoration: none;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.add-skill-btn:hover {
+  background-color: #800000;
+  transform: scale(1.02);
+}
+
+.add-skill-btn i {
+  margin-right: 8px;
+}
+
+.skills-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+}
+
+.skill-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.skill-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.skill-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.skill-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.skill-title i {
+  font-size: 24px;
+  color: #a10f0f;
+}
+
+.skill-title h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #333;
+}
+
+.skill-actions i {
+  margin-left: 12px;
+  cursor: pointer;
+  color: #888;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.skill-actions i:hover {
+  color: #a10f0f;
+}
+
+.tags {
+    margin-bottom: 15px;
+}
+
+.tags span {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 15px;
+  background: #f1f1f1;
+  color: #555;
+  margin-right: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.skill-description {
+    flex-grow: 1;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.skill-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #777;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+  margin-top: auto;
+}
+
+.skill-footer .rating i {
+    color: #ffcc00;
+    margin-right: 4px;
+}
+
+.no-skills {
+  grid-column: 1 / -1;
+  text-align: center;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 60px 40px;
+  background: #fafafa;
+  color: #777;
+  font-size: 1.1rem;
+}
+
+.no-skills i {
+  font-size: 48px;
+  color: #a10f0f;
+  display: block;
+  margin-bottom: 15px;
+}
+
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay:target {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-box {
+  background: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 1001;
+
+  transform: scale(0.95);
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay:target .modal-box {
+  transform: scale(1);
+}
+
+.modal-close-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: default;
+    z-index: 1000;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.close-button {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #888;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.close-button:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 24px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-body p {
+  margin-top: 0;
+  margin-bottom: 24px;
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.modal-form .form-group {
+  margin-bottom: 16px;
+}
+
+.modal-form .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.modal-form .form-group input[type="text"],
+.modal-form .form-group select,
+.modal-form .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal-form .form-group input[type="text"]:focus,
+.modal-form .form-group select:focus,
+.modal-form .form-group textarea:focus {
+  outline: none;
+  border-color: #a10f0f;
+  box-shadow: 0 0 0 3px rgba(161, 15, 15, 0.2);
+}
+
+.modal-form .form-group #skill-title {
+  border: 1px solid #a10f0f;
+}
+.modal-form .form-group #skill-title:focus {
+  border-color: #a10f0f;
+}
+
+
+.modal-form .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #f9f9f9;
+  border-top: 1px solid #eee;
+}
+
+.modal-footer .btn-primary,
+.modal-footer .btn-secondary {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.modal-footer .btn-primary {
+  background: #a10f0f;
+  color: white;
+  border: none;
+}
+.modal-footer .btn-primary:hover {
+  background: #800000;
+  transform: scale(1.02);
+}
+
+.modal-footer .btn-secondary {
+  background: #fff;
+  color: #555;
+  border: 1px solid #ccc;
+}
+.modal-footer .btn-secondary:hover {
+  background: #f5f5f5;
+  transform: scale(1.02);
+}
+

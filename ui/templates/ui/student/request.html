@@ -1,0 +1,97 @@
+{% extends 'ui/base.html' %}
+{% load static %}
+
+{% block title %}Skill Requests - CIT-U Skills Exchange{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'ui/css/request.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1>Skill Requests</h1>
+            <p>Request help or respond to others who need assistance</p>
+        </div>
+        <a href="#post-request-modal" class="post-request-btn">
+            <i class="fa-solid fa-plus"></i> Post New Request
+        </a>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="my-requests">My Requests</button>
+        <button class="tab" data-tab="available-requests">Available Requests</button>
+    </div>
+
+    <div class="requests-content">
+        <div class="empty-state">
+            <i class="fa-solid fa-inbox"></i>
+            <h3>No requests yet</h3>
+            <p>When you post a request, it will appear here.</p>
+        </div>
+
+    </div>
+</div>
+
+<div id="post-request-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Post a New Request</h2>
+      <a href="#" class="close-button">&times;</a>
+    </div>
+
+    <div class="modal-body">
+      <p>Describe what you need help with and connect with skilled peers.</p>
+
+      <form class="modal-form">
+        <div class="form-group">
+          <label for="request-title">Request Title</label>
+          <input type="text" id="request-title" placeholder="e.g., Need help with React Hooks">
+        </div>
+
+        <div class="form-group">
+          <label for="request-category">Category</label>
+          <select id="request-category">
+            <option value="" disabled selected>Select category</option>
+            <option value="tech">Technology</option>
+            <option value="art">Arts & Music</option>
+            <option value="academic">Academic</option>
+            <option value="lifestyle">Lifestyle & Hobbies</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="request-urgency">Urgency</label>
+          <select id="request-urgency">
+            <option value="" disabled selected>Select urgency level</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="request-budget">Budget/Exchange</label>
+          <input type="text" id="request-budget" placeholder="e.g., ₱500/hour or Skill exchange">
+        </div>
+
+        <div class="form-group">
+          <label for="request-description">Description</label>
+          <textarea id="request-description" rows="4" placeholder="Describe what you need help with, your current level, and specific areas you're struggling with..."></textarea>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <a href="#" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary">Post Request</button>
+    </div>
+  </div>
+
+  <a href="#" class="modal-close-bg"></a>
+</div>
+
+
+{% endblock %}
+

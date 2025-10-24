@@ -1,0 +1,311 @@
+
+.container {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 2rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-title-section h1 {
+  font-size: 2.2rem;
+  color: #333;
+  margin: 0 0 5px 0;
+  font-weight: 700;
+}
+
+.page-title-section p {
+  color: #666;
+  font-size: 1rem;
+}
+
+.post-request-btn {
+  display: inline-block;
+  background-color: #a10f0f;
+  color: white;
+  text-decoration: none;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.post-request-btn:hover {
+  background-color: #800000;
+  transform: scale(1.02);
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  background: #f9f9f9;
+}
+
+.tab {
+  flex: 1;
+  padding: 14px 0;
+  background: #ffcc00;
+  border: none;
+  color: #800000;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tab:not(:last-child) {
+  border-right: 1px solid #eee;
+}
+
+.tab:not(.active):hover {
+  background-color: #FFF0C4;
+  color: #a10f0f;
+}
+
+.tab.active {
+  background-color: #a10f0f;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.tab.active:hover {
+  background-color: #800000;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #fff;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  color: #777;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  color: #a10f0f;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: #555;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.request-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* This rule shows the modal ONLY when the URL fragment matches its ID */
+.modal-overlay:target {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-box {
+  background: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 1001;
+
+  /* Pop-in animation */
+  transform: scale(0.95);
+  transition: transform 0.3s ease;
+}
+
+/* Modal box pops in when modal is targeted */
+.modal-overlay:target .modal-box {
+  transform: scale(1);
+}
+
+/* Background link to close the modal */
+.modal-close-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: default;
+    z-index: 1000;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.close-button {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #888;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.close-button:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 24px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-body p {
+  margin-top: 0;
+  margin-bottom: 24px;
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.modal-form .form-group {
+  margin-bottom: 16px;
+}
+
+.modal-form .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.modal-form .form-group input[type="text"],
+.modal-form .form-group select,
+.modal-form .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal-form .form-group input[type="text"]:focus,
+.modal-form .form-group select:focus,
+.modal-form .form-group textarea:focus {
+  outline: none;
+  border-color: #a10f0f;
+  box-shadow: 0 0 0 3px rgba(161, 15, 15, 0.2);
+}
+
+
+/* Specific style for Request Title from your photo */
+.modal-form .form-group #request-title {
+  border: 1px solid #a10f0f;
+}
+.modal-form .form-group #request-title:focus {
+  border-color: #a10f0f; /* Keeps maroon border on focus */
+}
+
+/* Specific style for Budget input */
+.modal-form .form-group #request-budget {
+    border-style: dashed;
+}
+
+
+.modal-form .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #f9f9f9;
+  border-top: 1px solid #eee;
+}
+
+/* Style for both button and link in footer */
+.modal-footer .btn-primary,
+.modal-footer .btn-secondary {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.modal-footer .btn-primary {
+  background: #a10f0f;
+  color: white;
+  border: none;
+}
+.modal-footer .btn-primary:hover {
+  background: #800000;
+  transform: scale(1.02);
+}
+
+.modal-footer .btn-secondary {
+  background: #fff;
+  color: #555;
+  border: 1px solid #ccc;
+}
+.modal-footer .btn-secondary:hover {
+  background: #f5f5f5;
+  transform: scale(1.02);
+}
+
