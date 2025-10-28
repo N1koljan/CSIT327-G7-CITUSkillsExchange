@@ -93,8 +93,14 @@ def request_view(request):
 def find_skill_view(request):
     return render(request, 'ui/student/find_skills.html')
 
-def session_view(request):
-    return render(request, 'ui/student/session.html')
+@login_required
+def schedule_view(request):
+    return render(request, 'ui/student/schedule.html')
+
+@login_required
+def notification_view(request):
+    return render(request, 'ui/student/notification.html')
+
 def skill_view(request):
     return render(request, 'ui/student/skill.html')
 # --------------------------------

@@ -1,12 +1,13 @@
 body {
   font-family: Arial, sans-serif;
   margin: 0;
+  padding: 0;
   background-color: #f9f9f9;
   color: #333;
 }
 
 main {
-  padding: 20px;
+  padding: 0px;
 }
 
 /* --- Header and Navbar Styles --- */
@@ -56,4 +57,8 @@ header nav a.active {
   color: #ffcc00;
   padding: 6px 10px;
   border-radius: 6px;
+}
+
+main.main-content {
+  margin-top: 1rem;
 }

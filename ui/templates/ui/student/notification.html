@@ -1,0 +1,44 @@
+{% extends 'ui/base.html' %}
+{% load static %}
+
+{% block title %}Notifications - CIT-U Skills Exchange{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'ui/css/notification.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="notifications-container">
+
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1>Notifications</h1>
+            <p>Stay updated with your tutoring activities and messages</p>
+        </div>
+        <button class="btn btn-mark-all">
+            <i class="fa-regular fa-circle-check"></i> Mark all as read
+        </button>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="all-notifications">
+            All Notifications
+            <span class="badge">0</span>
+        </button>
+        <button class="tab" data-tab="settings">
+            Settings
+        </button>
+    </div>
+
+
+    <div class="notification-list-area">
+        <div class="empty-state">
+            <i class="fa-regular fa-bell-slash"></i>
+            <h3>No notifications yet</h3>
+            <p>We'll let you know when something important happens.</p>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

@@ -40,7 +40,7 @@
          <i class="fa-solid fa-search"></i> Find Skills
       </a>
 
-      <a href="#"
+      <a href="{% url 'schedule' %}"
          {% if request.resolver_match.url_name == 'schedule' %}class="active"{% endif %}>
          <i class="fa-solid fa-calendar-days"></i> Schedule
       </a>
@@ -50,8 +50,8 @@
          <i class="fa-solid fa-comment"></i> Feedback
       </a>
 
-      <a href="#"
-         {% if request.resolver_match.url_name == 'notifications' %}class="active"{% endif %}>
+      <a href="{% url 'notification' %}"
+         {% if request.resolver_match.url_name == 'notification' %}class="active"{% endif %}>
          <i class="fa-solid fa-bell"></i> Notifications
       </a>
 
