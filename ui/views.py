@@ -101,6 +101,10 @@ def schedule_view(request):
 def notification_view(request):
     return render(request, 'ui/student/notification.html')
 
+@login_required
+def chat_view(request):
+    return render(request, 'ui/student/chat.html')
+
 def skill_view(request):
     return render(request, 'ui/student/skill.html')
 # --------------------------------

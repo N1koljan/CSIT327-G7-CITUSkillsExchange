@@ -134,7 +134,6 @@
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-/* This rule shows the modal ONLY when the URL fragment matches its ID */
 .modal-overlay:target {
   opacity: 1;
   visibility: visible;
@@ -148,18 +147,14 @@
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
   position: relative;
   z-index: 1001;
-
-  /* Pop-in animation */
   transform: scale(0.95);
   transition: transform 0.3s ease;
 }
 
-/* Modal box pops in when modal is targeted */
 .modal-overlay:target .modal-box {
   transform: scale(1);
 }
 
-/* Background link to close the modal */
 .modal-close-bg {
     position: absolute;
     top: 0;
@@ -246,16 +241,13 @@
   box-shadow: 0 0 0 3px rgba(161, 15, 15, 0.2);
 }
 
-
-/* Specific style for Request Title from your photo */
 .modal-form .form-group #request-title {
   border: 1px solid #a10f0f;
 }
 .modal-form .form-group #request-title:focus {
-  border-color: #a10f0f; /* Keeps maroon border on focus */
+  border-color: #a10f0f;
 }
 
-/* Specific style for Budget input */
 .modal-form .form-group #request-budget {
     border-style: dashed;
 }
@@ -275,7 +267,6 @@
   border-top: 1px solid #eee;
 }
 
-/* Style for both button and link in footer */
 .modal-footer .btn-primary,
 .modal-footer .btn-secondary {
   padding: 10px 20px;
@@ -309,3 +300,182 @@
   transform: scale(1.02);
 }
 
+.request-card h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.request-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.request-tags span {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #e0e0e0;
+}
+
+.tag-category {
+  background-color: #f3e5f5;
+  border-color: #e1bee7;
+  color: #6a1b9a;
+}
+
+.tag-status {
+  background-color: #e8f5e9;
+  border-color: #c8e6c9;
+  color: #2e7d32;
+}
+.tag-status-open {
+  background-color: #e8f5e9;
+  border-color: #c8e6c9;
+  color: #2e7d32;
+}
+.tag-status-closed {
+  background-color: #ffebee;
+  border-color: #ffcdd2;
+  color: #c62828;
+}
+
+.tag-urgency {
+  background-color: #fff8e1;
+  border-color: #ffecb3;
+  color: #f57f17;
+}
+.tag-urgency-low {
+  background-color: #e3f2fd;
+  border-color: #bbdefb;
+  color: #0d47a1;
+}
+.tag-urgency-high {
+  background-color: #ffebee;
+  border-color: #ffcdd2;
+  color: #c62828;
+}
+
+.request-description {
+  color: #555;
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
+}
+
+.request-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+  color: #777;
+  padding-bottom: 1rem;
+}
+.request-meta i {
+  margin-right: 5px;
+}
+
+.request-meta .meta-budget {
+  margin-left: auto;
+  font-weight: 600;
+  color: #a10f0f;
+  font-style: italic;
+}
+
+.request-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+  align-items: center;
+}
+
+.request-actions .btn-card-primary,
+.request-actions .btn-card-secondary,
+.request-actions .btn-card-tertiary {
+  text-decoration: none;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.request-actions .btn-card-primary {
+  background-color: #a10f0f;
+  color: white;
+  border: 1px solid #a10f0f;
+}
+.request-actions .btn-card-primary:hover {
+  background-color: #800000;
+  border-color: #800000;
+  transform: scale(1.02);
+}
+
+.request-actions .btn-card-secondary {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+}
+.request-actions .btn-card-secondary:hover {
+  background-color: #f5f5f5;
+  border-color: #bbb;
+  transform: scale(1.02);
+}
+
+.request-actions .btn-card-tertiary {
+  background-color: transparent;
+  color: #555;
+  border: 1px solid transparent;
+  margin-left: auto;
+}
+.request-actions .btn-card-tertiary:hover {
+  background-color: #f5f5f5;
+  color: #a10f0f;
+  border-color: #ddd;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.request-meta span i.fa-user {
+  color: #a10f0f;
+}
+
+.request-actions.available-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 10px;
+}
+
+.request-actions .btn-card-primary-yellow {
+  text-decoration: none;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background-color: #ffcc00;
+  color: #800000;
+  border: 1px solid #ffcc00;
+}
+
+.request-actions .btn-card-primary-yellow:hover {
+  background-color: #f0c000;
+  border-color: #f0c000;
+  transform: scale(1.02);
+}

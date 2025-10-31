@@ -24,11 +24,86 @@
         <button class="tab" data-tab="available-requests">Available Requests</button>
     </div>
 
-    <div class="requests-content">
-        <div class="empty-state">
-            <i class="fa-solid fa-inbox"></i>
-            <h3>No requests yet</h3>
-            <p>When you post a request, it will appear here.</p>
+    <div class="tab-content-container">
+
+        <div class="tab-panel active" id="my-requests">
+            {% for request in my_requests %}
+              <div class="request-card">
+                <h3>{{ request.title }}</h3>
+                <div class="request-tags">
+                  <span class="tag-category tag-category-{{ request.category }}">
+                    {{ request.get_category_display }}
+                  </span>
+                  <span class="tag-status tag-status-{{ request.status|lower }}">
+                    {{ request.get_status_display }}
+                  </span>
+                  <span class="tag-urgency tag-urgency-{{ request.urgency|lower }}">
+                    {{ request.get_urgency_display }} Priority
+                  </span>
+                </div>
+                <p class="request-description">{{ request.description|truncatewords:20 }}</p>
+                <div class="request-meta">
+                  <span><i class="fa-regular fa-clock"></i> {{ request.created_at|timesince }} ago</span>
+                  <span><i class="fa-regular fa-comment-dots"></i> 3 responses</span>
+                  <span class="meta-budget">{{ request.budget }}</span>
+                </div>
+                <div class="request-actions">
+                  <a href="#" class="btn-card-secondary">View Responses</a>
+                  <a href="#" class="btn-card-primary">Edit Request</a>
+                  <a href="#" class="btn-card-tertiary">Close Request</a>
+                </div>
+              </div>
+              {% empty %}
+              <div class="empty-state">
+                  <i class="fa-solid fa-inbox"></i>
+                  <h3>No requests yet</h3>
+                  <p>When you post a request, it will appear here.</p>
+              </div>
+            {% endfor %}
+        </div>
+
+        <div class="tab-panel" id="available-requests">
+            {% for request in available_requests %}
+              <div class="request-card">
+                <h3>{{ request.title }}</h3>
+                <div class="request-tags">
+                  <span class="tag-category tag-category-{{ request.category }}">
+                    {{ request.get_category_display }}
+                  </span>
+                  <span class="tag-status tag-status-{{ request.status|lower }}">
+                    {{ request.get_status_display }}
+                  </span>
+                  <span class="tag-urgency tag-urgency-{{ request.urgency|lower }}">
+                    {{ request.get_urgency_display }} Priority
+                  </span>
+                </div>
+                <p class="request-description">{{ request.description|truncatewords:20 }}</p>
+
+                <div class="request-meta">
+                  <span>
+                    <i class="fa-regular fa-user"></i> {{ request.user.first_name }} {{ request.user.last_name }}
+                  </span>
+                  <span>
+                    <i class="fa-regular fa-clock"></i> {{ request.created_at|timesince }} ago
+                  </span>
+                  <span>
+                    <i class="fa-regular fa-comment-dots"></i> 2 responses
+                  </span>
+                  <span class="meta-budget">₱{{ request.budget }}</span>
+                </div>
+
+                <div class="request-actions available-actions">
+                  <a href="#" class="btn-card-secondary">View Details</a>
+                  <a href="#" class="btn-card-primary-yellow">Respond to Request</a>
+                </div>
+              </div>
+              {% empty %}
+              <div class="empty-state">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <h3>No available requests</h3>
+                  <p>Check back later to see new opportunities to help.</p>
+              </div>
+            {% endfor %}
         </div>
 
     </div>
@@ -95,3 +170,26 @@
 
 {% endblock %}
 
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetId = tab.getAttribute('data-tab');
+        const targetPanel = document.getElementById(targetId);
+
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        panels.forEach(p => p.classList.remove('active'));
+        if (targetPanel) {
+          targetPanel.classList.add('active');
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}
