@@ -1,0 +1,36 @@
+<!-- in ui/templates/student/propose_barter.html -->
+{% extends "base.html" %}
+
+{% block title %}Propose Barter{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Propose a Barter</h1>
+
+        <div class="bg-gray-100 p-4 rounded-md mb-6">
+            <h2 class="text-lg font-semibold">You are making a proposal for:</h2>
+            <p class="text-gray-700"><strong>Skill:</strong> {{ skill_request.skill.title }}</p>
+            <p class="text-gray-700"><strong>Provider:</strong> {{ skill_request.skill.owner.username }}</p>
+        </div>
+
+        <p class="mb-4">Select one of your skills to offer in exchange for the skill you requested.</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <label for="{{ form.offered_skill.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.offered_skill.label }}</label>
+                {{ form.offered_skill }}
+                {% if form.offered_skill.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.offered_skill.errors|first }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Send Barter Proposal
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

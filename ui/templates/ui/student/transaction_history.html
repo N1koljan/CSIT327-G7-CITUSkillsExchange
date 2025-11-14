@@ -1,0 +1,92 @@
+{% extends 'ui/base.html' %}
+{% load static %}
+
+{% block title %}Transaction History - CIT-U Skills Exchange{% endblock %}
+
+{% block styles %}
+  <!-- We are reusing the CSS from the requests page for a consistent card style -->
+  <link rel="stylesheet" href="{% static 'ui/css/request.css' %}">
+
+  <style>
+    .status-badge.status-completed {
+        background-color: #10B981; /* A nice green color */
+        color: white;
+    }
+    /* Style for the new feedback button area, just like on the requests page */
+    .request-actions-footer {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #eee;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1>Transaction History</h1>
+            <p>A record of all your completed skill exchanges</p>
+        </div>
+    </div>
+
+    <div class="request-list">
+        {% for tx in transactions %}
+            <div class="request-card">
+                <!-- Avatar of the OTHER person in the transaction -->
+                <div class="card-avatar">
+                    {% if request.user == tx.provider %}
+                        {% if tx.receiver.profile_picture %}<img src="{{ tx.receiver.profile_picture.url }}" alt="{{ tx.receiver.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                    {% else %}
+                        {% if tx.provider.profile_picture %}<img src="{{ tx.provider.profile_picture.url }}" alt="{{ tx.provider.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="card-details">
+                    <div class="request-card-header">
+                        <h3>{{ tx.request.skill.title }}</h3>
+                        <span class="status-badge status-completed">{{ tx.get_status_display }}</span>
+                    </div>
+
+                    <p class="request-meta">
+                        {% if request.user == tx.provider %}
+                            You provided this service to <strong>{{ tx.receiver.username }}</strong>
+                        {% else %}
+                            You received this service from <strong>{{ tx.provider.username }}</strong>
+                        {% endif %}
+                    </p>
+
+                    <div class="card-details-grid">
+                        <div class="detail-item"><strong>Exchange Type:</strong><p>{{ tx.get_exchange_type_display }}</p></div>
+                        <div class="detail-item"><strong>Completed On:</strong><p>{{ tx.completed_at|date:"F d, Y" }}</p></div>
+                    </div>
+
+                    <!-- 👇 THIS IS THE NEW SECTION FOR THE FEEDBACK BUTTON 👇 -->
+                    <div class="request-actions-footer">
+                        {% if request.user == tx.receiver %}
+                            <!-- Only the receiver (original requester) can leave feedback -->
+                            {% if not tx.request.rating %}
+                                <!-- If no rating exists yet, show the button -->
+                                <a href="{% url 'core:leave_feedback' request_id=tx.request.id %}" class="btn btn-primary">
+                                    <i class="fa-solid fa-star"></i> Leave Feedback
+                                </a>
+                            {% else %}
+                                <!-- If a rating already exists, show a confirmation -->
+                                <p class="text-sm text-green-600 font-semibold"><i class="fa-solid fa-check-circle"></i> Feedback Submitted</p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <!-- 👆 END OF NEW SECTION 👆 -->
+
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">
+                <i class="fa-solid fa-history"></i>
+                <h3>No transactions yet</h3>
+                <p>When you complete a skill exchange from your schedule, it will appear here.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

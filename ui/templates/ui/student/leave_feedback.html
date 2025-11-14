@@ -1,0 +1,38 @@
+<!-- in ui/templates/student/leave_feedback.html -->
+{% extends "ui/base.html" %}
+
+{% block title %}Leave Feedback{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Leave Feedback</h1>
+
+        <div class="bg-gray-100 p-4 rounded-md mb-6">
+            <h2 class="text-lg font-semibold">You are leaving feedback for:</h2>
+            <p class="text-gray-700"><strong>Skill:</strong> {{ skill_request.skill.title }}</p>
+            <p class="text-gray-700"><strong>Provider:</strong> {{ skill_request.skill.owner.username }}</p>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <label for="{{ form.rating.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.rating.label }}</label>
+                {{ form.rating }}
+                {% if form.rating.errors %}<p class="text-red-500 text-xs mt-1">{{ form.rating.errors|first }}</p>{% endif %}
+            </div>
+
+            <div class="mb-6">
+                <label for="{{ form.comment.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.comment.label }}</label>
+                {{ form.comment }}
+                {% if form.comment.errors %}<p class="text-red-500 text-xs mt-1">{{ form.comment.errors|first }}</p>{% endif %}
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none">
+                Submit Feedback
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

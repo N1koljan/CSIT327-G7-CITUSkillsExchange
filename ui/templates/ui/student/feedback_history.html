@@ -1,0 +1,80 @@
+<!-- in ui/templates/student/feedback_history.html -->
+
+{% extends 'ui/base.html' %}
+{% load static %}
+
+{% block title %}Feedback History - CIT-U Skills Exchange{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'ui/css/request.css' %}"> <!-- Reusing request.css for similar card styles -->
+  <style>
+    .star-rating { color: #f59e0b; } /* Gold color for stars */
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-title-section">
+            <h1>Feedback History</h1>
+            <p>A record of all feedback you've given and received</p>
+        </div>
+    </div>
+
+    <!-- Section for Feedback You've Given -->
+    <h2 class="text-2xl font-bold mb-4 mt-8">Feedback You've Given</h2>
+    <div class="request-list">
+        {% for rating in given_ratings %}
+            <div class="request-card">
+                <div class="card-avatar">
+                    {% if rating.rated_user.profile_picture %}
+                        <img src="{{ rating.rated_user.profile_picture.url }}" alt="{{ rating.rated_user.username }}'s profile">
+                    {% else %}
+                        <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                    {% endif %}
+                </div>
+                <div class="card-details">
+                    <p class="request-meta">For: <strong>{{ rating.rated_user.username }}</strong> regarding skill "<strong>{{ rating.skill.title }}</strong>"</p>
+                    <div class="star-rating my-2">
+                        {% for i in "12345" %}
+                            <i class="fa-{% if forloop.counter <= rating.rating %}solid{% else %}regular{% endif %} fa-star"></i>
+                        {% endfor %}
+                    </div>
+                    <p class="text-gray-700 italic">"{{ rating.comment }}"</p>
+                    <p class="text-xs text-gray-500 mt-2">Submitted on {{ rating.created_at|date:"F d, Y" }}</p>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state"><i class="fa-solid fa-star-half-stroke"></i><h3>No feedback given yet</h3><p>After a skill exchange is completed, you can leave feedback from the Requests page.</p></div>
+        {% endfor %}
+    </div>
+
+    <!-- Section for Feedback You've Received -->
+    <h2 class="text-2xl font-bold mb-4 mt-8">Feedback You've Received</h2>
+    <div class="request-list">
+        {% for rating in received_ratings %}
+            <div class="request-card">
+                <div class="card-avatar">
+                    {% if rating.rater.profile_picture %}
+                        <img src="{{ rating.rater.profile_picture.url }}" alt="{{ rating.rater.username }}'s profile">
+                    {% else %}
+                        <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                    {% endif %}
+                </div>
+                <div class="card-details">
+                    <p class="request-meta">From: <strong>{{ rating.rater.username }}</strong> regarding your skill "<strong>{{ rating.skill.title }}</strong>"</p>
+                    <div class="star-rating my-2">
+                        {% for i in "12345" %}
+                            <i class="fa-{% if forloop.counter <= rating.rating %}solid{% else %}regular{% endif %} fa-star"></i>
+                        {% endfor %}
+                    </div>
+                    <p class="text-gray-700 italic">"{{ rating.comment }}"</p>
+                    <p class="text-xs text-gray-500 mt-2">Received on {{ rating.created_at|date:"F d, Y" }}</p>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state"><i class="fa-solid fa-inbox"></i><h3>No feedback received yet</h3><p>When students leave feedback on your skills, it will appear here.</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
