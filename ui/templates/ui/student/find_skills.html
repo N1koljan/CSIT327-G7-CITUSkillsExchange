@@ -1,3 +1,5 @@
+{% extends 'ui/base.html<!-- in ui/templates/ui/student/find_skills.html -->
+
 {% extends 'ui/base.html' %}
 {% load static %}
 
@@ -5,61 +7,124 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/find_skills.css' %}">
+
+  <!-- 👇 NEW STYLES for the comment section -->
+  <style>
+    .comments-section {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #eee;
+    }
+    .comment-list {
+        margin-top: 1rem;
+        max-height: 250px; /* Optional: make it scrollable if there are many comments */
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    .comment {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 1rem;
+    }
+    .comment-avatar img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+    }
+    .comment-body { flex: 1; }
+    .comment-body strong { font-size: 0.9rem; }
+    .comment-body p { margin: 2px 0 0 0; font-size: 0.95rem; }
+    .comment-form textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        margin-top: 10px;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
-
     <main class="main-content">
+        <!-- ... (your page title and search bar are fine) ... -->
         <div class="page-title-section">
             <h1>Find Skills & Tutors</h1>
             <p>Discover skilled peers and find the perfect match for your learning goals</p>
         </div>
-
-        <div class="search-bar">
+        <form class="search-bar" method="GET" action="{% url 'find_skills' %}">
             <i class="fa-solid fa-search search-icon"></i>
-            <input type="text" placeholder="Search for skills (e.g., 'Python', 'Guitar', 'Baking')">
-            <button class="btn btn-primary">Search</button>
-            <button class="btn btn-secondary">
-                <i class="fa-solid fa-filter"></i> Filters
-            </button>
-        </div>
-
-        <div class="results-header">
-            <div class="skills-found">
-                <strong>0 skills found</strong>
-            </div>
-            <div class="sort-by">
-                <label for="sort-select">Sort by:</label>
-                <select id="sort-select">
-                    <option value="relevance">Relevance</option>
-                    <option value="rating">Rating</option>
-                    <option value="newest">Newest</option>
-                </select>
-            </div>
-        </div>
+            <input type="text" name="q" placeholder="Search for skills..." value="{{ query }}">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
 
         <div class="results-list">
-            <div class="empty-state">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <h3>No skills found</h3>
-                <p>Try adjusting your search or filters to find what you're looking for.</p>
-            </div>
+            {% if skills %}
+                {% for skill in skills %}
+                    <!-- Add an ID to the card so we can link to it -->
+                    <div class="skill-card-result" id="skill-{{ skill.id }}">
+                        <!-- ... (the main skill info and tutor info is fine) ... -->
+                        <div class="skill-info">
+                            <h3>{{ skill.title }}</h3>
+                            <p class="skill-category-result">{{ skill.category }}</p>
+                            <p class="skill-description-result">{{ skill.description|truncatewords:25 }}</p>
+                        </div>
+                        <div class="tutor-info">
+                            {% if skill.owner.profile_picture %}<img src="{{ skill.owner.profile_picture.url }}" class="tutor-avatar">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" class="tutor-avatar">{% endif %}
+                            <div class="tutor-details">
+                                <strong>{{ skill.owner.get_full_name|default:skill.owner.username }}</strong>
+                                <p>{{ skill.owner.department }} Department</p>
+                            </div>
+                            <a href="{% url 'core:create_skill_request' skill_id=skill.id %}" class="btn btn-outline-primary">View & Request</a>
+                        </div>
 
+                        <!-- ===================== NEW COMMENT SECTION ===================== -->
+                        <div class="comments-section">
+                            <h4>{{ skill.comments.count }} Comment{{ skill.comments.count|pluralize }}</h4>
+
+                            <div class="comment-list">
+                                {% for comment in skill.comments.all %}
+                                <div class="comment">
+                                    <div class="comment-avatar">
+                                        {% if comment.author.profile_picture %}
+                                            <img src="{{ comment.author.profile_picture.url }}" alt="{{ comment.author.username }}'s avatar">
+                                        {% else %}
+                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default avatar">
+                                        {% endif %}
+                                    </div>
+                                    <div class="comment-body">
+                                        <strong>{{ comment.author.username }}</strong>
+                                        <p>{{ comment.content }}</p>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p>No comments yet. Be the first to ask a question!</p>
+                                {% endfor %}
+                            </div>
+
+                            <form class="comment-form" method="POST" action="{% url 'add_comment' skill_id=skill.id %}">
+                                {% csrf_token %}
+                                {{ comment_form.content }}
+                                <button type-="submit" class="btn btn-secondary" style="margin-top: 10px;">Post Comment</button>
+                            </form>
+                        </div>
+                        <!-- ============================================================= -->
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state"><h3>No skills found</h3></div>
+            {% endif %}
         </div>
     </main>
 
     <aside class="sidebar">
+        <!-- This sidebar can be made dynamic in a future sprint -->
         <h2>Suggested Matches</h2>
         <p class="sidebar-subtitle">Based on your "Skills Wanted"</p>
-        
         <div class="match-card">
             <h4>Suggested Skill</h4>
-            <p>No values yet</p>
-            <button class="btn btn-outline">Explore</button>
+            <p>Feature coming soon!</p>
         </div>
-
     </aside>
-
 </div>
 {% endblock %}

@@ -25,6 +25,7 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_
 # Installed apps
 # ---------------------------
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -137,3 +138,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 LOGIN_REDIRECT_URL = '/profile/'
 LOGIN_URL = '/login/'
+
+# skills_exchange/settings.py
+
+# ... at the end of the file
+ASGI_APPLICATION = 'skills_exchange.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}

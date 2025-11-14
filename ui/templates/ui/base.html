@@ -1,3 +1,5 @@
+<!-- in ui/templates/ui/base.html -->
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -5,62 +7,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}CIT-U Peer-to-Peer Skills Exchange{% endblock %}</title>
-
-  <!-- Your base.css file, which is already correct -->
   <link rel="stylesheet" href="{% static 'ui/css/base.css' %}">
-
-  {% block styles %}
-  {% endblock %}
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  {% block styles %}{% endblock %}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+
+<body {% if user.is_authenticated %}data-is-authenticated="true"{% else %}data-is-authenticated="false"{% endif %}>
+
   <header>
     <div class="logo">CIT-U Peer to Peer Skills Exchange</div>
     <nav>
-      <!-- === NAVBAR WITH DYNAMIC ACTIVE LINKS === -->
-      <!-- This logic checks the URL name and adds your "active" class -->
+      <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}><i class="fa-solid fa-house"></i> Dashboard</a>
+      <a href="{% url 'my_skills' %}" {% if request.resolver_match.url_name == 'my_skills' %}class="active"{% endif %}><i class="fa-solid fa-book"></i> My Skills</a>
+      <a href="{% url 'requests' %}" {% if request.resolver_match.url_name == 'requests' %}class="active"{% endif %}><i class="fa-solid fa-list"></i> Requests</a>
+      <a href="{% url 'find_skills' %}" {% if request.resolver_match.url_name == 'find_skills' %}class="active"{% endif %}><i class="fa-solid fa-search"></i> Find Skills</a>
+      <a href="{% url 'schedule' %}" {% if request.resolver_match.url_name == 'schedule' %}class="active"{% endif %}><i class="fa-solid fa-calendar-days"></i> Schedule</a>
 
-      <a href="{% url 'dashboard' %}"
-         {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
-         <i class="fa-solid fa-house"></i> Dashboard
-      </a>
+      <!-- 👇 THIS IS THE NEW "TRANSACTIONS" LINK 👇 -->
+      <a href="{% url 'core:transaction_history' %}" {% if request.resolver_match.url_name == 'transaction_history' %}class="active"{% endif %}><i class="fa-solid fa-history"></i> Transactions</a>
 
-      <a href="{% url 'my_skills' %}"
-         {% if request.resolver_match.url_name == 'my_skills' %}class="active"{% endif %}>
-         <i class="fa-solid fa-book"></i> My Skills
-      </a>
-
-      <a href="{% url 'requests' %}"
-         {% if request.resolver_match.url_name == 'requests' %}class="active"{% endif %}>
-         <i class="fa-solid fa-list"></i> Requests
-      </a>
-
-      <a href="{% url 'find_skills' %}"
-         {% if request.resolver_match.url_name == 'find_skills' %}class="active"{% endif %}>
-         <i class="fa-solid fa-search"></i> Find Skills
-      </a>
-
-      <a href="{% url 'schedule' %}"
-         {% if request.resolver_match.url_name == 'schedule' %}class="active"{% endif %}>
-         <i class="fa-solid fa-calendar-days"></i> Schedule
-      </a>
-
-      <a href="#"
-         {% if request.resolver_match.url_name == 'feedback' %}class="active"{% endif %}>
-         <i class="fa-solid fa-comment"></i> Feedback
-      </a>
-
-      <a href="{% url 'notification' %}"
-         {% if request.resolver_match.url_name == 'notification' %}class="active"{% endif %}>
-         <i class="fa-solid fa-bell"></i> Notifications
-      </a>
-
-      <a href="{% url 'profile' %}"
-         {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_profile' %}class="active"{% endif %}>
-         <i class="fa-solid fa-user"></i> Profile
-      </a>
-
-      <!-- === END OF LINKS === -->
+      <a href="{% url 'feedback_history' %}" {% if request.resolver_match.url_name == 'feedback_history' %}class="active"{% endif %}><i class="fa-solid fa-comment"></i> Feedback</a>
+      <a href="{% url 'profile' %}" {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_profile' %}class="active"{% endif %}><i class="fa-solid fa-user"></i> Profile</a>
     </nav>
   </header>
 
@@ -68,6 +36,28 @@
     {% block content %}
     {% endblock %}
   </main>
+
+  <script src="{% static 'ui/js/notifications.js' %}"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+  {% if messages %}
+  <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          {% for message in messages %}
+              let backgroundColor;
+              switch ('{{ message.tags }}') {
+                  case 'success': backgroundColor = "linear-gradient(to right, #00b09b, #96c93d)"; break;
+                  case 'error': backgroundColor = "linear-gradient(to right, #ff5f6d, #ffc371)"; break;
+                  case 'warning': backgroundColor = "linear-gradient(to right, #f39c12, #f1c40f)"; break;
+                  default: backgroundColor = "linear-gradient(to right, #3498db, #2980b9)";
+              }
+              Toastify({ text: "{{ message|escapejs }}", duration: 5000, close: true, gravity: "top", position: "right", stopOnFocus: true, style: { background: backgroundColor, }, }).showToast();
+          {% endfor %}
+      });
+  </script>
+  {% endif %}
+
+  {% block scripts %}{% endblock %}
+
 </body>
 </html>
-

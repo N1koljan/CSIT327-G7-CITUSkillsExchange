@@ -14,18 +14,52 @@
         <h1>My Skills</h1>
         <p>Manage the skills you can teach and share with others</p>
       </div>
+      <!-- This button now correctly opens the modal using the href anchor -->
       <a href="#add-skill-modal" class="add-skill-btn"><i class="fa-solid fa-plus"></i> Add New Skill</a>
     </div>
 
-    <div class="skills-list">
-      <div class="no-skills">
-        <i class="fa-solid fa-circle-info"></i>
-        <p>You haven't added any skills yet. Click "Add New Skill" to get started!</p>
-      </div>
+    <!-- Display messages (success/error) -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message-banner
+                {% if message.tags == 'success' %} message-success {% endif %}
+                {% if message.tags == 'error' %} message-error {% endif %}"
+                role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
 
+    <div class="skills-list">
+      <!-- DYNAMIC SKILL LIST -->
+      {% if skills %}
+        {% for skill in skills %}
+          <div class="skill-card">
+            <div class="skill-card-header">
+              <h3>{{ skill.title }}</h3>
+              <div class="skill-actions">
+                <a href="{% url 'skill_edit' skill.pk %}" class="action-btn edit-btn"><i class="fa-solid fa-pencil"></i> Edit</a>
+                <a href="{% url 'skill_delete' skill.pk %}" class="action-btn delete-btn"><i class="fa-solid fa-trash"></i> Delete</a>
+              </div>
+            </div>
+            <p class="skill-category">{{ skill.category }}</p>
+            <p class="skill-description">{{ skill.description|truncatewords:30 }}</p>
+            <div class="skill-footer">
+              <span>Exchange: <strong>{{ skill.get_exchange_type_display }}</strong></span>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <!-- EMPTY STATE MESSAGE -->
+        <div class="no-skills">
+          <i class="fa-solid fa-circle-info"></i>
+          <p>You haven't added any skills yet. Click "Add New Skill" to get started!</p>
+        </div>
+      {% endif %}
     </div>
   </section>
 
+  <!-- MODAL FOR ADDING A NEW SKILL -->
   <div id="add-skill-modal" class="modal-overlay">
     <div class="modal-box">
       <div class="modal-header">
@@ -33,54 +67,45 @@
         <a href="#" class="close-button">&times;</a>
       </div>
 
-      <div class="modal-body">
-        <p>Share your knowledge by adding a skill you can teach others.</p>
+      <!-- THE FORM NOW POSTS TO THE BACKEND -->
+      <form class="modal-form" method="post" action="{% url 'my_skills' %}">
+        {% csrf_token %} <!-- IMPORTANT: Django security token -->
+        <div class="modal-body">
+          <p>Share your knowledge by adding a skill you can teach others.</p>
 
-        <form class="modal-form">
+          <!-- Skill Title -->
           <div class="form-group">
-            <label for="skill-title">Skill Title</label>
-            <input type="text" id="skill-title" placeholder="e.g., React Development">
+            <label for="{{ form.title.id_for_label }}">Skill Title</label>
+            <!-- IMPORTANT: The 'name' attribute must match the form field name -->
+            <input type="text" id="{{ form.title.id_for_label }}" name="title" placeholder="e.g., React Development" required>
           </div>
 
+          <!-- Category -->
           <div class="form-group">
-            <label for="skill-category">Category</label>
-            <select id="skill-category">
-              <option value="" disabled selected>Select category</option>
-              <option value="tech">Technology</option>
-              <option value="art">Arts & Music</option>
-              <option value="academic">Academic</option>
-              <option value="lifestyle">Lifestyle & Hobbies</option>
-            </select>
+            <label for="{{ form.category.id_for_label }}">Category</label>
+            <input type="text" id="{{ form.category.id_for_label }}" name="category" placeholder="e.g., Technology, Arts, Academic" required>
           </div>
 
+          <!-- Exchange Type -->
           <div class="form-group">
-            <label for="skill-level">Skill Level</label>
-            <select id="skill-level">
-              <option value="" disabled selected>Select your level</option>
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-              <option value="expert">Expert</option>
-            </select>
+            <label for="{{ form.exchange_type.id_for_label }}">Exchange Type</label>
+            <!-- This renders the dropdown with choices from the model -->
+            {{ form.exchange_type }}
           </div>
 
+          <!-- Description -->
           <div class="form-group">
-            <label for="skill-description">Description</label>
-            <textarea id="skill-description" rows="4" placeholder="Describe what you can teach and your experience..."></textarea>
+            <label for="{{ form.description.id_for_label }}">Description</label>
+            <textarea id="{{ form.description.id_for_label }}" name="description" rows="4" placeholder="Describe what you can teach and your experience..." required></textarea>
           </div>
-        </form>
-      </div>
+        </div>
 
-      <div class="modal-footer">
-
-        <a href="#" class="btn-secondary">Cancel</a>
-
-        <button type="submit" class="btn-primary">Add Skill</button>
-      </div>
+        <div class="modal-footer">
+          <a href="#" class="btn-secondary">Cancel</a>
+          <button type="submit" class="btn-primary">Add Skill</button>
+        </div>
+      </form>
     </div>
-
     <a href="#" class="modal-close-bg"></a>
   </div>
-
 {% endblock %}
-

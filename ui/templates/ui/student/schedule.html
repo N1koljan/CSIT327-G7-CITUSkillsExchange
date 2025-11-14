@@ -5,6 +5,24 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/schedule.css' %}">
+
+  <!-- CSS for the new avatar layout -->
+  <style>
+    .schedule-item-layout {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .item-avatar img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .item-content {
+      flex: 1;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
@@ -19,35 +37,40 @@
 
     <div class="schedule-layout">
 
+        <!-- DYNAMIC MAIN COLUMN (WITH PROFILE PICS) -->
         <div class="main-column">
             <div class="card pending-requests">
                 <div class="card-header"> <h3>Pending Requests</h3> </div>
                 <div class="card-content">
-
                      {% if not pending_requests %}
                         <div class="empty-list-message">
                             <i class="fa-regular fa-folder-open"></i>
-                            <p>No Pending Requests yet</p>
+                            <p>No Pending Requests</p>
                         </div>
                      {% else %}
-                        {% for request_item in pending_requests %}
-                            <div class="request-item">
-                                <h4>{{ request_item.title|default:"Skill Title (e.g., Python Basics)" }}</h4>
-                                <div class="details">
-                                    <i class="fa-regular fa-calendar-days"></i>
-                                    <span>{{ request_item.date|default:"YYYY-MM-DD" }}</span>
+                        {% for req in pending_requests %}
+                            <div class="request-item schedule-item-layout">
+                                <div class="item-avatar">
+                                    {% if req.requester == request.user %}
+                                        {% if req.skill.owner.profile_picture %}
+                                            <img src="{{ req.skill.owner.profile_picture.url }}" alt="{{ req.skill.owner.username }}'s profile">
+                                        {% else %}
+                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                                        {% endif %}
+                                    {% else %}
+                                        {% if req.requester.profile_picture %}
+                                            <img src="{{ req.requester.profile_picture.url }}" alt="{{ req.requester.username }}'s profile">
+                                        {% else %}
+                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                                        {% endif %}
+                                    {% endif %}
                                 </div>
-                                <div class="details">
-                                    <i class="fa-regular fa-clock"></i>
-                                    <span>{{ request_item.time|default:"HH:MM AM - HH:MM PM" }}</span>
-                                </div>
-                                <div class="details invited-by">
-                                    <i class="fa-regular fa-user"></i>
-                                    <span>Invited by: {{ request_item.inviter|default:"John Doe" }}</span>
-                                </div>
-                                <div class="request-actions">
-                                    <button class="btn btn-accept"><i class="fa-solid fa-check"></i> Accept</button>
-                                    <button class="btn btn-decline"><i class="fa-solid fa-xmark"></i> Decline</button>
+                                <div class="item-content">
+                                    <h4>{{ req.skill.title }}</h4>
+                                    {% if req.requested_date_time %}<div class="details"><i class="fa-regular fa-calendar-alt"></i><span>{{ req.requested_date_time }}</span></div>{% endif %}
+                                    <div class="details invited-by">
+                                        {% if req.requester == request.user %}<i class="fa-solid fa-arrow-up-right-from-square"></i><span>Request sent to: <strong>{{ req.skill.owner.username }}</strong></span>{% else %}<i class="fa-solid fa-inbox"></i><span>Request from: <strong>{{ req.requester.username }}</strong></span>{% endif %}
+                                    </div>
                                 </div>
                             </div>
                         {% endfor %}
@@ -64,31 +87,47 @@
                             <p>No Confirmed Sessions yet</p>
                         </div>
                      {% else %}
-                        {% for session_item in confirmed_sessions %}
-                            <a href="#session-details-placeholder" class="session-item-link">
-                                <div class="session-item">
-                                    <h4>{{ session_item.title|default:"Confirmed Session Title" }}</h4>
-                                    <div class="details">
-                                        <i class="fa-regular fa-calendar-days"></i>
-                                        <span>{{ session_item.date|default:"YYYY-MM-DD" }}</span>
-                                    </div>
-                                    <div class="details">
-                                        <i class="fa-regular fa-clock"></i>
-                                        <span>{{ session_item.time|default:"HH:MM PM - HH:MM PM" }}</span>
-                                    </div>
+                        {% for session in confirmed_sessions %}
+                            <div class="session-item schedule-item-layout">
+                                <div class="item-avatar">
+                                    {% if session.requester == request.user %}
+                                        {% if session.skill.owner.profile_picture %}<img src="{{ session.skill.owner.profile_picture.url }}" alt="{{ session.skill.owner.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                                    {% else %}
+                                        {% if session.requester.profile_picture %}<img src="{{ session.requester.profile_picture.url }}" alt="{{ session.requester.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                                    {% endif %}
                                 </div>
-                            </a>
+                                <div class="item-content">
+                                    <h4>{{ session.skill.title }}</h4>
+                                    {% if session.requested_date_time %}<div class="details"><i class="fa-regular fa-calendar-days"></i><span>{{ session.requested_date_time }}</span></div>{% endif %}
+                                    <div class="details">
+                                        <i class="fa-regular fa-user"></i>
+                                        {% if session.requester == request.user %}<span>With: <strong>{{ session.skill.owner.username }}</strong> (Provider)</span>{% else %}<span>With: <strong>{{ session.requester.username }}</strong> (Requester)</span>{% endif %}
+                                    </div>
+
+                                    <!-- 👇 THIS IS THE NEW "MARK AS DONE" BUTTON SECTION 👇 -->
+                                    <div class="session-actions" style="margin-top: 1rem;">
+                                        <form method="post" action="{% url 'core:complete_session' request_id=session.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-primary-gold btn-sm">
+                                                <i class="fa-solid fa-check-double"></i> Mark as Done
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <!-- 👆 END OF NEW SECTION 👆 -->
+
+                                </div>
+                            </div>
                         {% endfor %}
                      {% endif %}
                 </div>
             </div>
         </div>
 
+        <!-- SIDEBAR WITH CALENDAR (UNCHANGED) -->
         <div class="sidebar-column">
             <a href="#schedule-session-modal" class="btn btn-new-session btn-sidebar">
                 <i class="fa-solid fa-plus"></i> New Session
             </a>
-
             <div class="calendar-section">
                  <div class="calendar-section-header">
                     <i class="fa-solid fa-calendar-days"></i>
@@ -101,22 +140,15 @@
                         <button class="nav-arrow" id="nextMonthBtn">&gt;</button>
                     </div>
                     <div class="calendar-grid" id="calendarGrid">
-                        <div class="day-name">Su</div>
-                        <div class="day-name">Mo</div>
-                        <div class="day-name">Tu</div>
-                        <div class="day-name">We</div>
-                        <div class="day-name">Th</div>
-                        <div class="day-name">Fr</div>
-                        <div class="day-name">Sa</div>
+                        <div class="day-name">Su</div><div class="day-name">Mo</div><div class="day-name">Tu</div><div class="day-name">We</div><div class="day-name">Th</div><div class="day-name">Fr</div><div class="day-name">Sa</div>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
-
+<!-- MODALS (UNCHANGED) -->
 <div id="schedule-session-modal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-header">
@@ -126,123 +158,57 @@
     <div class="modal-body">
       <p>Fill in the details to create a new tutoring session</p>
       <form class="modal-form">
-        <div class="form-group">
-          <label for="session-title">Session Title / Skill to Exchange <span class="required">*</span></label>
-          <input type="text" id="session-title" placeholder="e.g., React Hooks Tutorial" required>
-        </div>
-        <div class="form-group">
-          <label for="session-date">Date <span class="required">*</span></label>
-          <div class="input-with-icon">
-            <input type="text" id="session-date" placeholder="dd/mm/yyyy" required>
-            <i class="fa-regular fa-calendar-days"></i>
-          </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="start-time">Start Time <span class="required">*</span></label>
-                <div class="input-with-icon">
-                    <input type="text" id="start-time" placeholder="--:--" required>
-                    <i class="fa-regular fa-clock"></i>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="end-time">End Time <span class="required">*</span></label>
-                <div class="input-with-icon">
-                    <input type="text" id="end-time" placeholder="--:--" required>
-                    <i class="fa-regular fa-clock"></i>
-                </div>
-            </div>
-        </div>
-        <div class="form-group">
-          <label for="session-details">Session Details <span class="required">*</span></label>
-          <textarea id="session-details" rows="4" placeholder="Describe what will be covered in this session..." required></textarea>
-        </div>
+        <div class="form-group"><label for="session-title">Session Title / Skill to Exchange <span class="required">*</span></label><input type="text" id="session-title" placeholder="e.g., React Hooks Tutorial" required></div>
+        <div class="form-group"><label for="session-date">Date <span class="required">*</span></label><div class="input-with-icon"><input type="text" id="session-date" placeholder="dd/mm/yyyy" required><i class="fa-regular fa-calendar-days"></i></div></div>
+        <div class="form-row"><div class="form-group"><label for="start-time">Start Time <span class="required">*</span></label><div class="input-with-icon"><input type="text" id="start-time" placeholder="--:--" required><i class="fa-regular fa-clock"></i></div></div><div class="form-group"><label for="end-time">End Time <span class="required">*</span></label><div class="input-with-icon"><input type="text" id="end-time" placeholder="--:--" required><i class="fa-regular fa-clock"></i></div></div></div>
+        <div class="form-group"><label for="session-details">Session Details <span class="required">*</span></label><textarea id="session-details" rows="4" placeholder="Describe what will be covered in this session..." required></textarea></div>
       </form>
     </div>
-    <div class="modal-footer">
-      <a href="#" class="btn-secondary">Cancel</a>
-      <button type="submit" class="btn-primary-gold">Save Schedule</button>
-    </div>
+    <div class="modal-footer"><a href="#" class="btn-secondary">Cancel</a><button type="submit" class="btn-primary-gold">Save Schedule</button></div>
   </div>
   <a href="#" class="modal-close-bg"></a>
 </div>
 
 <div id="session-details-placeholder" class="modal-overlay session-details-modal">
   <div class="modal-box">
-    <div class="modal-header">
-      <h2>Session Details</h2>
-      <a href="#" class="close-button">&times;</a>
-    </div>
+    <div class="modal-header"><h2>Session Details</h2><a href="#" class="close-button">&times;</a></div>
     <div class="modal-body details-body">
-        <div class="detail-group">
-            <label>Session Title</label>
-            <p>{{ session_item.title|default:"React Hooks Deep Dive" }}</p>
-        </div>
-        <div class="detail-group">
-            <label>Date</label>
-            <p>{{ session_item.date|default:"2024-01-15" }}</p>
-        </div>
-        <div class="detail-row">
-            <div class="detail-group">
-                <label>Start Time</label>
-                <p>{{ session_item.start_time|default:"3:00 PM" }}</p>
-            </div>
-            <div class="detail-group">
-                <label>End Time</label>
-                <p>{{ session_item.end_time|default:"4:30 PM" }}</p>
-            </div>
-        </div>
-         <div class="detail-group">
-            <label>Details</label>
-            <p>{{ session_item.details|default:"Focus on useState, useEffect, and custom hooks" }}</p>
-        </div>
-         <div class="detail-group">
-            <label>With</label>
-            <p>{{ session_item.participant|default:"Alex Johnson" }}</p>
-        </div>
+        <div class="detail-group"><label>Session Title</label><p>React Hooks Deep Dive</p></div>
+        <div class="detail-group"><label>Date</label><p>2024-01-15</p></div>
+        <div class="detail-row"><div class="detail-group"><label>Start Time</label><p>3:00 PM</p></div><div class="detail-group"><label>End Time</label><p>4:30 PM</p></div></div>
+        <div class="detail-group"><label>Details</label><p>Focus on useState, useEffect, and custom hooks</p></div>
+        <div class="detail-group"><label>With</label><p>Alex Johnson</p></div>
     </div>
-    <div class="modal-footer">
-      <a href="#reschedule-placeholder" class="btn-secondary btn-icon">
-          <i class="fa-solid fa-calendar-days"></i> Reschedule
-      </a>
-      <a href="#" class="btn-secondary">Close</a>
-    </div>
+    <div class="modal-footer"><a href="#reschedule-placeholder" class="btn-secondary btn-icon"><i class="fa-solid fa-calendar-days"></i> Reschedule</a><a href="#" class="btn-secondary">Close</a></div>
   </div>
   <a href="#" class="modal-close-bg"></a>
 </div>
+{% endblock %}
 
+{% block scripts %}
+<!-- CALENDAR SCRIPT (UNCHANGED) -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
         const monthYearDisplay = document.getElementById('monthYearDisplay');
         const calendarGrid = document.getElementById('calendarGrid');
         const prevMonthBtn = document.getElementById('prevMonthBtn');
         const nextMonthBtn = document.getElementById('nextMonthBtn');
-
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-
         const today = new Date();
         const todayDate = today.getDate();
         const todayMonth = today.getMonth();
         const todayYear = today.getFullYear();
-
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-                            "July", "August", "September", "October", "November", "December"];
-
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         function renderCalendar(year, month) {
-
             const firstDayOfMonth = new Date(year, month, 1);
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const firstDayWeekday = firstDayOfMonth.getDay();
             const daysInPrevMonth = new Date(year, month, 0).getDate();
-
             const dayElements = calendarGrid.querySelectorAll('.day, .other-month');
             dayElements.forEach(day => day.remove());
-
             monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
-
             for (let i = 0; i < firstDayWeekday; i++) {
                 const day = daysInPrevMonth - firstDayWeekday + 1 + i;
                 const dayDiv = document.createElement('div');
@@ -250,26 +216,20 @@
                 dayDiv.textContent = day;
                 calendarGrid.appendChild(dayDiv);
             }
-
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayDiv = document.createElement('div');
                 dayDiv.classList.add('day');
                 dayDiv.textContent = day;
-
                 if (day === todayDate && month === todayMonth && year === todayYear) {
                     dayDiv.classList.add('current-day');
                 }
-
                 dayDiv.addEventListener('click', () => {
                     console.log(`Clicked on: ${day}/${month + 1}/${year}`);
                 });
-
                 calendarGrid.appendChild(dayDiv);
             }
-
             const totalCellsGenerated = firstDayWeekday + daysInMonth;
             const remainingCells = (totalCellsGenerated % 7 === 0) ? 0 : 7 - (totalCellsGenerated % 7);
-
             for (let i = 1; i <= remainingCells; i++) {
                 const dayDiv = document.createElement('div');
                 dayDiv.classList.add('day', 'other-month');
@@ -277,28 +237,17 @@
                 calendarGrid.appendChild(dayDiv);
             }
         }
-
         prevMonthBtn.addEventListener('click', () => {
             currentMonth--;
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            }
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
             renderCalendar(currentYear, currentMonth);
         });
-
         nextMonthBtn.addEventListener('click', () => {
             currentMonth++;
-            if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            }
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
             renderCalendar(currentYear, currentMonth);
         });
-
         renderCalendar(currentYear, currentMonth);
     });
 </script>
-
 {% endblock %}
-

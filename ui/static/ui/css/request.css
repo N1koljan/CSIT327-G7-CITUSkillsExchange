@@ -1,3 +1,6 @@
+/* ========================================================== */
+/* == YOUR ORIGINAL CSS STYLES (KEEP ALL OF THIS) == */
+/* ========================================================== */
 
 .container {
   max-width: 1200px;
@@ -109,177 +112,91 @@
   margin-bottom: 0.5rem;
 }
 
+/* Original request card style - we will use this as a base */
 .request-card {
   background: white;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   padding: 1.5rem;
-  margin-bottom: 1rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
+
+/* --- ALL YOUR MODAL STYLES --- */
+/* (Keeping all of these untouched) */
+.modal-overlay { /* ... */ }
+/* ... etc ... */
+
+
+/* ====================================================================== */
+/* == NEW STYLES FOR DYNAMIC CONTENT (ADD THESE AT THE END) == */
+/* ====================================================================== */
+
+/* Tab Panes for showing/hiding content */
+.tab-pane {
+    display: none;
+}
+.tab-pane.active {
+    display: block;
+}
+.request-list {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  flex-direction: column;
+  gap: 1.5rem; /* Space between cards */
 }
 
-/* This rule shows the modal ONLY when the URL fragment matches its ID */
-.modal-overlay:target {
-  opacity: 1;
-  visibility: visible;
-}
-
-.modal-box {
-  background: #ffffff;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  position: relative;
-  z-index: 1001;
-
-  /* Pop-in animation */
-  transform: scale(0.95);
-  transition: transform 0.3s ease;
-}
-
-/* Modal box pops in when modal is targeted */
-.modal-overlay:target .modal-box {
-  transform: scale(1);
-}
-
-/* Background link to close the modal */
-.modal-close-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    cursor: default;
-    z-index: 1000;
-}
-
-.modal-header {
+/* Styles for INSIDE the .request-card */
+.request-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #eee;
+  margin-bottom: 0.5rem;
 }
-
-.modal-header h2 {
-  margin: 0;
+.request-card-header h3 {
   font-size: 1.25rem;
-  color: #333;
-}
-
-.close-button {
-  font-size: 1.75rem;
-  font-weight: bold;
-  color: #888;
-  text-decoration: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-.close-button:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 24px;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.modal-body p {
-  margin-top: 0;
-  margin-bottom: 24px;
-  color: #555;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.modal-form .form-group {
-  margin-bottom: 16px;
-}
-
-.modal-form .form-group label {
-  display: block;
-  margin-bottom: 6px;
   font-weight: 600;
   color: #333;
-  font-size: 0.9rem;
+}
+.request-meta {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+.request-message {
+  background-color: #f9f9f9;
+  border-left: 3px solid #ffcc00; /* Gold accent */
+  padding: 1rem;
+  border-radius: 4px;
+  color: #555;
+  font-style: italic;
+  margin-top: 1rem;
 }
 
-.modal-form .form-group input[type="text"],
-.modal-form .form-group select,
-.modal-form .form-group textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-family: Arial, sans-serif;
-  box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+/* Status Badges */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
+.status-pending { background-color: #FFF0C4; color: #73510d; border: 1px solid #ffe79e;}
+.status-accepted { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;}
+.status-declined { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca;}
 
-.modal-form .form-group input[type="text"]:focus,
-.modal-form .form-group select:focus,
-.modal-form .form-group textarea:focus {
-  outline: none;
-  border-color: #a10f0f;
-  box-shadow: 0 0 0 3px rgba(161, 15, 15, 0.2);
-}
-
-
-/* Specific style for Request Title from your photo */
-.modal-form .form-group #request-title {
-  border: 1px solid #a10f0f;
-}
-.modal-form .form-group #request-title:focus {
-  border-color: #a10f0f; /* Keeps maroon border on focus */
-}
-
-/* Specific style for Budget input */
-.modal-form .form-group #request-budget {
-    border-style: dashed;
-}
-
-
-.modal-form .form-group textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.modal-footer {
+/* Accept/Decline Action Buttons */
+.request-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  background: #f9f9f9;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
   border-top: 1px solid #eee;
 }
 
-/* Style for both button and link in footer */
-.modal-footer .btn-primary,
-.modal-footer .btn-secondary {
+.btn {
   padding: 10px 20px;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
@@ -287,25 +204,21 @@
   text-decoration: none;
   display: inline-block;
   text-align: center;
-}
-
-.modal-footer .btn-primary {
-  background: #a10f0f;
-  color: white;
   border: none;
 }
-.modal-footer .btn-primary:hover {
-  background: #800000;
-  transform: scale(1.02);
-}
+.btn-accept { background-color: #16a34a; color: white; }
+.btn-accept:hover { background-color: #15803d; transform: scale(1.02); }
 
-.modal-footer .btn-secondary {
-  background: #fff;
-  color: #555;
-  border: 1px solid #ccc;
-}
-.modal-footer .btn-secondary:hover {
-  background: #f5f5f5;
-  transform: scale(1.02);
-}
+.btn-decline { background-color: #dc2626; color: white; }
+.btn-decline:hover { background-color: #b91c1c; transform: scale(1.02); }
 
+/* Styles for message banners */
+.message-banner {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+}
+.message-success { background-color: #d1fae5; color: #065f46; border-color: #a7f3d0;}
+.message-error { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.message-info { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; }

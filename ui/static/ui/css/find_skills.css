@@ -10,7 +10,8 @@
 
 .main-content {
   flex: 3;
-}
+
+}Í
 
 .page-title-section {
     margin-bottom: 20px;
@@ -147,7 +148,7 @@
 
 /* Sidebar */
 .sidebar {
-  flex: 1;
+  flex: 0 0 50px;
   background: #fff;
   border: 1px solid #eee;
   padding: 20px;

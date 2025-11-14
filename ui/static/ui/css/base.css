@@ -62,3 +62,26 @@ header nav a.active {
 main.main-content {
   margin-top: 1rem;
 }
+
+.notification-bar {
+    background-color: #2a9d8f;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.notification-bar a {
+    color: white;
+    text-decoration: none;
+}
+.notification-bar .close-btn {
+    cursor: pointer;
+    font-size: 20px;
+    margin-left: 20px;
+}

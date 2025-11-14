@@ -1,7 +1,8 @@
 # in core/forms.py
 
 from django import forms
-from .models import CustomUser
+
+from .models import CustomUser, Request, Skill, Comment, BarterProposal, Rating
 from django.db.models import Q
 
 DEPARTMENT_MAPPING = {
@@ -100,3 +101,85 @@ class CustomSignUpForm(forms.Form):
             password=data['password']
         )
         return user
+
+
+class SkillRequestForm(forms.ModelForm):
+    class Meta:
+        model = Request
+
+        # 👇 MODIFIED: Include the new fields
+        fields = ['requested_date_time', 'payment_choice', 'extra_description']
+
+        widgets = {
+            # This makes the datetime field use a text input compatible with calendar widgets
+
+            'payment_choice': forms.Select(),  # Use a dropdown for choices
+            'extra_description': forms.Textarea(
+                attrs={
+                    'rows': 4,
+                    'placeholder': 'Hi! I would like to request help with this skill because...'
+                }
+            ),
+        }
+
+        labels = {
+            'requested_date_time': 'Proposed Date & Time',
+            'payment_choice': 'Payment Method',
+            'extra_description': 'Extra Description',
+        }
+
+class CommentForm(forms.ModelForm):
+            class Meta:
+                model = Comment
+                # The user only needs to provide the content.
+                # The 'skill' and 'author' will be set automatically in the view.
+                fields = ['content']
+                widgets = {
+                    'content': forms.Textarea(attrs={
+                        'rows': 3,
+                        'placeholder': 'Add a comment or ask a question...'
+                    })
+                }
+                # Hide the label for the content field to make the UI cleaner
+                labels = {
+                    'content': '',
+                }
+
+class BarterProposalForm(forms.ModelForm):
+    class Meta:
+        model = BarterProposal
+        fields = ['offered_skill']
+        labels = {
+            'offered_skill': 'Select one of your skills to offer in exchange'
+        }
+
+    def __init__(self, *args, **kwargs):
+        # We need the user to filter the queryset of offered_skill
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user:
+            # This is the key part: only show skills owned by the current user.
+            self.fields['offered_skill'].queryset = Skill.objects.filter(owner=user)
+
+class FeedbackForm(forms.ModelForm):
+    class Meta:
+        model = Rating
+        # The user only needs to fill out these two fields.
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.NumberInput(attrs={
+                'type': 'number',
+                'min': '1',
+                'max': '5',
+                'class': 'rating-stars' # You can use this class for JS star widgets
+            }),
+            'comment': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Share your experience with this exchange...'
+            })
+        }
+        labels = {
+            'rating': 'Your Rating (1-5 stars)',
+            'comment': 'Your Feedback'
+        }

@@ -1,22 +1,24 @@
 # In ui/views.py
+
+# --- CORRECTED & COMPLETE IMPORTS ---
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from core.forms import CustomSignUpForm
-from core.forms import CustomLoginForm, CustomSignUpForm
+from django.contrib import messages  # <-- THIS IS THE MISSING IMPORT
+from django.urls import reverse
 from django.contrib.auth import login, logout
+from django.db.models import Q      # <-- ADD THIS IMPORT FOR SEARCHING
+from core.models import Skill, Request,Comment,  Rating
+from core.forms import CustomLoginForm, CustomSignUpForm, CommentForm
+from .forms import EditProfileForm, SkillForm
 
-from ui.forms import EditProfileForm
-
+# --- Existing Authentication & Profile Views ---
 
 def home(request):
     return render(request, 'ui/index.html')
 
-
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
-
     if request.method == 'POST':
         form = CustomLoginForm(request.POST)
         if form.is_valid():
@@ -26,35 +28,23 @@ def login_view(request):
             return redirect('dashboard')
     else:
         form = CustomLoginForm()
-
     return render(request, 'ui/auth/login.html', {'form': form})
-
 
 def signup_view(request):
     if request.method == 'POST':
-
-        print("✅ POST request received in ui/views.py!")
         form = CustomSignUpForm(request.POST)
-        print("Is the form valid?", form.is_valid())
-        print("Form Errors:", form.errors.as_json())
-        # ----------------------------
-
         if form.is_valid():
             user = form.save()
             messages.success(request, f'Account for {user.username} created successfully! You can now log in.')
             return redirect('login')
     else:
         form = CustomSignUpForm()
-
     return render(request, 'ui/auth/signup.html', {'form': form})
 
 @login_required
 def profile_view(request):
-    context = {
-        'user': request.user
-    }
+    context = {'user': request.user}
     return render(request, 'ui/student/profile.html', context)
-
 
 @login_required
 def dashboard_view(request):
@@ -70,10 +60,7 @@ def edit_profile_view(request):
             return redirect('profile')
     else:
         form = EditProfileForm(instance=request.user)
-
-    context = {
-        'form': form
-    }
+    context = {'form': form}
     return render(request, 'ui/student/edit_profile.html', context)
 
 def logout_view(request):
@@ -81,26 +68,241 @@ def logout_view(request):
     messages.info(request, "You have successfully logged out.")
     return redirect('login')
 
-@login_required
-def my_skill_view(request):
-    return render(request, 'ui/student/my_skills.html')
+# --- Placeholder Views ---
 
-@login_required
-def request_view(request):
-    return render(request, 'ui/student/request.html')
 
-@login_required
-def find_skill_view(request):
-    return render(request, 'ui/student/find_skills.html')
 
 @login_required
 def schedule_view(request):
-    return render(request, 'ui/student/schedule.html')
+    """
+    Fetches pending requests and confirmed sessions for the current user's schedule page.
+    """
+    # Get all requests that are 'Pending' where the current user is either
+    # the one who sent it (requester) or the one who received it (skill owner).
+    # select_related is used for performance to pre-fetch related user and skill data.
+    pending_requests = Request.objects.filter(
+        Q(requester=request.user) | Q(skill__owner=request.user),
+        status='Pending'
+    ).select_related('skill', 'skill__owner', 'requester').order_by('-created_at')
+
+    # Get all requests that are 'Accepted' where the current user is involved.
+    # These represent your confirmed sessions.
+    confirmed_sessions = Request.objects.filter(
+        Q(requester=request.user) | Q(skill__owner=request.user),
+        status='Accepted'
+    ).select_related('skill', 'skill__owner', 'requester').order_by('-updated_at') # Order by when they were accepted
+
+    context = {
+        'pending_requests': pending_requests,
+        'confirmed_sessions': confirmed_sessions,
+    }
+    return render(request, 'ui/student/schedule.html', context)
 
 @login_required
 def notification_view(request):
     return render(request, 'ui/student/notification.html')
 
-def skill_view(request):
-    return render(request, 'ui/student/skill.html')
-# --------------------------------
+# --- NEW & UPDATED Skill Management Views ---
+
+@login_required
+def my_skills_list(request):
+    """
+    Handles both displaying the list of skills AND creating a new skill via the modal form.
+    """
+    if request.method == 'POST':
+        form = SkillForm(request.POST, user=request.user)
+        if form.is_valid():
+            skill = form.save(commit=False)
+            skill.owner = request.user
+            skill.save()
+            messages.success(request, f"Skill '{skill.title}' was successfully added!")
+            return redirect('my_skills')
+        else:
+            error_message = "Please correct the errors below. "
+            for field, errors in form.errors.items():
+                error_message += f"{field.capitalize()}: {', '.join(errors)} "
+            messages.error(request, error_message)
+
+    skills = Skill.objects.filter(owner=request.user)
+    form = SkillForm()
+    context = {'skills': skills, 'form': form}
+    return render(request, 'ui/student/my_skills.html', context)
+
+
+@login_required
+def find_skill_view(request):
+    """
+    Displays all available skills and handles search/filtering.
+    """
+    query = request.GET.get('q', '')
+
+    # 👇 MODIFIED: Use prefetch_related for a massive performance boost!
+    # This fetches all skills and their related comments + authors in just 2-3 database queries
+    # instead of hundreds.
+    skills = Skill.objects.exclude(owner=request.user).prefetch_related('comments__author')
+
+    if query:
+        skills = skills.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(category__icontains=query)
+        )
+
+    # We create one instance of the comment form to pass to the template for all skills.
+    comment_form = CommentForm()
+
+    context = {'skills': skills, 'query': query, 'comment_form': comment_form}
+    return render(request, 'ui/student/find_skills.html', context)
+
+
+# 👇 --- ADD THIS ENTIRE NEW VIEW --- 👇
+@login_required
+def add_comment_to_skill(request, skill_id):
+    # This view only accepts POST requests
+    if request.method == 'POST':
+        skill = get_object_or_404(Skill, id=skill_id)
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            new_comment = form.save(commit=False)
+            new_comment.skill = skill
+            new_comment.author = request.user
+            new_comment.save()
+            messages.success(request, "Your comment has been added.")
+        else:
+            # If the form is invalid (e.g., empty), show an error.
+            messages.error(request, "Comment cannot be empty.")
+
+    # Redirect back to the find_skills page, with an anchor to the skill card
+    return redirect(f"{reverse('find_skills')}#skill-{skill_id}")
+
+@login_required
+def skill_edit(request, pk):
+    skill = get_object_or_404(Skill, pk=pk)
+    if skill.owner != request.user:
+        messages.error(request, "You are not authorized to edit this skill.")
+        return redirect('my_skills')
+    if request.method == 'POST':
+        form = SkillForm(request.POST, instance=skill, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your skill has been updated!')
+            return redirect('my_skills')
+    else:
+        form = SkillForm(instance=skill, user=request.user)
+    return render(request, 'ui/student/skill_form.html', {'form': form, 'page_title': 'Edit Skill'})
+
+@login_required
+def skill_delete(request, pk):
+    skill = get_object_or_404(Skill, pk=pk)
+    if skill.owner != request.user:
+        messages.error(request, "You are not authorized to delete this skill.")
+        return redirect('my_skills')
+    if request.method == 'POST':
+        skill_title = skill.title
+        skill.delete()
+        messages.success(request, f"The skill '{skill_title}' has been deleted.")
+        return redirect('my_skills')
+    return render(request, 'ui/student/skill_confirm_delete.html', {'skill': skill})
+
+
+@login_required
+def request_create(request, skill_pk):
+    """
+    Handles the creation of a new request for a specific skill.
+    """
+    skill = get_object_or_404(Skill, pk=skill_pk)
+
+    # Security Check 1: Prevent users from requesting their own skills
+    if skill.owner == request.user:
+        messages.error(request, "You cannot request your own skill.")
+        return redirect('find_skills')
+
+    # Security Check 2: Prevent duplicate requests for the same skill
+    if Request.objects.filter(skill=skill, requester=request.user).exists():
+        messages.info(request, "You have already sent a request for this skill.")
+        return redirect('find_skills')
+
+    if request.method == 'POST':
+        form = RequestForm(request.POST)
+        if form.is_valid():
+            new_request = form.save(commit=False)
+            new_request.skill = skill
+            new_request.requester = request.user
+            new_request.save()
+            messages.success(request, f"Your request for '{skill.title}' has been sent!")
+            return redirect('my_requests')
+    else:
+        form = RequestForm()
+
+    return render(request, 'ui/student/request_form.html', {'form': form, 'skill': skill})
+
+
+
+
+
+@login_required
+def update_request_status(request, pk, action):
+    """
+    Handles accepting or declining a received request.
+    """
+    # This view should only accept POST requests for security
+    if request.method != 'POST':
+        return redirect('requests_received')
+
+    req_to_update = get_object_or_404(Request, pk=pk)
+
+    # Security Check: Ensure the person updating is the owner of the skill
+    if req_to_update.skill.owner != request.user:
+        messages.error(request, "You are not authorized to perform this action.")
+        return redirect('requests_received')
+
+    if action == 'accept' and req_to_update.status == 'Pending':
+        req_to_update.status = 'Accepted'
+        messages.success(request, f"You have accepted the request from {req_to_update.requester.username}.")
+    elif action == 'decline' and req_to_update.status == 'Pending':
+        req_to_update.status = 'Declined'
+        messages.info(request, f"You have declined the request from {req_to_update.requester.username}.")
+    else:
+        messages.error(request, "This request is not pending or the action is invalid.")
+
+    req_to_update.save()
+    return redirect('requests_received')
+
+@login_required
+def request_dashboard(request):
+    """
+    Displays the main request dashboard.
+    Excludes 'Completed' requests as they belong in Transaction History.
+    """
+    # Fetch requests sent BY the current user (Excluding Completed)
+    sent_requests = Request.objects.filter(
+        requester=request.user
+    ).exclude(status='Completed').select_related('skill', 'skill__owner').order_by('-created_at')
+
+    # Fetch requests sent TO the current user (Excluding Completed)
+    received_requests = Request.objects.filter(
+        skill__owner=request.user
+    ).exclude(status='Completed').select_related('skill', 'requester').order_by('-created_at')
+
+    context = {
+        'sent_requests': sent_requests,
+        'received_requests': received_requests
+    }
+    return render(request, 'ui/student/request.html', context)
+
+@login_required
+def feedback_history_view(request):
+    """
+    Displays all feedback the user has given and received.
+    """
+    # Fetch all ratings GIVEN BY the current user
+    given_ratings = Rating.objects.filter(rater=request.user).select_related('skill', 'rated_user')
+
+    # Fetch all ratings RECEIVED BY the current user
+    received_ratings = Rating.objects.filter(rated_user=request.user).select_related('skill', 'rater')
+
+    context = {
+        'given_ratings': given_ratings,
+        'received_ratings': received_ratings,
+    }
+    return render(request, 'ui/student/feedback_history.html', context)

@@ -1,3 +1,5 @@
+<!-- in ui/templates/ui/student/request.html -->
+
 {% extends 'ui/base.html' %}
 {% load static %}
 
@@ -5,6 +7,16 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/request.css' %}">
+  <style>
+    .request-card { display: flex; gap: 1.5rem; align-items: flex-start; }
+    .card-avatar img { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; }
+    .card-details { flex: 1; }
+    .card-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; padding: 1rem; background-color: #f9f9f9; border-radius: 6px; border: 1px solid #eee; }
+    .detail-item strong { display: block; color: #555; font-size: 0.85rem; margin-bottom: 0.25rem; }
+    .detail-item p { margin: 0; color: #333; }
+    .request-message-section { margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem; }
+    .request-actions-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; }
+  </style>
 {% endblock %}
 
 {% block content %}
@@ -12,86 +24,111 @@
     <div class="page-header">
         <div class="page-title-section">
             <h1>Skill Requests</h1>
-            <p>Request help or respond to others who need assistance</p>
+            <p>Manage requests you've sent and received</p>
         </div>
-        <a href="#post-request-modal" class="post-request-btn">
-            <i class="fa-solid fa-plus"></i> Post New Request
-        </a>
     </div>
 
     <div class="tabs">
-        <button class="tab active" data-tab="my-requests">My Requests</button>
-        <button class="tab" data-tab="available-requests">Available Requests</button>
+        <button class="tab active" data-tab="sent-requests">Sent Requests</button>
+        <button class="tab" data-tab="received-requests">Received Requests</button>
     </div>
 
     <div class="requests-content">
-        <div class="empty-state">
-            <i class="fa-solid fa-inbox"></i>
-            <h3>No requests yet</h3>
-            <p>When you post a request, it will appear here.</p>
+
+        <div id="tab-content-sent-requests" class="tab-pane active">
+            {% if sent_requests %}
+                <div class="request-list">
+                    {% for req in sent_requests %}
+                    <div class="request-card">
+                        <div class="card-avatar">
+                            {% if req.skill.owner.profile_picture %}<img src="{{ req.skill.owner.profile_picture.url }}" alt="{{ req.skill.owner.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                        </div>
+                        <div class="card-details">
+                            <div class="request-card-header">
+                                <h3>{{ req.skill.title }}</h3>
+                                <span class="status-badge status-{{ req.status|lower }}">{{ req.get_status_display }}</span>
+                            </div>
+                            <p class="request-meta">To: <strong>{{ req.skill.owner.username }}</strong> | On: {{ req.created_at|date:"F d, Y" }}</p>
+                            <div class="card-details-grid">
+                                {% if req.requested_date_time %}<div class="detail-item"><strong>Proposed Time:</strong><p>{{ req.requested_date_time }}</p></div>{% endif %}
+                                {% if req.payment_choice %}<div class="detail-item"><strong>Payment Method:</strong><p>{{ req.get_payment_choice_display }}</p></div>{% endif %}
+                            </div>
+                            <div class="request-message-section"><strong>Your Message:</strong><p>{{ req.extra_description }}</p></div>
+
+                            <!-- 👇 THIS IS THE MODIFIED FEEDBACK BUTTON LOGIC 👇 -->
+                            <div class="request-actions-footer">
+                                {% if req.status == 'Completed' %}
+                                    {% if not req.rating %}
+                                        <a href="{% url 'core:leave_feedback' request_id=req.id %}" class="btn btn-primary">
+                                            <i class="fa-solid fa-star"></i> Leave Feedback
+                                        </a>
+                                    {% else %}
+                                        <p class="text-sm text-green-600 font-semibold"><i class="fa-solid fa-check-circle"></i> Feedback Submitted</p>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            <!-- 👆 END OF MODIFIED SECTION 👆 -->
+
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state"><i class="fa-solid fa-paper-plane"></i><h3>No sent requests</h3><p>When you request a skill from another student, it will appear here.</p></div>
+            {% endif %}
         </div>
 
+        <div id="tab-content-received-requests" class="tab-pane">
+            {% if received_requests %}
+                <div class="request-list">
+                    {% for req in received_requests %}
+                    <div class="request-card">
+                        <div class="card-avatar">
+                            {% if req.requester.profile_picture %}<img src="{{ req.requester.profile_picture.url }}" alt="{{ req.requester.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                        </div>
+                        <div class="card-details">
+                            <div class="request-card-header">
+                                <h3>Request for "{{ req.skill.title }}"</h3>
+                                <span class="status-badge status-{{ req.status|lower }}">{{ req.get_status_display }}</span>
+                            </div>
+                            <p class="request-meta">From: <strong>{{ req.requester.username }}</strong> | On: {{ req.created_at|date:"F d, Y" }}</p>
+                            <div class="card-details-grid">
+                                {% if req.requested_date_time %}<div class="detail-item"><strong>Proposed Time:</strong><p>{{ req.requested_date_time }}</p></div>{% endif %}
+                                {% if req.payment_choice %}<div class="detail-item"><strong>Payment Method:</strong><p>{{ req.get_payment_choice_display }}</p></div>{% endif %}
+                            </div>
+                            <div class="request-message-section"><strong>Their Message:</strong><p>{{ req.extra_description }}</p></div>
+                            {% if req.status == 'Pending' %}
+                            <div class="request-actions">
+                                <form method="post" action="{% url 'core:update_request_status' request_id=req.id status='Accepted' %}">{% csrf_token %}<button type="submit" class="btn btn-success">Accept</button></form>
+                                <form method="post" action="{% url 'core:update_request_status' request_id=req.id status='Declined' %}">{% csrf_token %}<button type="submit" class="btn btn-danger">Decline</button></form>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state"><i class="fa-solid fa-inbox"></i><h3>No received requests</h3><p>When another student requests one of your skills, it will appear here.</p></div>
+            {% endif %}
+        </div>
     </div>
 </div>
-
-<div id="post-request-modal" class="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h2>Post a New Request</h2>
-      <a href="#" class="close-button">&times;</a>
-    </div>
-
-    <div class="modal-body">
-      <p>Describe what you need help with and connect with skilled peers.</p>
-
-      <form class="modal-form">
-        <div class="form-group">
-          <label for="request-title">Request Title</label>
-          <input type="text" id="request-title" placeholder="e.g., Need help with React Hooks">
-        </div>
-
-        <div class="form-group">
-          <label for="request-category">Category</label>
-          <select id="request-category">
-            <option value="" disabled selected>Select category</option>
-            <option value="tech">Technology</option>
-            <option value="art">Arts & Music</option>
-            <option value="academic">Academic</option>
-            <option value="lifestyle">Lifestyle & Hobbies</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="request-urgency">Urgency</label>
-          <select id="request-urgency">
-            <option value="" disabled selected>Select urgency level</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="request-budget">Budget/Exchange</label>
-          <input type="text" id="request-budget" placeholder="e.g., ₱500/hour or Skill exchange">
-        </div>
-
-        <div class="form-group">
-          <label for="request-description">Description</label>
-          <textarea id="request-description" rows="4" placeholder="Describe what you need help with, your current level, and specific areas you're struggling with..."></textarea>
-        </div>
-      </form>
-    </div>
-
-    <div class="modal-footer">
-      <a href="#" class="btn-secondary">Cancel</a>
-      <button type="submit" class="btn-primary">Post Request</button>
-    </div>
-  </div>
-
-  <a href="#" class="modal-close-bg"></a>
-</div>
-
-
 {% endblock %}
 
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tab');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => t.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            const targetPaneId = 'tab-content-' + this.dataset.tab;
+            document.getElementById(targetPaneId).classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %}
