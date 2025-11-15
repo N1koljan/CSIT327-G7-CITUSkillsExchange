@@ -24,4 +24,10 @@ urlpatterns = [
     path('conversations/', views.conversation_list, name='conversation_list'),
     path('api/unread-count/', views.get_unread_count, name='get_unread_count'),
     path('api/mark-read/<str:username>/', views.mark_conversation_as_read, name='mark_conversation_as_read'),
+
+    # ========== SEARCH URLs (Task 7.1.1) ==========
+    path('search/', views.search_skills, name='search_skills'),
+    path('search/users/', views.search_users, name='search_users'),
+    path('search/advanced/', views.advanced_search, name='advanced_search'),
+    path('api/search/autocomplete/', views.search_autocomplete, name='search_autocomplete'),
 ]

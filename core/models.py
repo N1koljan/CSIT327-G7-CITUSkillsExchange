@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings  # Use settings to reference the custom user model
-
+from django.contrib.postgres.search import SearchVectorField
 
 # --- Your Existing CustomUser Model (No changes needed here) ---
 class CustomUser(AbstractUser):
@@ -25,6 +25,8 @@ class CustomUser(AbstractUser):
     department = models.CharField(max_length=2, choices=DEPARTMENT_CHOICES, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     bio = models.TextField(max_length=500, blank=True, null=True)
+
+    search_vector = SearchVectorField(null=True, editable=False)
 
     def __str__(self):
         return self.username
@@ -59,6 +61,8 @@ class Skill(models.Model):
     # Timestamps for tracking when the skill was created or last updated.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    search_vector = SearchVectorField(null=True, editable=False)
 
     class Meta:
         # Ensures that a user cannot create two skills with the exact same title.

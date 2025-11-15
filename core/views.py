@@ -367,3 +367,166 @@ def mark_conversation_as_read(request, username):
         return JsonResponse({'success': True})
 
     return JsonResponse({'success': False}, status=400)
+
+
+# Add these to core/views.py (at the bottom, after your chat views)
+
+from django.contrib.postgres.search import SearchQuery, SearchRank
+from django.db.models import Q
+
+
+# ========== SEARCH VIEWS (Task 7.1.1: Configure Supabase Full-Text Search) ==========
+
+@login_required
+def search_skills(request):
+    """
+    Search for skills using full-text search.
+    Task 7.1.1: Configure Supabase full-text search
+    """
+    query = request.GET.get('q', '').strip()
+    category = request.GET.get('category', '').strip()
+    exchange_type = request.GET.get('exchange_type', '').strip()
+
+    # Start with all skills
+    skills = Skill.objects.select_related('owner').all()
+
+    # Apply full-text search if query provided
+    if query:
+        # Use PostgreSQL full-text search
+        search_query = SearchQuery(query, search_type='websearch')
+        skills = skills.filter(search_vector=search_query).annotate(
+            rank=SearchRank('search_vector', search_query)
+        ).order_by('-rank', '-created_at')
+    else:
+        # Default ordering if no search query
+        skills = skills.order_by('-created_at')
+
+    # Apply category filter
+    if category:
+        skills = skills.filter(category__icontains=category)
+
+    # Apply exchange type filter
+    if exchange_type:
+        skills = skills.filter(exchange_type=exchange_type)
+
+    # Get unique categories for filter dropdown
+    all_categories = Skill.objects.values_list('category', flat=True).distinct().order_by('category')
+
+    context = {
+        'skills': skills[:50],  # Limit to 50 results
+        'query': query,
+        'category': category,
+        'exchange_type': exchange_type,
+        'all_categories': all_categories,
+        'exchange_types': Skill.EXCHANGE_TYPE_CHOICES,
+        'total_results': skills.count(),
+    }
+
+    return render(request, 'core/search_results.html', context)
+
+
+@login_required
+def search_users(request):
+    """
+    Search for users using full-text search.
+    Task 7.1.1: Configure Supabase full-text search
+    """
+    query = request.GET.get('q', '').strip()
+    department = request.GET.get('department', '').strip()
+
+    # Start with all users (exclude current user)
+    users = CustomUser.objects.exclude(id=request.user.id)
+
+    # Apply full-text search if query provided
+    if query:
+        search_query = SearchQuery(query, search_type='websearch')
+        users = users.filter(search_vector=search_query).annotate(
+            rank=SearchRank('search_vector', search_query)
+        ).order_by('-rank')
+    else:
+        users = users.order_by('username')
+
+    # Apply department filter
+    if department:
+        users = users.filter(department=department)
+
+    context = {
+        'users': users[:50],  # Limit to 50 results
+        'query': query,
+        'department': department,
+        'departments': CustomUser.DEPARTMENT_CHOICES,
+        'total_results': users.count(),
+    }
+
+    return render(request, 'core/search_users.html', context)
+
+
+@login_required
+def advanced_search(request):
+    """
+    Combined search for skills and users.
+    Task 7.1.1: Configure Supabase full-text search
+    """
+    query = request.GET.get('q', '').strip()
+    search_type = request.GET.get('type', 'all')  # 'all', 'skills', 'users'
+
+    results = {
+        'skills': [],
+        'users': [],
+        'query': query,
+        'search_type': search_type,
+    }
+
+    if query:
+        search_query = SearchQuery(query, search_type='websearch')
+
+        # Search skills
+        if search_type in ['all', 'skills']:
+            skills = Skill.objects.select_related('owner').filter(
+                search_vector=search_query
+            ).annotate(
+                rank=SearchRank('search_vector', search_query)
+            ).order_by('-rank')[:20]
+            results['skills'] = skills
+
+        # Search users
+        if search_type in ['all', 'users']:
+            users = CustomUser.objects.filter(
+                search_vector=search_query
+            ).exclude(
+                id=request.user.id
+            ).annotate(
+                rank=SearchRank('search_vector', search_query)
+            ).order_by('-rank')[:20]
+            results['users'] = users
+
+    return render(request, 'core/advanced_search.html', results)
+
+
+# API endpoint for autocomplete (optional but useful)
+@login_required
+def search_autocomplete(request):
+    """
+    Autocomplete API for search suggestions.
+    Task 7.1.1: Configure Supabase full-text search
+    """
+    query = request.GET.get('q', '').strip()
+
+    if not query or len(query) < 2:
+        return JsonResponse({'suggestions': []})
+
+    # Get skill suggestions
+    skill_suggestions = Skill.objects.filter(
+        Q(title__icontains=query) | Q(category__icontains=query)
+    ).values_list('title', flat=True).distinct()[:5]
+
+    # Get category suggestions
+    category_suggestions = Skill.objects.filter(
+        category__icontains=query
+    ).values_list('category', flat=True).distinct()[:3]
+
+    suggestions = list(skill_suggestions) + list(category_suggestions)
+
+    return JsonResponse({
+        'suggestions': suggestions[:8]  # Max 8 suggestions
+    })
