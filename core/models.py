@@ -242,3 +242,81 @@ class Rating(models.Model):
     def __str__(self):
         return f"{self.rating} stars for '{self.skill.title}' by {self.rater.username}"
 
+# Add to core/models.py (append after your existing models)
+
+from django.conf import settings
+from django.utils import timezone
+from django.db import models
+
+class Exchange(models.Model):
+    REQUEST_STATUS = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    proposer = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                 on_delete=models.CASCADE,
+                                 related_name='proposed_exchanges')
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                 on_delete=models.CASCADE,
+                                 related_name='received_exchanges')
+    skill_offered = models.ForeignKey('Skill', on_delete=models.CASCADE, related_name='offered_exchanges')
+    skill_requested = models.ForeignKey('Skill', on_delete=models.CASCADE, related_name='requested_exchanges')
+    status = models.CharField(max_length=20, choices=REQUEST_STATUS, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.proposer.username} ↔ {self.receiver.username} ({self.status})"
+
+
+class Message(models.Model):
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='sent_messages',
+                               on_delete=models.CASCADE)
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='received_messages',
+                                  on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+    is_read = models.BooleanField(default=False, db_index=True)
+    conversation_id = models.CharField(max_length=255, blank=True, null=True, db_index=True)
+
+    class Meta:
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['recipient', 'is_read']),
+            models.Index(fields=['conversation_id', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.sender} -> {self.recipient}: {self.content[:40]}"
+
+
+class Schedule(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('declined', 'Declined'),
+        ('completed', 'Completed'),
+    ]
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    organizer = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='organized_schedules',
+                                  on_delete=models.CASCADE)
+    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='schedules', blank=True)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    reminder_sent = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['start_time']
+        indexes = [
+            models.Index(fields=['start_time']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.start_time.isoformat()})"

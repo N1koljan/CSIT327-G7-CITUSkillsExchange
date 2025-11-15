@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables
 # ---------------------------
 # Change "config" to the folder where your .env file is located
-dotenv_path = BASE_DIR / ".env"
+dotenv_path = BASE_DIR / "skills_exchange" / ".env"
 load_dotenv(dotenv_path)
 
 # ---------------------------
@@ -25,7 +25,7 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_
 # Installed apps
 # ---------------------------
 INSTALLED_APPS = [
-    'channels',
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ui',
     'core',
+    'channels',
 ]
 
 # ---------------------------
@@ -143,6 +144,7 @@ LOGIN_URL = '/login/'
 
 # ... at the end of the file
 ASGI_APPLICATION = 'skills_exchange.asgi.application'
+
 
 CHANNEL_LAYERS = {
     "default": {

@@ -11,7 +11,9 @@ from django.views.decorators.http import require_POST
 # Real-time imports
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-
+from django.db.models import Max
+from django.http import JsonResponse
+from .models import Message
 
 # This is your existing signup view. It's perfectly fine.
 def signup_view(request):
@@ -227,3 +229,141 @@ def complete_session(request, request_id):
 
     messages.success(request, f"Session for '{skill_request.skill.title}' has been marked as complete!")
     return redirect('schedule')
+
+
+@login_required
+def chat_page(request, username):
+    """
+    Display chat page for a conversation with another user.
+    Task 6.1.3 dependency - This view will be used by Nicole's chat UI.
+    """
+    other_user = get_object_or_404(CustomUser, username=username)
+    current_user = request.user
+
+    # Generate conversation_id (consistent for both users)
+    users_sorted = sorted([current_user.username, other_user.username])
+    conversation_id = f"{users_sorted[0]}_{users_sorted[1]}"
+
+    # Get chat history (Task 6.1.5: Save chat history in DB)
+    messages_list = Message.objects.filter(
+        Q(sender=current_user, recipient=other_user) |
+        Q(sender=other_user, recipient=current_user)
+    ).order_by('created_at')
+
+    # Mark messages from other user as read (Task 6.1.8: Add unread message)
+    Message.objects.filter(
+        sender=other_user,
+        recipient=current_user,
+        is_read=False
+    ).update(is_read=True)
+
+    context = {
+        'other_user': other_user,
+        'conversation_id': conversation_id,
+        'messages': messages_list,
+    }
+
+    return render(request, 'core/chat.html', context)
+
+
+@login_required
+def conversation_list(request):
+    """
+    Display list of all conversations for the current user.
+    Task 6.1.6 dependency - Will be implemented by Gerard Grant Estella.
+    Shows latest message preview and unread count.
+    """
+    current_user = request.user
+
+    # Get all users the current user has conversations with
+    conversations = Message.objects.filter(
+        Q(sender=current_user) | Q(recipient=current_user)
+    ).values(
+        'sender', 'recipient'
+    ).annotate(
+        last_message_time=Max('created_at')
+    ).order_by('-last_message_time')
+
+    # Build conversation list with details
+    conversation_list = []
+    seen_users = set()
+
+    for conv in conversations:
+        # Determine the other user
+        if conv['sender'] == current_user.id:
+            other_user_id = conv['recipient']
+        else:
+            other_user_id = conv['sender']
+
+        # Skip if we've already processed this user
+        if other_user_id in seen_users:
+            continue
+        seen_users.add(other_user_id)
+
+        other_user = CustomUser.objects.get(id=other_user_id)
+
+        # Get last message
+        last_message = Message.objects.filter(
+            Q(sender=current_user, recipient=other_user) |
+            Q(sender=other_user, recipient=current_user)
+        ).order_by('-created_at').first()
+
+        # Count unread messages (Task 6.1.8: Add unread message)
+        unread_count = Message.objects.filter(
+            sender=other_user,
+            recipient=current_user,
+            is_read=False
+        ).count()
+
+        # Generate conversation_id
+        users_sorted = sorted([current_user.username, other_user.username])
+        conversation_id = f"{users_sorted[0]}_{users_sorted[1]}"
+
+        conversation_list.append({
+            'other_user': other_user,
+            'last_message': last_message,
+            'unread_count': unread_count,
+            'conversation_id': conversation_id,
+        })
+
+    context = {
+        'conversations': conversation_list,
+    }
+
+    return render(request, 'core/conversation_list.html', context)
+
+
+@login_required
+def get_unread_count(request):
+    """
+    API endpoint to get total unread message count.
+    Task 6.1.8: Add unread message indicator.
+    """
+    unread_count = Message.objects.filter(
+        recipient=request.user,
+        is_read=False
+    ).count()
+
+    return JsonResponse({
+        'unread_count': unread_count
+    })
+
+
+@login_required
+def mark_conversation_as_read(request, username):
+    """
+    Mark all messages in a conversation as read.
+    Task 6.1.8: Add unread message functionality.
+    """
+    if request.method == 'POST':
+        other_user = get_object_or_404(CustomUser, username=username)
+
+        Message.objects.filter(
+            sender=other_user,
+            recipient=request.user,
+            is_read=False
+        ).update(is_read=True)
+
+        return JsonResponse({'success': True})
+
+    return JsonResponse({'success': False}, status=400)
