@@ -37,4 +37,7 @@ path('skill/<int:skill_id>/comment/', views.add_comment_to_skill, name='add_comm
 
     # Action URL to update a request's status (e.g., accept or decline)
     path('request/<int:pk>/update/<str:action>/', views.update_request_status, name='request_update_status'),
+    path('chat/', views.chat_view, name='chat'),
+    path('skill/', views.skill_view, name='skill'),
+    path('logout/', views.logout_view, name='logout'),
 ]

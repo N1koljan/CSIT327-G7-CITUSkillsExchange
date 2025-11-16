@@ -217,6 +217,13 @@ def request_create(request, skill_pk):
         messages.error(request, "You cannot request your own skill.")
         return redirect('find_skills')
 
+@login_required
+def chat_view(request):
+    return render(request, 'ui/student/chat.html')
+
+def skill_view(request):
+    return render(request, 'ui/student/skill.html')
+# --------------------------------
     # Security Check 2: Prevent duplicate requests for the same skill
     if Request.objects.filter(skill=skill, requester=request.user).exists():
         messages.info(request, "You have already sent a request for this skill.")

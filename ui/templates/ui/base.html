@@ -1,5 +1,3 @@
-<!-- in ui/templates/ui/base.html -->
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -7,28 +5,64 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}CIT-U Peer-to-Peer Skills Exchange{% endblock %}</title>
+
+  <!-- Your base.css file, which is already correct -->
   <link rel="stylesheet" href="{% static 'ui/css/base.css' %}">
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-  {% block styles %}{% endblock %}
+
+  {% block styles %}
+  {% endblock %}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-
-<body {% if user.is_authenticated %}data-is-authenticated="true"{% else %}data-is-authenticated="false"{% endif %}>
-
+<body>
   <header>
     <div class="logo">CIT-U Peer to Peer Skills Exchange</div>
     <nav>
-      <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}><i class="fa-solid fa-house"></i> Dashboard</a>
-      <a href="{% url 'my_skills' %}" {% if request.resolver_match.url_name == 'my_skills' %}class="active"{% endif %}><i class="fa-solid fa-book"></i> My Skills</a>
-      <a href="{% url 'requests' %}" {% if request.resolver_match.url_name == 'requests' %}class="active"{% endif %}><i class="fa-solid fa-list"></i> Requests</a>
-      <a href="{% url 'find_skills' %}" {% if request.resolver_match.url_name == 'find_skills' %}class="active"{% endif %}><i class="fa-solid fa-search"></i> Find Skills</a>
-      <a href="{% url 'schedule' %}" {% if request.resolver_match.url_name == 'schedule' %}class="active"{% endif %}><i class="fa-solid fa-calendar-days"></i> Schedule</a>
+      <!-- === NAVBAR WITH DYNAMIC ACTIVE LINKS === -->
+      <!-- This logic checks the URL name and adds your "active" class -->
 
-      <!-- 👇 THIS IS THE NEW "TRANSACTIONS" LINK 👇 -->
-      <a href="{% url 'core:transaction_history' %}" {% if request.resolver_match.url_name == 'transaction_history' %}class="active"{% endif %}><i class="fa-solid fa-history"></i> Transactions</a>
+      <a href="{% url 'dashboard' %}"
+         {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
+         <i class="fa-solid fa-house"></i> Dashboard
+      </a>
+
+      <a href="{% url 'my_skills' %}"
+         {% if request.resolver_match.url_name == 'my_skills' %}class="active"{% endif %}>
+         <i class="fa-solid fa-book"></i> My Skills
+      </a>
+
+      <a href="{% url 'requests' %}"
+         {% if request.resolver_match.url_name == 'requests' %}class="active"{% endif %}>
+         <i class="fa-solid fa-list"></i> Requests
+      </a>
+
+      <a href="{% url 'find_skills' %}"
+         {% if request.resolver_match.url_name == 'find_skills' %}class="active"{% endif %}>
+         <i class="fa-solid fa-search"></i> Find Skills
+      </a>
 
       <a href="{% url 'feedback_history' %}" {% if request.resolver_match.url_name == 'feedback_history' %}class="active"{% endif %}><i class="fa-solid fa-comment"></i> Feedback</a>
       <a href="{% url 'profile' %}" {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_profile' %}class="active"{% endif %}><i class="fa-solid fa-user"></i> Profile</a>
+      <a href="{% url 'schedule' %}"
+         {% if request.resolver_match.url_name == 'schedule' %}class="active"{% endif %}>
+         <i class="fa-solid fa-calendar-days"></i> Schedule
+      </a>
+
+      <a href="{% url 'chat' %}"
+         {% if request.resolver_match.url_name == 'chat' %}class="active"{% endif %}>
+         <i class="fa-solid fa-comment"></i> Chat
+      </a>
+
+      <a href="{% url 'notification' %}"
+         {% if request.resolver_match.url_name == 'notification' %}class="active"{% endif %}>
+         <i class="fa-solid fa-bell"></i> Notifications
+      </a>
+
+      <a href="{% url 'profile' %}"
+         {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_profile' %}class="active"{% endif %}>
+         <i class="fa-solid fa-user"></i> Profile
+      </a>
+
+      <!-- === END OF LINKS === -->
     </nav>
   </header>
 
@@ -59,5 +93,10 @@
 
   {% block scripts %}{% endblock %}
 
+
+  {% block scripts %}
+  {% endblock %}
+
 </body>
 </html>
+

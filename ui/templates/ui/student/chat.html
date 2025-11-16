@@ -1,0 +1,217 @@
+{% extends 'ui/base.html' %}
+{% load static %}
+
+{% block title %}Messages - CIT-U Skills Exchange{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'ui/css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-page-container">
+    <aside class="chat-sidebar">
+        <div class="sidebar-header">
+            <h2>Messages</h2>
+            <button class="new-message-btn" title="New Message">
+                <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Search in messages...">
+        </div>
+
+        <div class="contact-list">
+            
+            {% for conversation in conversations %}
+                <a href="#" class="contact-item {% if conversation.id == current_conversation_id %}active{% endif %}">
+                    <div class="contact-info">
+                        <span class="contact-name">{{ conversation.partner.name }}</span>
+                        <span class="last-message">{{ conversation.last_message|truncatewords:5 }}</span>
+                    </div>
+                    {% if conversation.unread_count > 0 %}
+                        <span class="unread-count">{{ conversation.unread_count }}</span>
+                    {% endif %}
+                </a>
+            {% empty %}
+                <div class="contact-list-empty">
+                    <i class="fa-regular fa-comments"></i>
+                    <p>No conversations started yet.</p>
+                </div>
+            {% endfor %}
+
+        </div>
+    </aside>
+
+    <main class="chat-main">
+        {% if current_chat_partner %}
+            <div class="chat-header">
+                <h2>{{ current_chat_partner.name }}</h2>
+            </div>
+            <div class="message-area">
+
+                {% for message in messages %}
+                    <div class="message-bubble
+                                {% if message.sender == request.user %}outgoing{% else %}incoming{% endif %}
+                                {% if message.failed %}failed{% endif %}">
+
+                        <p>{{ message.text }}</p>
+
+                        <span class="timestamp">
+                            {% if message.failed %}
+                                <i class="fa-solid fa-circle-exclamation"></i> Failed to send. <a href="#">Retry</a>
+                            {% else %}
+                                {{ message.timestamp|time:"f A" }}
+                            {% endif %}
+                        </span>
+                    </div>
+                {% empty %}
+                    <div class="chat-empty-state">
+                        <i class="fa-regular fa-hand-peace"></i>
+                        <p>This is the start of your conversation with {{ current_chat_partner.name }}.</p>
+                        <span>Say hello!</span>
+                    </div>
+                {% endfor %}
+
+            </div>
+            <div class="chat-input-area">
+                <textarea placeholder="Type a message..."></textarea>
+                <button class="send-button"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+
+        {% else %}
+            <div class="chat-header">
+                <h2>Messages</h2>
+            </div>
+            <div class="message-area chat-empty-state-full">
+                <i class="fa-solid fa-inbox"></i>
+                <h3>Select a conversation</h3>
+                <p>Choose from your existing conversations on the left to start chatting.</p>
+            </div>
+        {% endif %}
+    </main>
+</div>
+
+<!-- Modal placed AFTER chat-page-container closes -->
+<div class="modal-overlay" id="newMessageModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>New Message</h3>
+            <button class="modal-close" id="closeModal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <p class="modal-subtitle">Start a new conversation with a peer</p>
+
+        <form class="new-message-form">
+            <div class="form-group">
+                <label for="recipientName">Recipient Name</label>
+                <input type="text" id="recipientName" placeholder="Enter user name..." required>
+            </div>
+
+            <div class="form-group">
+                <label for="messageText">Message (Optional)</label>
+                <textarea id="messageText" placeholder="Type your message..." rows="4"></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+                <button type="submit" class="btn-start-chat">Start Chat</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    console.log('Script is loading...');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM is ready!');
+
+        const messageArea = document.querySelector('.message-area');
+        if (messageArea) {
+            messageArea.scrollTop = messageArea.scrollHeight;
+        }
+
+        const contactItems = document.querySelectorAll('.contact-item');
+        contactItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                contactItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                const contactName = this.querySelector('.contact-name');
+                const chatHeader = document.querySelector('.chat-main .chat-header h2');
+                if (contactName && chatHeader) {
+                    chatHeader.textContent = contactName.textContent;
+                }
+            });
+        });
+
+        // Modal functionality
+        const newMessageBtn = document.querySelector('.new-message-btn');
+        const modal = document.getElementById('newMessageModal');
+
+        console.log('Button found:', newMessageBtn);
+        console.log('Modal found:', modal);
+
+        if (newMessageBtn && modal) {
+            console.log('Adding click listener to button...');
+
+            newMessageBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('BUTTON CLICKED!');
+                console.log('Modal before:', modal.className);
+                modal.classList.add('active');
+                console.log('Modal after:', modal.className);
+            });
+        } else {
+            console.error('Button or Modal not found!');
+        }
+
+        // Close modal functionality
+        const closeModal = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        function closeModalFunc() {
+            console.log('Closing modal...');
+            modal.classList.remove('active');
+            const form = document.querySelector('.new-message-form');
+            if (form) form.reset();
+        }
+
+        if (closeModal) {
+            closeModal.addEventListener('click', closeModalFunc);
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', closeModalFunc);
+        }
+
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModalFunc();
+                }
+            });
+        }
+
+        // Handle form submission
+        const form = document.querySelector('.new-message-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const recipientName = document.getElementById('recipientName').value;
+                const messageText = document.getElementById('messageText').value;
+                console.log('New conversation with:', recipientName);
+                console.log('Initial message:', messageText);
+                closeModalFunc();
+            });
+        }
+    });
+</script>
+{% endblock %}
