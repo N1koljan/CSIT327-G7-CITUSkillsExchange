@@ -31,57 +31,6 @@
     {% endif %}
 
     <div class="skills-list">
-
-      {% for skill in user_skills %}
-        <div class="skill-card">
-          <div class="skill-header">
-            <div class="skill-title">
-              {% if skill.category == 'tech' %}
-                <i class="fa-solid fa-code" style="color: #6a1b9a;"></i>
-              {% elif skill.category == 'art' %}
-                <i class="fa-solid fa-palette" style="color: #d81b60;"></i>
-              {% elif skill.category == 'academic' %}
-                <i class="fa-solid fa-calculator" style="color: #0277bd;"></i>
-              {% elif skill.category == 'lifestyle' %}
-                <i class="fa-solid fa-person-running" style="color: #00897b;"></i>
-              {% else %}
-                <i class="fa-solid fa-star" style="color: #a10f0f;"></i>
-              {% endif %}
-
-              <h3>{{ skill.title }}</h3>
-            </div>
-            <div class="skill-actions">
-              <a href="#" title="Edit Skill"><i class="fa-solid fa-pen-to-square"></i></a>
-              <a href="#" title="Delete Skill"><i class="fa-solid fa-trash-can"></i></a>
-            </div>
-          </div>
-
-          <div class="tags">
-            <span class="tag-category tag-category-{{ skill.category }}">
-              {{ skill.get_category_display }}
-            </span>
-            <span class="tag-level">{{ skill.get_level_display }}</span>
-          </div>
-
-          <p class="skill-description">{{ skill.description|truncatewords:20 }}</p>
-
-          <div class="skill-footer">
-            <span><i class="fa-solid fa-chalkboard-user"></i> 8 sessions</span>
-            <span class="rating"><i class="fa-solid fa-star"></i> 4.8</span>
-          </div>
-
-          <div class="card-actions">
-            <a href="#" class="btn-card-secondary">View Details</a>
-            <a href="#" class="btn-card-primary">Edit</a>
-          </div>
-
-        </div>
-        {% empty %}
-        <div class="no-skills">
-          <i class="fa-solid fa-circle-info"></i>
-          <p>You haven't added any skills yet. Click "Add New Skill" to get started!</p>
-        </div>
-      {% endfor %}
       <!-- DYNAMIC SKILL LIST -->
       {% if skills %}
         {% for skill in skills %}

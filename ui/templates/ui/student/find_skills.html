@@ -54,56 +54,6 @@
         </div>
         <form class="search-bar" method="GET" action="{% url 'find_skills' %}">
             <i class="fa-solid fa-search search-icon"></i>
-            <input type="text" placeholder="Search for skills (e.g., 'Python', 'Guitar', 'Baking')">
-            <button class="btn btn-primary">Search</button>
-            <button class="btn btn-secondary">
-                <i class="fa-solid fa-filter"></i> Filters
-            </button>
-        </div>
-
-        <div class="results-header">
-            <div class="skills-found">
-                <strong>0 skills found</strong>
-            </div>
-            <div class="sort-by">
-                <label for="sort-select">Sort by:</label>
-                <select id="sort-select">
-                    <option value="relevance">Relevance</option>
-                    <option value="rating">Rating</option>
-                    <option value="newest">Newest</option>
-                </select>
-            </div>
-        </div>
-
-        {% for skill in skills %}
-        <div class="skill-card">
-            <div class="skill-card-header">
-            <h3 class="skill-title">Skill Name Placeholder</h3> {# Dynamic Skill Name #}
-            <div class="skill-meta">
-                <span class="skill-price">Price Placeholder</span> {# Dynamic Price #}
-                <span class="skill-availability"><i class="fa-solid fa-circle-check"></i> Availability Placeholder</span> {# Dynamic Availability #}
-            </div>
-        </div>
-
-        <div class="skill-card-badges">
-            <span class="badge badge-primary">Category Placeholder</span> {# Dynamic Main Category #}
-            <span class="badge badge-secondary">Level Placeholder</span> {# Dynamic Level #}
-            <button class="btn btn-outline-details">View Details</button>
-        </div>
-
-            <p class="skill-description">
-                Description placeholder. This will be from the database. It's a short description of the skill or what the tutor offers.
-            </p> {# Dynamic Description #}
-
-            <div class="skill-card-footer">
-                <button class="btn btn-primary btn-contact-tutor">Contact Tutor</button>
-        </div>
-
-        </div>
-        {% empty %}
-        <div class="empty-state">
-            <h3>No skills found</h3>
-            <p>Try adjusting your search or filters to find what you're looking for.</p>
             <input type="text" name="q" placeholder="Search for skills..." value="{{ query }}">
             <button type="submit" class="btn btn-primary">Search</button>
         </form>
@@ -165,35 +115,16 @@
                 <div class="empty-state"><h3>No skills found</h3></div>
             {% endif %}
         </div>
-        {% endfor %}
     </main>
 
     <aside class="sidebar">
-        <h2><i class="fa-solid fa-bolt"></i> Suggested Matches</h2>
-        <p class="sidebar-subtitle">Based on your profile and interests</p>
-
-        {% for match in suggested_matches %}
         <!-- This sidebar can be made dynamic in a future sprint -->
         <h2>Suggested Matches</h2>
         <p class="sidebar-subtitle">Based on your "Skills Wanted"</p>
         <div class="match-card">
-            <div class="match-card-header">
-                <h4>{{ match.name|default:"Skill Name Placeholder" }}</h4>
-                <span class="match-percent">{{ match.percent|default:"??" }}%</span>
-            </div>
-            <p class="match-reason">{{ match.reason|default:"Based on your [...] skill" }}</p>
-            <a href="#" class="btn btn-outline">Explore</a>
             <h4>Suggested Skill</h4>
             <p>Feature coming soon!</p>
         </div>
-
-        {% empty %}
-        <div class="sidebar-empty-state">
-            <i class="fa-solid fa-inbox"></i>
-            <p>No suggested matches right now. Try adding more skills to your profile!</p>
-        </div>
-        {% endfor %}
-
     </aside>
 </div>
 {% endblock %}
