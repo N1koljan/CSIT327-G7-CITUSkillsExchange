@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 # ---------------------------
 # Base directory
@@ -8,18 +9,18 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------------------------
-# Load environment variables
+# Load .env locally only
 # ---------------------------
-# Change "config" to the folder where your .env file is located
-dotenv_path = BASE_DIR / "skills_exchange" / ".env"
-load_dotenv(dotenv_path)
+if os.environ.get("RENDER", "") != "true":
+    load_dotenv()  # looks for .env in project root
 
 # ---------------------------
-# Django secret key and debug
+# Django secret key & debug
 # ---------------------------
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-key")
-DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-dev-key")
+DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() == "true"
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
 
 # ---------------------------
 # Installed apps
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
 # ---------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # <-- enable WhiteNoise
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -74,32 +76,29 @@ TEMPLATES = [
 ]
 
 # ---------------------------
-# WSGI application
+# WSGI & ASGI
 # ---------------------------
 WSGI_APPLICATION = 'skills_exchange.wsgi.application'
+ASGI_APPLICATION = 'skills_exchange.asgi.application'
 
 # ---------------------------
-# Database configuration (Supabase PostgreSQL)
+# Database (use DATABASE_URL for Render)
 # ---------------------------
-
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#    }
-#}
-
+DATABASE_URL = os.environ.get("DATABASE_URL")
 DATABASES = {
+    "default": dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
+
+# ---------------------------
+# Channels (development only)
+# ---------------------------
+CHANNEL_LAYERS = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.getenv("PGHOST"),
-        "PORT": os.getenv("PGPORT"),
-        "USER": os.getenv("PGUSER"),
-        "PASSWORD": os.getenv("PGPASSWORD"),
-        "NAME": os.getenv("PGDATABASE"),
-        "OPTIONS": {
-            "sslmode": os.getenv("PGSSLMODE", "require"),
-        },
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
 
@@ -122,32 +121,30 @@ USE_I18N = True
 USE_TZ = True
 
 # ---------------------------
-# Static files
+# Static files (WhiteNoise)
 # ---------------------------
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]  # optional for development
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ---------------------------
-# Default primary key field type
+# Media
 # ---------------------------
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-AUTH_USER_MODEL = 'core.CustomUser'
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# ---------------------------
+# Auth
+# ---------------------------
+AUTH_USER_MODEL = 'core.CustomUser'
 LOGIN_REDIRECT_URL = '/profile/'
 LOGIN_URL = '/login/'
 
-# skills_exchange/settings.py
-
-# ... at the end of the file
-ASGI_APPLICATION = 'skills_exchange.asgi.application'
-
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
+# ---------------------------
+# Security (production)
+# ---------------------------
+if os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "True").lower() == "true":
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
