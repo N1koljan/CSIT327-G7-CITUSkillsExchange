@@ -19,7 +19,13 @@ if os.environ.get("RENDER", "") != "true":
 # ---------------------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-dev-key")
 DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() == "true"
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
+# Updated ALLOWED_HOSTS logic
+raw_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = [h.strip() for h in raw_hosts.split(",") if h.strip()]
+
+# If DEBUG is False and ALLOWED_HOSTS is empty, fallback to localhost for safety
+if not DEBUG and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
 
 # ---------------------------
