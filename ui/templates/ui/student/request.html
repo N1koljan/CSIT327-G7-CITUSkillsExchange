@@ -1,5 +1,3 @@
-<!-- in ui/templates/ui/student/request.html -->
-
 {% extends 'ui/base.html' %}
 {% load static %}
 
@@ -7,16 +5,6 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/request.css' %}">
-  <style>
-    .request-card { display: flex; gap: 1.5rem; align-items: flex-start; }
-    .card-avatar img { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; }
-    .card-details { flex: 1; }
-    .card-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; padding: 1rem; background-color: #f9f9f9; border-radius: 6px; border: 1px solid #eee; }
-    .detail-item strong { display: block; color: #555; font-size: 0.85rem; margin-bottom: 0.25rem; }
-    .detail-item p { margin: 0; color: #333; }
-    .request-message-section { margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem; }
-    .request-actions-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; }
-  </style>
 {% endblock %}
 
 {% block content %}
@@ -28,20 +16,28 @@
         </div>
     </div>
 
-    <div class="tabs">
-        <button class="tab active" data-tab="sent-requests">Sent Requests</button>
-        <button class="tab" data-tab="received-requests">Received Requests</button>
+    <!-- Sliding Toggle Tabs -->
+    <div class="tabs-slider-container">
+        <div class="tabs-slider">
+            <button class="tab-slider active" data-tab="sent-requests">Sent Requests</button>
+            <button class="tab-slider" data-tab="received-requests">Received Requests</button>
+            <div class="slider-indicator"></div>
+        </div>
     </div>
 
     <div class="requests-content">
-
+        <!-- SENT REQUESTS TAB -->
         <div id="tab-content-sent-requests" class="tab-pane active">
             {% if sent_requests %}
                 <div class="request-list">
                     {% for req in sent_requests %}
                     <div class="request-card">
                         <div class="card-avatar">
-                            {% if req.skill.owner.profile_picture %}<img src="{{ req.skill.owner.profile_picture.url }}" alt="{{ req.skill.owner.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                            {% if req.skill.owner.profile_picture %}
+                                <img src="{{ req.skill.owner.profile_picture.url }}" alt="{{ req.skill.owner.username }}'s profile">
+                            {% else %}
+                                <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                            {% endif %}
                         </div>
                         <div class="card-details">
                             <div class="request-card-header">
@@ -49,42 +45,72 @@
                                 <span class="status-badge status-{{ req.status|lower }}">{{ req.get_status_display }}</span>
                             </div>
                             <p class="request-meta">To: <strong>{{ req.skill.owner.username }}</strong> | On: {{ req.created_at|date:"F d, Y" }}</p>
+                            
                             <div class="card-details-grid">
-                                {% if req.requested_date_time %}<div class="detail-item"><strong>Proposed Time:</strong><p>{{ req.requested_date_time }}</p></div>{% endif %}
-                                {% if req.payment_choice %}<div class="detail-item"><strong>Payment Method:</strong><p>{{ req.get_payment_choice_display }}</p></div>{% endif %}
+                                {% if req.requested_date_time %}
+                                    <div class="detail-item">
+                                        <strong>Proposed Time:</strong>
+                                        <p>{{ req.requested_date_time }}</p>
+                                    </div>
+                                {% endif %}
+                                {% if req.payment_choice %}
+                                    <div class="detail-item">
+                                        <strong>Payment Method:</strong>
+                                        <p>{{ req.get_payment_choice_display }}</p>
+                                    </div>
+                                {% endif %}
                             </div>
-                            <div class="request-message-section"><strong>Your Message:</strong><p>{{ req.extra_description }}</p></div>
+                            
+                            <div class="request-message-section">
+                                <strong>Your Message:</strong>
+                                <p>{{ req.extra_description }}</p>
+                            </div>
 
-                            <!-- 👇 THIS IS THE MODIFIED FEEDBACK BUTTON LOGIC 👇 -->
                             <div class="request-actions-footer">
                                 {% if req.status == 'Completed' %}
                                     {% if not req.rating %}
-                                        <a href="{% url 'core:leave_feedback' request_id=req.id %}" class="btn btn-primary">
+                                        <a href="{% url 'core:leave_feedback' request_id=req.id %}" class="btn-primary">
                                             <i class="fa-solid fa-star"></i> Leave Feedback
                                         </a>
                                     {% else %}
-                                        <p class="text-sm text-green-600 font-semibold"><i class="fa-solid fa-check-circle"></i> Feedback Submitted</p>
+                                        <p class="text-sm text-green-600 font-semibold">
+                                            <i class="fa-solid fa-check-circle"></i> Feedback Submitted
+                                        </p>
                                     {% endif %}
+                                {% elif req.status == 'Pending' or req.status == 'Accepted' %}
+                                    <form method="post" action="{% url 'core:cancel_request' request_id=req.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-close" onclick="return confirm('Are you sure you want to cancel this request?')">
+                                            <i class="fa-solid fa-times"></i> Close Request
+                                        </button>
+                                    </form>
                                 {% endif %}
                             </div>
-                            <!-- 👆 END OF MODIFIED SECTION 👆 -->
-
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="empty-state"><i class="fa-solid fa-paper-plane"></i><h3>No sent requests</h3><p>When you request a skill from another student, it will appear here.</p></div>
+                <div class="empty-state">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <h3>No sent requests</h3>
+                    <p>When you request a skill from another student, it will appear here.</p>
+                </div>
             {% endif %}
         </div>
 
+        <!-- RECEIVED REQUESTS TAB -->
         <div id="tab-content-received-requests" class="tab-pane">
             {% if received_requests %}
                 <div class="request-list">
                     {% for req in received_requests %}
                     <div class="request-card">
                         <div class="card-avatar">
-                            {% if req.requester.profile_picture %}<img src="{{ req.requester.profile_picture.url }}" alt="{{ req.requester.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                            {% if req.requester.profile_picture %}
+                                <img src="{{ req.requester.profile_picture.url }}" alt="{{ req.requester.username }}'s profile">
+                            {% else %}
+                                <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                            {% endif %}
                         </div>
                         <div class="card-details">
                             <div class="request-card-header">
@@ -92,15 +118,41 @@
                                 <span class="status-badge status-{{ req.status|lower }}">{{ req.get_status_display }}</span>
                             </div>
                             <p class="request-meta">From: <strong>{{ req.requester.username }}</strong> | On: {{ req.created_at|date:"F d, Y" }}</p>
+                            
                             <div class="card-details-grid">
-                                {% if req.requested_date_time %}<div class="detail-item"><strong>Proposed Time:</strong><p>{{ req.requested_date_time }}</p></div>{% endif %}
-                                {% if req.payment_choice %}<div class="detail-item"><strong>Payment Method:</strong><p>{{ req.get_payment_choice_display }}</p></div>{% endif %}
+                                {% if req.requested_date_time %}
+                                    <div class="detail-item">
+                                        <strong>Proposed Time:</strong>
+                                        <p>{{ req.requested_date_time }}</p>
+                                    </div>
+                                {% endif %}
+                                {% if req.payment_choice %}
+                                    <div class="detail-item">
+                                        <strong>Payment Method:</strong>
+                                        <p>{{ req.get_payment_choice_display }}</p>
+                                    </div>
+                                {% endif %}
                             </div>
-                            <div class="request-message-section"><strong>Their Message:</strong><p>{{ req.extra_description }}</p></div>
+                            
+                            <div class="request-message-section">
+                                <strong>Their Message:</strong>
+                                <p>{{ req.extra_description }}</p>
+                            </div>
+                            
                             {% if req.status == 'Pending' %}
-                            <div class="request-actions">
-                                <form method="post" action="{% url 'core:update_request_status' request_id=req.id status='Accepted' %}">{% csrf_token %}<button type="submit" class="btn btn-success">Accept</button></form>
-                                <form method="post" action="{% url 'core:update_request_status' request_id=req.id status='Declined' %}">{% csrf_token %}<button type="submit" class="btn btn-danger">Decline</button></form>
+                            <div class="request-actions-footer">
+                                <form method="post" action="{% url 'core:update_request_status' request_id=req.id status='Accepted' %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-success">
+                                        <i class="fa-solid fa-check"></i> Accept Request
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'core:update_request_status' request_id=req.id status='Declined' %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-danger">
+                                        <i class="fa-solid fa-times"></i> Reject Request
+                                    </button>
+                                </form>
                             </div>
                             {% endif %}
                         </div>
@@ -108,7 +160,11 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="empty-state"><i class="fa-solid fa-inbox"></i><h3>No received requests</h3><p>When another student requests one of your skills, it will appear here.</p></div>
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
+                    <h3>No received requests</h3>
+                    <p>When another student requests one of your skills, it will appear here.</p>
+                </div>
             {% endif %}
         </div>
     </div>
@@ -118,17 +174,35 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const tabs = document.querySelectorAll('.tab');
+    const tabs = document.querySelectorAll('.tab-slider');
     const tabPanes = document.querySelectorAll('.tab-pane');
+    const indicator = document.querySelector('.slider-indicator');
+    
+    // Set initial indicator position
+    updateIndicator(document.querySelector('.tab-slider.active'));
+    
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
+            // Remove active class from all tabs and panes
             tabs.forEach(t => t.classList.remove('active'));
             tabPanes.forEach(p => p.classList.remove('active'));
+            
+            // Add active class to clicked tab
             this.classList.add('active');
+            
+            // Show corresponding pane
             const targetPaneId = 'tab-content-' + this.dataset.tab;
             document.getElementById(targetPaneId).classList.add('active');
+            
+            // Update indicator position
+            updateIndicator(this);
         });
     });
+    
+    function updateIndicator(activeTab) {
+        const index = Array.from(tabs).indexOf(activeTab);
+        indicator.style.transform = `translateX(${index * 100}%)`;
+    }
 });
 </script>
 {% endblock %}

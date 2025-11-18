@@ -1,5 +1,3 @@
-{% extends 'ui/base.html<!-- in ui/templates/ui/student/find_skills.html -->
-
 {% extends 'ui/base.html' %}
 {% load static %}
 
@@ -7,51 +5,17 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/find_skills.css' %}">
-
-  <!-- 👇 NEW STYLES for the comment section -->
-  <style>
-    .comments-section {
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid #eee;
-    }
-    .comment-list {
-        margin-top: 1rem;
-        max-height: 250px; /* Optional: make it scrollable if there are many comments */
-        overflow-y: auto;
-        padding-right: 10px;
-    }
-    .comment {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 1rem;
-    }
-    .comment-avatar img {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-    }
-    .comment-body { flex: 1; }
-    .comment-body strong { font-size: 0.9rem; }
-    .comment-body p { margin: 2px 0 0 0; font-size: 0.95rem; }
-    .comment-form textarea {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        margin-top: 10px;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'ui/css/request_modal.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <main class="main-content">
-        <!-- ... (your page title and search bar are fine) ... -->
         <div class="page-title-section">
             <h1>Find Skills & Tutors</h1>
             <p>Discover skilled peers and find the perfect match for your learning goals</p>
         </div>
+
         <form class="search-bar" method="GET" action="{% url 'find_skills' %}">
             <i class="fa-solid fa-search search-icon"></i>
             <input type="text" name="q" placeholder="Search for skills..." value="{{ query }}">
@@ -61,24 +25,39 @@
         <div class="results-list">
             {% if skills %}
                 {% for skill in skills %}
-                    <!-- Add an ID to the card so we can link to it -->
                     <div class="skill-card-result" id="skill-{{ skill.id }}">
-                        <!-- ... (the main skill info and tutor info is fine) ... -->
+                        <!-- Skill Information -->
                         <div class="skill-info">
                             <h3>{{ skill.title }}</h3>
                             <p class="skill-category-result">{{ skill.category }}</p>
                             <p class="skill-description-result">{{ skill.description|truncatewords:25 }}</p>
                         </div>
+
+                        <!-- Tutor Information -->
                         <div class="tutor-info">
-                            {% if skill.owner.profile_picture %}<img src="{{ skill.owner.profile_picture.url }}" class="tutor-avatar">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" class="tutor-avatar">{% endif %}
+                            {% if skill.owner.profile_picture %}
+                                <img src="{{ skill.owner.profile_picture.url }}" class="tutor-avatar" alt="{{ skill.owner.username }}">
+                            {% else %}
+                                <img src="{% static 'ui/img/profilepic.png' %}" class="tutor-avatar" alt="Default avatar">
+                            {% endif %}
                             <div class="tutor-details">
                                 <strong>{{ skill.owner.get_full_name|default:skill.owner.username }}</strong>
                                 <p>{{ skill.owner.department }} Department</p>
                             </div>
-                            <a href="{% url 'core:create_skill_request' skill_id=skill.id %}" class="btn btn-outline-primary">View & Request</a>
+                            <button class="btn btn-outline-primary open-modal-btn"
+                                    data-skill-id="{{ skill.id }}"
+                                    data-skill-title="{{ skill.title }}"
+                                    data-skill-category="{{ skill.category }}"
+                                    data-skill-exchange="{{ skill.get_exchange_type_display }}"
+                                    data-skill-description="{{ skill.description }}"
+                                    data-owner-name="{{ skill.owner.get_full_name|default:skill.owner.username }}"
+                                    data-owner-avatar="{% if skill.owner.profile_picture %}{{ skill.owner.profile_picture.url }}{% else %}{% static 'ui/img/profilepic.png' %}{% endif %}"
+                                    data-request-url="{% url 'core:create_skill_request' skill_id=skill.id %}">
+                                View & Request
+                            </button>
                         </div>
 
-                        <!-- ===================== NEW COMMENT SECTION ===================== -->
+                        <!-- Comments Section -->
                         <div class="comments-section">
                             <h4>{{ skill.comments.count }} Comment{{ skill.comments.count|pluralize }}</h4>
 
@@ -87,7 +66,7 @@
                                 <div class="comment">
                                     <div class="comment-avatar">
                                         {% if comment.author.profile_picture %}
-                                            <img src="{{ comment.author.profile_picture.url }}" alt="{{ comment.author.username }}'s avatar">
+                                            <img src="{{ comment.author.profile_picture.url }}" alt="{{ comment.author.username }}">
                                         {% else %}
                                             <img src="{% static 'ui/img/profilepic.png' %}" alt="Default avatar">
                                         {% endif %}
@@ -98,27 +77,29 @@
                                     </div>
                                 </div>
                                 {% empty %}
-                                <p>No comments yet. Be the first to ask a question!</p>
+                                <p style="color: #999; font-style: italic; margin: 0;">No comments yet. Be the first to ask a question!</p>
                                 {% endfor %}
                             </div>
 
                             <form class="comment-form" method="POST" action="{% url 'add_comment' skill_id=skill.id %}">
                                 {% csrf_token %}
-                                {{ comment_form.content }}
-                                <button type-="submit" class="btn btn-secondary" style="margin-top: 10px;">Post Comment</button>
+                                <textarea name="content" placeholder="Add a comment or ask a question..." rows="3" required></textarea>
+                                <button type="submit" class="btn btn-secondary" style="margin-top: 10px;">Post Comment</button>
                             </form>
                         </div>
-                        <!-- ============================================================= -->
                     </div>
                 {% endfor %}
             {% else %}
-                <div class="empty-state"><h3>No skills found</h3></div>
+                <div class="empty-state">
+                    <i class="fa-solid fa-search"></i>
+                    <h3>No skills found</h3>
+                    <p>Try adjusting your search terms</p>
+                </div>
             {% endif %}
         </div>
     </main>
 
     <aside class="sidebar">
-        <!-- This sidebar can be made dynamic in a future sprint -->
         <h2>Suggested Matches</h2>
         <p class="sidebar-subtitle">Based on your "Skills Wanted"</p>
         <div class="match-card">
@@ -127,4 +108,141 @@
         </div>
     </aside>
 </div>
+
+<!-- Request Modal -->
+<div id="requestModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Request Skill</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <!-- Skill Preview -->
+            <div class="modal-skill-preview">
+                <img id="modalOwnerAvatar" src="" alt="Owner avatar" class="modal-avatar">
+                <div class="modal-skill-info">
+                    <h3 id="modalSkillTitle"></h3>
+                    <div class="modal-meta">
+                        <span class="meta-badge category" id="modalSkillCategory"></span>
+                        <span class="meta-badge exchange" id="modalSkillExchange"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-description">
+                <h4>Description:</h4>
+                <p id="modalSkillDescription"></p>
+            </div>
+
+            <hr class="modal-divider">
+
+            <!-- Request Form -->
+            <form id="requestForm" method="POST">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="requested_date_time">
+                        <i class="fa-solid fa-calendar"></i> Proposed Date & Time
+                    </label>
+                    <input type="datetime-local" id="requested_date_time" name="requested_date_time" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="payment_choice">
+                        <i class="fa-solid fa-money-bill"></i> Payment Method
+                    </label>
+                    <select id="payment_choice" name="payment_choice" required>
+                        <option value="" disabled selected>Select Payment Option</option>
+                        <!-- Direct Payment Types -->
+                        <option value="online">Online Payment</option>
+                        <!-- In-Person / Flexible Options -->
+                        <option value="cash">Cash on Meetup</option>
+                        <option value="negotiable">Negotiable</option>
+                        <!-- Platform-Specific Options -->
+                        <option value="free">Free (Skill Exchange)</option>
+                        <option value="paid">Paid Session</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="extra_description">
+                        <i class="fa-solid fa-comment"></i> Extra Description
+                    </label>
+                    <textarea id="extra_description" name="extra_description" rows="4"
+                              placeholder="Hi! I would like to request help with this skill because..."></textarea>
+                    <small class="field-help">Provide any additional information that might be helpful</small>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary close-modal-btn">
+                        <i class="fa-solid fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('requestModal');
+    const openButtons = document.querySelectorAll('.open-modal-btn');
+    const closeButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
+    const requestForm = document.getElementById('requestForm');
+
+    // Open modal
+    openButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const skillData = {
+                id: this.dataset.skillId,
+                title: this.dataset.skillTitle,
+                category: this.dataset.skillCategory,
+                exchange: this.dataset.skillExchange,
+                description: this.dataset.skillDescription,
+                ownerName: this.dataset.ownerName,
+                ownerAvatar: this.dataset.ownerAvatar,
+                requestUrl: this.dataset.requestUrl
+            };
+
+            // Populate modal
+            document.getElementById('modalSkillTitle').textContent = skillData.title;
+            document.getElementById('modalSkillCategory').textContent = skillData.category;
+            document.getElementById('modalSkillExchange').innerHTML = '<i class="fa-solid fa-handshake"></i> ' + skillData.exchange;
+            document.getElementById('modalSkillDescription').textContent = skillData.description;
+            document.getElementById('modalOwnerAvatar').src = skillData.ownerAvatar;
+
+            // Set form action
+            requestForm.action = skillData.requestUrl;
+
+            // Show modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    // Close modal
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            requestForm.reset();
+        });
+    });
+
+    // Close on outside click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            requestForm.reset();
+        }
+    });
+});
+</script>
 {% endblock %}

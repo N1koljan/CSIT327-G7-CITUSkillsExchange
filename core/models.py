@@ -89,8 +89,11 @@ class Request(models.Model):
 
     # 👇 NEW: Add choices for payment method
     PAYMENT_CHOICES = [
-        ('Online', 'Online Payment'),
-        ('Cash', 'Cash on Meetup'),
+        ('online', 'Online Payment'),
+        ('cash', 'Cash on Meetup'),
+        ('negotiable', 'Negotiable'),
+        ('free', 'Free (Skill Exchange)'),
+        ('paid', 'Paid Session'),
     ]
 
     # The skill that is being requested.

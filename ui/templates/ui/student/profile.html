@@ -38,7 +38,6 @@
       <div class="info-box">
         <h3><i class="fa-solid fa-user"></i> Contact Information</h3>
         <p><i class="fa-solid fa-envelope"></i> <span class="value">{{ user.email }}</span></p>
-        <p><i class="fa-solid fa-phone"></i> <span class="value"></span></p> <!-- Kept blank as requested -->
         <p><i class="fa-solid fa-location-dot"></i> <span class="value">{{ user.school_id|default:'Not set' }}</span></p>
       </div>
 
@@ -46,7 +45,6 @@
         <h3><i class="fa-solid fa-graduation-cap"></i> Academic Information</h3>
         <!-- Use get_department_display to show the full name (e.g., "Computer Science") -->
         <p><i class="fa-solid fa-book"></i> <span class="value">{{ user.get_department_display|default:'Not set' }}</span></p>
-        <p><i class="fa-solid fa-calendar"></i> <span class="value"></span></p> <!-- Kept blank as requested -->
       </div>
     </div>
 

@@ -1,80 +1,209 @@
-<!-- in ui/templates/student/feedback_history.html -->
-
 {% extends 'ui/base.html' %}
 {% load static %}
 
 {% block title %}Feedback History - CIT-U Skills Exchange{% endblock %}
 
 {% block styles %}
-  <link rel="stylesheet" href="{% static 'ui/css/request.css' %}"> <!-- Reusing request.css for similar card styles -->
-  <style>
-    .star-rating { color: #f59e0b; } /* Gold color for stars */
-  </style>
+  <link rel="stylesheet" href="{% static 'ui/css/feedback_history.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <div class="page-title-section">
-            <h1>Feedback History</h1>
-            <p>A record of all feedback you've given and received</p>
+<div class="feedback-wrapper">
+    <div class="container">
+        <div class="page-header">
+            <div class="page-title-section">
+                <h1>Feedback History</h1>
+                <p>A record of all feedback you've given and received</p>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" data-tab="given">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>Feedback Given</span>
+                <span class="tab-count">{{ given_ratings|length }}</span>
+            </button>
+            <button class="tab-btn" data-tab="received">
+                <i class="fa-solid fa-inbox"></i>
+                <span>Feedback Received</span>
+                <span class="tab-count">{{ received_ratings|length }}</span>
+            </button>
+            <div class="tab-indicator"></div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content-wrapper">
+            <!-- Given Feedback Tab -->
+            <div class="tab-content active" id="given-tab">
+                <div class="feedback-list">
+                    {% for rating in given_ratings %}
+                        <div class="feedback-card">
+                            <!-- Card Header -->
+                            <div class="feedback-card-header">
+                                <div class="feedback-user-info">
+                                    <div class="user-avatar">
+                                        {% if rating.rated_user.profile_picture %}
+                                            <img src="{{ rating.rated_user.profile_picture.url }}" alt="{{ rating.rated_user.username }}">
+                                        {% else %}
+                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default avatar">
+                                        {% endif %}
+                                    </div>
+                                    <div class="user-details">
+                                        <h3>{{ rating.skill.title }}</h3>
+                                        <p class="user-meta">
+                                            <span>Tutor: <strong>{{ rating.rated_user.get_full_name|default:rating.rated_user.username }}</strong></span>
+                                            <span class="date-badge">
+                                                <i class="fa-solid fa-calendar"></i>
+                                                {{ rating.created_at|date:"M d, Y" }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="star-rating-display">
+                                    {% for i in "12345" %}
+                                        <i class="fa-{% if forloop.counter <= rating.rating %}solid{% else %}regular{% endif %} fa-star"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Card Body -->
+                            <div class="feedback-card-body">
+                                <div class="feedback-comment">
+                                    <i class="fa-solid fa-quote-left quote-icon"></i>
+                                    <p>{{ rating.comment }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer (Optional - helpful count could be added later) -->
+                            <div class="feedback-card-footer">
+                                <span class="skill-category">
+                                    <i class="fa-solid fa-folder"></i>
+                                    {{ rating.skill.category }}
+                                </span>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-star-half-stroke"></i>
+                            <h3>No feedback given yet</h3>
+                            <p>After a skill exchange is completed, you can leave feedback from the Transaction History page.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Received Feedback Tab -->
+            <div class="tab-content" id="received-tab">
+                <div class="feedback-list">
+                    {% for rating in received_ratings %}
+                        <div class="feedback-card">
+                            <!-- Card Header -->
+                            <div class="feedback-card-header">
+                                <div class="feedback-user-info">
+                                    <div class="user-avatar">
+                                        {% if rating.rater.profile_picture %}
+                                            <img src="{{ rating.rater.profile_picture.url }}" alt="{{ rating.rater.username }}">
+                                        {% else %}
+                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default avatar">
+                                        {% endif %}
+                                    </div>
+                                    <div class="user-details">
+                                        <h3>{{ rating.skill.title }}</h3>
+                                        <p class="user-meta">
+                                            <span>From: <strong>{{ rating.rater.get_full_name|default:rating.rater.username }}</strong></span>
+                                            <span class="date-badge">
+                                                <i class="fa-solid fa-calendar"></i>
+                                                {{ rating.created_at|date:"M d, Y" }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="star-rating-display">
+                                    {% for i in "12345" %}
+                                        <i class="fa-{% if forloop.counter <= rating.rating %}solid{% else %}regular{% endif %} fa-star"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Card Body -->
+                            <div class="feedback-card-body">
+                                <div class="feedback-comment">
+                                    <i class="fa-solid fa-quote-left quote-icon"></i>
+                                    <p>{{ rating.comment }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer -->
+                            <div class="feedback-card-footer">
+                                <span class="skill-category">
+                                    <i class="fa-solid fa-folder"></i>
+                                    {{ rating.skill.category }}
+                                </span>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <h3>No feedback received yet</h3>
+                            <p>When students leave feedback on your skills, it will appear here.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- Section for Feedback You've Given -->
-    <h2 class="text-2xl font-bold mb-4 mt-8">Feedback You've Given</h2>
-    <div class="request-list">
-        {% for rating in given_ratings %}
-            <div class="request-card">
-                <div class="card-avatar">
-                    {% if rating.rated_user.profile_picture %}
-                        <img src="{{ rating.rated_user.profile_picture.url }}" alt="{{ rating.rated_user.username }}'s profile">
-                    {% else %}
-                        <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                    {% endif %}
-                </div>
-                <div class="card-details">
-                    <p class="request-meta">For: <strong>{{ rating.rated_user.username }}</strong> regarding skill "<strong>{{ rating.skill.title }}</strong>"</p>
-                    <div class="star-rating my-2">
-                        {% for i in "12345" %}
-                            <i class="fa-{% if forloop.counter <= rating.rating %}solid{% else %}regular{% endif %} fa-star"></i>
-                        {% endfor %}
-                    </div>
-                    <p class="text-gray-700 italic">"{{ rating.comment }}"</p>
-                    <p class="text-xs text-gray-500 mt-2">Submitted on {{ rating.created_at|date:"F d, Y" }}</p>
-                </div>
-            </div>
-        {% empty %}
-            <div class="empty-state"><i class="fa-solid fa-star-half-stroke"></i><h3>No feedback given yet</h3><p>After a skill exchange is completed, you can leave feedback from the Requests page.</p></div>
-        {% endfor %}
-    </div>
-
-    <!-- Section for Feedback You've Received -->
-    <h2 class="text-2xl font-bold mb-4 mt-8">Feedback You've Received</h2>
-    <div class="request-list">
-        {% for rating in received_ratings %}
-            <div class="request-card">
-                <div class="card-avatar">
-                    {% if rating.rater.profile_picture %}
-                        <img src="{{ rating.rater.profile_picture.url }}" alt="{{ rating.rater.username }}'s profile">
-                    {% else %}
-                        <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                    {% endif %}
-                </div>
-                <div class="card-details">
-                    <p class="request-meta">From: <strong>{{ rating.rater.username }}</strong> regarding your skill "<strong>{{ rating.skill.title }}</strong>"</p>
-                    <div class="star-rating my-2">
-                        {% for i in "12345" %}
-                            <i class="fa-{% if forloop.counter <= rating.rating %}solid{% else %}regular{% endif %} fa-star"></i>
-                        {% endfor %}
-                    </div>
-                    <p class="text-gray-700 italic">"{{ rating.comment }}"</p>
-                    <p class="text-xs text-gray-500 mt-2">Received on {{ rating.created_at|date:"F d, Y" }}</p>
-                </div>
-            </div>
-        {% empty %}
-            <div class="empty-state"><i class="fa-solid fa-inbox"></i><h3>No feedback received yet</h3><p>When students leave feedback on your skills, it will appear here.</p></div>
-        {% endfor %}
-    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const indicator = document.querySelector('.tab-indicator');
+
+    function setIndicatorPosition(button) {
+        const buttonRect = button.getBoundingClientRect();
+        const containerRect = button.parentElement.getBoundingClientRect();
+        const left = buttonRect.left - containerRect.left;
+        const width = buttonRect.width;
+
+        indicator.style.width = `${width}px`;
+        indicator.style.left = `${left}px`;
+    }
+
+    // Set initial position
+    const activeBtn = document.querySelector('.tab-btn.active');
+    if (activeBtn) {
+        setIndicatorPosition(activeBtn);
+    }
+
+    // Handle tab clicks
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+
+            // Remove active class from all buttons and contents
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Add active class to clicked button and corresponding content
+            this.classList.add('active');
+            document.getElementById(`${targetTab}-tab`).classList.add('active');
+
+            // Move indicator
+            setIndicatorPosition(this);
+        });
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        const activeBtn = document.querySelector('.tab-btn.active');
+        if (activeBtn) {
+            setIndicatorPosition(activeBtn);
+        }
+    });
+});
+</script>
 {% endblock %}

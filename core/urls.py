@@ -31,4 +31,6 @@ urlpatterns = [
     path('search/users/', views.search_users, name='search_users'),
     path('search/advanced/', views.advanced_search, name='advanced_search'),
     path('api/search/autocomplete/', views.search_autocomplete, name='search_autocomplete'),
+    path('cancel-request/<int:request_id>/', views.cancel_request, name='cancel_request'),
+    path('create-session/', views.create_session, name='create_session'),
 ]

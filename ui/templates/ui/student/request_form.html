@@ -1,83 +1,116 @@
-<!-- in ui/templates/ui/student/request_form.html -->
-
 {% extends 'ui/base.html' %}
 {% load static %}
 
 {% block title %}Request Skill: {{ skill.title }}{% endblock %}
 
 {% block styles %}
-  {# We'll need some simple styles for this form #}
-  <style>
-    .request-container { max-width: 800px; margin: 2rem auto; padding: 2rem; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .skill-preview { border-bottom: 1px solid #eee; padding-bottom: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1.5rem; }
-    .skill-preview img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
-    .skill-preview h2 { margin: 0 0 5px 0; color: #a10f0f; }
-    .skill-preview .meta-tags span { background: #f1f1f1; padding: 5px 10px; border-radius: 15px; font-size: 0.85rem; margin-right: 8px; }
-    .form-group { margin-bottom: 1.5rem; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-    .btn-submit { background-color: #a10f0f; color: white; padding: 12px 20px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 100%; }
-  </style>
-
-  <!-- The line for the calendar CSS has been removed -->
-
+  <link rel="stylesheet" href="{% static 'ui/css/request_form.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="request-container">
-    <!-- Section 1: Pre-displayed Skill Information -->
-    <div class="skill-preview">
-        {% if skill.owner.profile_picture %}
-            <img src="{{ skill.owner.profile_picture.url }}" alt="{{ skill.owner.username }}'s profile picture">
-        {% else %}
-            {# Make sure this path to your default image is correct #}
-            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile picture">
-        {% endif %}
-        <div>
-            <h2>{{ skill.title }}</h2>
-            <div class="meta-tags">
-                <span><strong>Category:</strong> {{ skill.category }}</span>
-                <span><strong>Exchange:</strong> {{ skill.get_exchange_type_display }}</span>
+<div class="request-wrapper">
+    <div class="request-container">
+        <!-- Skill Preview Section -->
+        <div class="skill-preview-card">
+            <div class="skill-header">
+                <div class="skill-avatar">
+                    {% if skill.owner.profile_picture %}
+                        <img src="{{ skill.owner.profile_picture.url }}" alt="{{ skill.owner.username }}">
+                    {% else %}
+                        <img src="{% static 'ui/img/profilepic.png' %}" alt="Default avatar">
+                    {% endif %}
+                </div>
+                <div class="skill-header-info">
+                    <h1>{{ skill.title }}</h1>
+                    <div class="skill-meta">
+                        <span class="meta-badge category">
+                            <i class="fa-solid fa-folder"></i> {{ skill.category }}
+                        </span>
+                        <span class="meta-badge exchange">
+                            <i class="fa-solid fa-handshake"></i> {{ skill.get_exchange_type_display }}
+                        </span>
+                    </div>
+                </div>
             </div>
+
+            <div class="skill-description">
+                <h4>Description:</h4>
+                <p>{{ skill.description }}</p>
+            </div>
+        </div>
+
+        <!-- Request Form Section -->
+        <div class="request-form-card">
+            <h2>Send Your Request</h2>
+            <p class="form-subtitle">Fill out the details below to request this skill</p>
+
+            <form method="post" class="request-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-error">
+                        <i class="fa-solid fa-exclamation-circle"></i>
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="{{ form.requested_date_time.id_for_label }}">
+                        <i class="fa-solid fa-calendar"></i>
+                        {{ form.requested_date_time.label }}
+                    </label>
+                    {{ form.requested_date_time }}
+                    {% if form.requested_date_time.errors %}
+                        <span class="field-error">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                            {{ form.requested_date_time.errors.0 }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.payment_choice.id_for_label }}">
+                        <i class="fa-solid fa-money-bill"></i>
+                        {{ form.payment_choice.label }}
+                    </label>
+                    {{ form.payment_choice }}
+                    {% if form.payment_choice.errors %}
+                        <span class="field-error">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                            {{ form.payment_choice.errors.0 }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.extra_description.id_for_label }}">
+                        <i class="fa-solid fa-comment"></i>
+                        {{ form.extra_description.label }}
+                    </label>
+                    {{ form.extra_description }}
+                    {% if form.extra_description.errors %}
+                        <span class="field-error">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                            {{ form.extra_description.errors.0 }}
+                        </span>
+                    {% endif %}
+                    <small class="field-help">Provide any additional information that might be helpful</small>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{% url 'find_skills' %}" class="btn btn-secondary">
+                        <i class="fa-solid fa-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Request
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-    <p><strong>Description:</strong> {{ skill.description }}</p>
-    <hr>
-
-    <!-- Section 2: The Request Form -->
-    <h3>Send Your Request</h3>
-    <form method="post">
-        {% csrf_token %}
-
-        <!-- This block will show any general errors -->
-        {% if form.non_field_errors %}
-            <div class="form-errors">
-                {{ form.non_field_errors }}
-            </div>
-        {% endif %}
-
-        <div class="form-group">
-            <label for="{{ form.requested_date_time.id_for_label }}">{{ form.requested_date_time.label }}</label>
-            {{ form.requested_date_time }}
-            <!-- This will show errors for THIS specific field -->
-            {% for error in form.requested_date_time.errors %}<span style="color: red; font-size: 0.9em; display: block; margin-top: 5px;">{{ error }}</span>{% endfor %}
-        </div>
-        <div class="form-group">
-            <label for="{{ form.payment_choice.id_for_label }}">{{ form.payment_choice.label }}</label>
-            {{ form.payment_choice }}
-            {% for error in form.payment_choice.errors %}<span style="color: red; font-size: 0.9em; display: block; margin-top: 5px;">{{ error }}</span>{% endfor %}
-        </div>
-        <div class="form-group">
-            <label for="{{ form.extra_description.id_for_label }}">{{ form.extra_description.label }}</label>
-            {{ form.extra_description }}
-            {% for error in form.extra_description.errors %}<span style="color: red; font-size: 0.9em; display: block; margin-top: 5px;">{{ error }}</span>{% endfor %}
-        </div>
-
-        <button type="submit" class="btn-submit">Submit Request</button>
-    </form>
 </div>
 {% endblock %}
 
 {% block scripts %}
-  <!-- The JavaScript for the calendar widget has been removed -->
+  <!-- Add any necessary scripts here -->
 {% endblock %}

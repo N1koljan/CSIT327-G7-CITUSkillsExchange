@@ -422,3 +422,82 @@
     color: #555;
 }
 
+/* --- Add this to the bottom of schedule.css --- */
+
+/* Ensure Date/Time inputs match Text inputs */
+#schedule-session-modal .modal-form .form-group input[type="date"],
+#schedule-session-modal .modal-form .form-group input[type="time"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-color: #fff; /* Fixes grey background in some browsers */
+    color: #333;
+}
+
+#schedule-session-modal .modal-form .form-group input[type="date"]:focus,
+#schedule-session-modal .modal-form .form-group input[type="time"]:focus {
+    outline: none;
+    border-color: #a10f0f;
+    box-shadow: 0 0 0 3px rgba(161, 15, 15, 0.2);
+}
+
+/* Remove default browser calendar icon if you want to rely on clicking the input,
+   or keep it standard. This forces the input text to align correctly. */
+input[type="date"], input[type="time"] {
+    display: block;
+    appearance: none;
+}
+
+/* --- NEW STYLES FOR THE MINIMAL SESSION CARD --- */
+
+/* The container for the new list */
+.all-sessions-list-container {
+    margin-bottom: 2rem; /* Space between this and Pending Requests */
+}
+
+/* The specific card style matching your image */
+.session-card-minimal {
+    background-color: #fff;
+    border: 1px solid #edd6d6; /* Light reddish border matches image */
+    border-radius: 10px;       /* Rounded corners */
+    padding: 16px 20px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.session-card-minimal:hover {
+    box-shadow: 0 4px 12px rgba(161, 15, 15, 0.1);
+    transform: translateY(-2px);
+    border-color: #dcbdbd;
+}
+
+/* Title Style */
+.session-card-minimal h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+/* Date and Time Rows */
+.session-card-minimal .minimal-details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.session-card-minimal .minimal-details i {
+    color: #8c5e5e; /* Muted maroon for icons */
+    width: 16px;
+    text-align: center;
+}

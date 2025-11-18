@@ -4,89 +4,312 @@
 {% block title %}Transaction History - CIT-U Skills Exchange{% endblock %}
 
 {% block styles %}
-  <!-- We are reusing the CSS from the requests page for a consistent card style -->
-  <link rel="stylesheet" href="{% static 'ui/css/request.css' %}">
-
-  <style>
-    .status-badge.status-completed {
-        background-color: #10B981; /* A nice green color */
-        color: white;
-    }
-    /* Style for the new feedback button area, just like on the requests page */
-    .request-actions-footer {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid #eee;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'ui/css/transaction.css' %}">
+  <link rel="stylesheet" href="{% static 'ui/css/feedback_modal.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <div class="page-title-section">
-            <h1>Transaction History</h1>
-            <p>A record of all your completed skill exchanges</p>
+<div class="transaction-wrapper">
+    <div class="container">
+        <div class="page-header">
+            <div class="page-title-section">
+                <h1>Transaction History</h1>
+                <p>A record of all your completed skill exchanges</p>
+            </div>
         </div>
-    </div>
 
-    <div class="request-list">
-        {% for tx in transactions %}
-            <div class="request-card">
-                <!-- Avatar of the OTHER person in the transaction -->
-                <div class="card-avatar">
-                    {% if request.user == tx.provider %}
-                        {% if tx.receiver.profile_picture %}<img src="{{ tx.receiver.profile_picture.url }}" alt="{{ tx.receiver.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
-                    {% else %}
-                        {% if tx.provider.profile_picture %}<img src="{{ tx.provider.profile_picture.url }}" alt="{{ tx.provider.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
-                    {% endif %}
-                </div>
-
-                <div class="card-details">
-                    <div class="request-card-header">
-                        <h3>{{ tx.request.skill.title }}</h3>
-                        <span class="status-badge status-completed">{{ tx.get_status_display }}</span>
-                    </div>
-
-                    <p class="request-meta">
+        <div class="transaction-list">
+            {% for tx in transactions %}
+                <div class="transaction-card">
+                    <!-- Avatar Section -->
+                    <div class="card-avatar">
                         {% if request.user == tx.provider %}
-                            You provided this service to <strong>{{ tx.receiver.username }}</strong>
-                        {% else %}
-                            You received this service from <strong>{{ tx.provider.username }}</strong>
-                        {% endif %}
-                    </p>
-
-                    <div class="card-details-grid">
-                        <div class="detail-item"><strong>Exchange Type:</strong><p>{{ tx.get_exchange_type_display }}</p></div>
-                        <div class="detail-item"><strong>Completed On:</strong><p>{{ tx.completed_at|date:"F d, Y" }}</p></div>
-                    </div>
-
-                    <!-- 👇 THIS IS THE NEW SECTION FOR THE FEEDBACK BUTTON 👇 -->
-                    <div class="request-actions-footer">
-                        {% if request.user == tx.receiver %}
-                            <!-- Only the receiver (original requester) can leave feedback -->
-                            {% if not tx.request.rating %}
-                                <!-- If no rating exists yet, show the button -->
-                                <a href="{% url 'core:leave_feedback' request_id=tx.request.id %}" class="btn btn-primary">
-                                    <i class="fa-solid fa-star"></i> Leave Feedback
-                                </a>
+                            {% if tx.receiver.profile_picture %}
+                                <img src="{{ tx.receiver.profile_picture.url }}" alt="{{ tx.receiver.username }}">
                             {% else %}
-                                <!-- If a rating already exists, show a confirmation -->
-                                <p class="text-sm text-green-600 font-semibold"><i class="fa-solid fa-check-circle"></i> Feedback Submitted</p>
+                                <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                            {% endif %}
+                        {% else %}
+                            {% if tx.provider.profile_picture %}
+                                <img src="{{ tx.provider.profile_picture.url }}" alt="{{ tx.provider.username }}">
+                            {% else %}
+                                <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
                             {% endif %}
                         {% endif %}
                     </div>
-                    <!-- 👆 END OF NEW SECTION 👆 -->
 
+                    <!-- Card Content -->
+                    <div class="card-content">
+                        <div class="card-header">
+                            <div class="card-title-section">
+                                <h3>{{ tx.request.skill.title }}</h3>
+                                <span class="skill-category">{{ tx.request.skill.category }}</span>
+                            </div>
+                            <span class="status-badge status-completed">
+                                <i class="fa-solid fa-check-circle"></i>
+                                {{ tx.get_status_display }}
+                            </span>
+                        </div>
+
+                        <p class="transaction-meta">
+                            {% if request.user == tx.provider %}
+                                <i class="fa-solid fa-user-check"></i>
+                                You provided this service to <strong>{{ tx.receiver.username }}</strong>
+                            {% else %}
+                                <i class="fa-solid fa-user-graduate"></i>
+                                You received this service from <strong>{{ tx.provider.username }}</strong>
+                            {% endif %}
+                        </p>
+
+                        <div class="card-details-grid">
+                            <div class="detail-item">
+                                <i class="fa-solid fa-handshake"></i>
+                                <div>
+                                    <strong>Exchange Type</strong>
+                                    <p>{{ tx.get_exchange_type_display }}</p>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fa-solid fa-calendar-check"></i>
+                                <div>
+                                    <strong>Completed On</strong>
+                                    <p>{{ tx.completed_at|date:"F d, Y" }}</p>
+                                </div>
+                            </div>
+                            {% if tx.request.scheduled_time %}
+                            <div class="detail-item">
+                                <i class="fa-solid fa-clock"></i>
+                                <div>
+                                    <strong>Duration</strong>
+                                    <p>1.5 hours</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Feedback Section -->
+                        {% if request.user == tx.receiver %}
+                            <div class="feedback-section">
+                                {% if not tx.request.rating %}
+                                    <button class="btn btn-feedback open-feedback-modal"
+                                            data-request-id="{{ tx.request.id }}"
+                                            data-skill-title="{{ tx.request.skill.title }}"
+                                            data-provider-name="{{ tx.provider.get_full_name|default:tx.provider.username }}"
+                                            data-feedback-url="{% url 'core:leave_feedback' request_id=tx.request.id %}">
+                                        <i class="fa-solid fa-star"></i> Leave Review
+                                    </button>
+                                {% else %}
+                                    <div class="feedback-submitted">
+                                        <i class="fa-solid fa-check-circle"></i>
+                                        <span>Review Submitted</span>
+                                        <div class="rating-display">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= tx.request.rating.rating %}
+                                                    <i class="fa-solid fa-star"></i>
+                                                {% else %}
+                                                    <i class="fa-regular fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-        {% empty %}
-            <div class="empty-state">
-                <i class="fa-solid fa-history"></i>
-                <h3>No transactions yet</h3>
-                <p>When you complete a skill exchange from your schedule, it will appear here.</p>
-            </div>
-        {% endfor %}
+            {% empty %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-history"></i>
+                    <h3>No transactions yet</h3>
+                    <p>When you complete a skill exchange from your schedule, it will appear here.</p>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
+
+<!-- Feedback Modal -->
+<div id="feedbackModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Rate Your Session</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <p class="modal-subtitle" id="modalSubtitle">Share your experience with <strong id="providerName"></strong></p>
+
+            <form id="feedbackForm" method="POST">
+                {% csrf_token %}
+
+                <!-- Star Rating -->
+                <div class="form-group">
+                    <label>Overall Rating</label>
+                    <div class="star-rating">
+                        <input type="radio" id="star5" name="rating" value="5" required>
+                        <label for="star5" title="5 stars">
+                            <i class="fa-solid fa-star"></i>
+                        </label>
+
+                        <input type="radio" id="star4" name="rating" value="4">
+                        <label for="star4" title="4 stars">
+                            <i class="fa-solid fa-star"></i>
+                        </label>
+
+                        <input type="radio" id="star3" name="rating" value="3">
+                        <label for="star3" title="3 stars">
+                            <i class="fa-solid fa-star"></i>
+                        </label>
+
+                        <input type="radio" id="star2" name="rating" value="2">
+                        <label for="star2" title="2 stars">
+                            <i class="fa-solid fa-star"></i>
+                        </label>
+
+                        <input type="radio" id="star1" name="rating" value="1">
+                        <label for="star1" title="1 star">
+                            <i class="fa-solid fa-star"></i>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Review Text -->
+                <div class="form-group">
+                    <label for="feedback">Your Review</label>
+                    <textarea id="feedback"
+                              name="feedback"
+                              rows="5"
+                              placeholder="Share your thoughts about the tutoring session..."
+                              required></textarea>
+                </div>
+
+                <!-- Quick Tags (Optional) -->
+                <div class="form-group">
+                    <label>Quick Tags (Optional)</label>
+                    <div class="quick-tags">
+                        <label class="tag-checkbox">
+                            <input type="checkbox" name="tags" value="clear_explanations">
+                            <span>Clear Explanations</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" name="tags" value="patient">
+                            <span>Patient</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" name="tags" value="well_prepared">
+                            <span>Well Prepared</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" name="tags" value="helpful_examples">
+                            <span>Helpful Examples</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" name="tags" value="on_time">
+                            <span>On Time</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary close-modal-btn">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('feedbackModal');
+    const openButtons = document.querySelectorAll('.open-feedback-modal');
+    const closeButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
+    const feedbackForm = document.getElementById('feedbackForm');
+    const starRating = document.querySelector('.star-rating');
+
+    // Open modal
+    openButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const requestId = this.dataset.requestId;
+            const skillTitle = this.dataset.skillTitle;
+            const providerName = this.dataset.providerName;
+            const feedbackUrl = this.dataset.feedbackUrl;
+
+            // Set modal content
+            document.getElementById('providerName').textContent = providerName;
+            feedbackForm.action = feedbackUrl;
+
+            // Show modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    // Close modal
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            closeModal();
+        });
+    });
+
+    // Close on outside click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    function closeModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        feedbackForm.reset();
+        // Reset star colors
+        document.querySelectorAll('.star-rating input').forEach(input => {
+            input.checked = false;
+        });
+    }
+
+    // Star rating hover effect
+    const starLabels = document.querySelectorAll('.star-rating label');
+    starLabels.forEach((label, index) => {
+        label.addEventListener('mouseenter', function() {
+            highlightStars(5 - index);
+        });
+    });
+
+    starRating.addEventListener('mouseleave', function() {
+        const checkedStar = document.querySelector('.star-rating input:checked');
+        if (checkedStar) {
+            const value = parseInt(checkedStar.value);
+            highlightStars(value);
+        } else {
+            highlightStars(0);
+        }
+    });
+
+    // Handle star selection
+    document.querySelectorAll('.star-rating input').forEach(input => {
+        input.addEventListener('change', function() {
+            highlightStars(parseInt(this.value));
+        });
+    });
+
+    function highlightStars(count) {
+        starLabels.forEach((label, index) => {
+            if (5 - index <= count) {
+                label.classList.add('active');
+            } else {
+                label.classList.remove('active');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

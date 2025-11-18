@@ -3,8 +3,7 @@ from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .forms import CustomSignUpForm, SkillRequestForm, BarterProposalForm, FeedbackForm
-# 👇 CHANGE #1: Import 'Request', not 'SkillRequest'
-from .models import CustomUser, Skill, Request, BarterProposal, Transaction, Rating
+from .models import CustomUser, Skill, Request, BarterProposal, Transaction, Rating, Schedule
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
@@ -17,6 +16,8 @@ from django.http import JsonResponse
 from .models import Message
 from django.db.models import Q, Max, Count, Case, When, IntegerField
 from .utils import get_conversation_id
+from datetime import datetime
+from django.utils.dateparse import parse_datetime
 import json
 
 
@@ -93,27 +94,30 @@ def signup_view(request):
 def create_skill_request(request, skill_id):
     skill = get_object_or_404(Skill, id=skill_id)
 
+    # Check if user is trying to request their own skill
     if skill.owner == request.user:
         messages.error(request, "You cannot request your own skill.")
-        # 👇 Assuming you have a URL named 'find_skills'
         return redirect('find_skills')
 
+    # Check if user already sent a request for this skill
     existing_request = Request.objects.filter(skill=skill, requester=request.user).first()
     if existing_request:
-        messages.warning(request,
-                         f"You have already sent a request for '{skill.title}'. Its status is '{existing_request.get_status_display()}'.")
+        messages.warning(
+            request,
+            f"You have already sent a request for '{skill.title}'. Its status is '{existing_request.get_status_display()}'."
+        )
         return redirect('find_skills')
 
     if request.method == 'POST':
         form = SkillRequestForm(request.POST)
-        print("Form errors:", form.errors)
+
         if form.is_valid():
             new_request = form.save(commit=False)
             new_request.requester = request.user
             new_request.skill = skill
             new_request.save()
 
-            # --- REAL-TIME NOTIFICATION LOGIC (no changes here) ---
+            # Send real-time notification
             channel_layer = get_channel_layer()
             notification_group_name = f'user_{skill.owner.id}_notifications'
             async_to_sync(channel_layer.group_send)(
@@ -127,13 +131,23 @@ def create_skill_request(request, skill_id):
                 }
             )
 
-            messages.success(request, "Your skill request has been sent successfully!")
-            # 👇 MODIFIED: Redirect to the new requests list page
+            messages.success(request, f"Your request for '{skill.title}' has been sent successfully!")
             return redirect('find_skills')
-    else:
-        form = SkillRequestForm()
+        else:
+            # Form has errors - display them
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+            return redirect('find_skills')
 
-    return render(request, 'ui/student/request_form.html', {'form': form, 'skill': skill})
+    # For GET requests (fallback if someone accesses the URL directly)
+    # Since we're using modal now, just redirect to find_skills
+    # Optionally, you can still render the old page as a fallback
+    return redirect('find_skills')
+
+    # OR keep the old template as fallback:
+    # form = SkillRequestForm()
+    # return render(request, 'ui/student/request_form.html', {'form': form, 'skill': skill})
 
 
 @login_required
@@ -215,41 +229,80 @@ def update_request_status(request, request_id, status):
 def leave_feedback(request, request_id):
     skill_request = get_object_or_404(Request, id=request_id)
 
-    # ... (keep the validation checks 1, 2, and 3 same as before) ...
+    # Validation 1: Check if user is authorized (only requester can leave feedback)
     if skill_request.requester != request.user:
         messages.error(request, "You are not authorized to leave feedback for this request.")
-        return redirect('requests')
+        return redirect('core:transaction_history')
 
+    # Validation 2: Check if request is in correct status
     if skill_request.status not in ['Accepted', 'Completed']:
         messages.error(request, "You can only leave feedback for accepted or completed requests.")
-        return redirect('requests')
+        return redirect('core:transaction_history')
 
-    if hasattr(skill_request, 'rating'):
+    # Validation 3: Check if rating already exists
+    if hasattr(skill_request, 'rating') and skill_request.rating:
         messages.warning(request, "You have already submitted feedback for this exchange.")
-        # 👇 CHANGE 1: If they try to rate again, send them to history
         return redirect('core:transaction_history')
 
     if request.method == 'POST':
-        form = FeedbackForm(request.POST)
-        if form.is_valid():
-            feedback = form.save(commit=False)
-            feedback.request = skill_request
-            feedback.skill = skill_request.skill
-            feedback.rater = request.user
-            feedback.rated_user = skill_request.skill.owner
-            feedback.save()
-            messages.success(request, "Thank you! Your feedback has been submitted.")
+        # Get the rating and comment from POST data
+        # The modal uses name="rating" and name="feedback"
+        # But your model uses "rating" and "comment"
+        rating_value = request.POST.get('rating')
+        comment_text = request.POST.get('feedback')  # Modal uses "feedback"
+        tags = request.POST.getlist('tags')  # Optional quick tags
 
-            # 👇 CHANGE 2: Redirect to Transaction History after success
+        # Validate required fields
+        if not rating_value or not comment_text:
+            messages.error(request, "Please provide both a rating and a review.")
             return redirect('core:transaction_history')
-    else:
-        form = FeedbackForm()
 
-    context = {
-        'form': form,
-        'skill_request': skill_request
-    }
-    return render(request, 'ui/student/leave_feedback.html', context)
+        try:
+            # Create a dictionary with the correct field names for your model
+            form_data = {
+                'rating': int(rating_value),
+                'comment': comment_text
+            }
+
+            # If tags were selected, append them to the comment
+            if tags:
+                form_data['comment'] += f"\n\n✓ {', '.join(tags).replace('_', ' ').title()}"
+
+            # Create the form instance with the data
+            form = FeedbackForm(form_data)
+
+            if form.is_valid():
+                # Save the form but don't commit to DB yet
+                rating = form.save(commit=False)
+
+                # Set the required foreign key relationships
+                rating.request = skill_request
+                rating.skill = skill_request.skill
+                rating.rater = request.user
+                rating.rated_user = skill_request.skill.owner
+
+                # Now save to database
+                rating.save()
+
+                messages.success(request, "Thank you! Your feedback has been submitted successfully.")
+                return redirect('core:transaction_history')
+            else:
+                # If form validation fails, show the errors
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
+                return redirect('core:transaction_history')
+
+        except ValueError:
+            messages.error(request, "Invalid rating value. Please select between 1-5 stars.")
+            return redirect('core:transaction_history')
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+            return redirect('core:transaction_history')
+
+    # For GET requests, redirect to transaction history
+    # (since we're using a modal, direct access should redirect)
+    return redirect('core:transaction_history')
 
 @login_required
 @require_POST
@@ -582,3 +635,76 @@ def send_message_api(request, username):
         return JsonResponse({'success': False, 'error': 'User not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def cancel_request(request, request_id):
+    """
+    Allows the requester to cancel their own pending request.
+    """
+    req_to_cancel = get_object_or_404(Request, pk=request_id)
+
+    # Ensure ONLY the sender can cancel their own request
+    if req_to_cancel.requester != request.user:
+        messages.error(request, "You are not authorized to cancel this request.")
+        return redirect('request_dashboard')
+
+    # Only Pending requests can be cancelled
+    if req_to_cancel.status != 'Pending':
+        messages.error(request, "Only pending requests can be canceled.")
+        return redirect('request_dashboard')
+
+    req_to_cancel.status = 'Cancelled'
+    req_to_cancel.save()
+
+    messages.success(request, "Your request has been cancelled successfully.")
+    return redirect('request_dashboard')
+
+
+@login_required
+def create_session(request):
+    if request.method == 'POST':
+        try:
+            # Get data from the form
+            title = request.POST.get('title', 'New Session')
+            description = request.POST.get('details', '')
+
+            # Get date and time separately
+            session_date = request.POST.get('session_date')  # YYYY-MM-DD format
+            start_time_str = request.POST.get('start_time')  # HH:MM format
+            end_time_str = request.POST.get('end_time')  # HH:MM format
+
+            # Combine date and time into datetime objects
+            from datetime import datetime
+
+            start_datetime = datetime.strptime(
+                f"{session_date} {start_time_str}",
+                "%Y-%m-%d %H:%M"
+            )
+            end_datetime = datetime.strptime(
+                f"{session_date} {end_time_str}",
+                "%Y-%m-%d %H:%M"
+            )
+
+            # Create the Schedule object
+            new_schedule = Schedule.objects.create(
+                organizer=request.user,
+                title=title,
+                description=description,
+                start_time=start_datetime,
+                end_time=end_datetime,
+                status='confirmed'
+            )
+
+            messages.success(request, f"Session '{title}' created successfully!")
+            return redirect('schedule')
+
+        except ValueError as ve:
+            print(f"Date/Time parsing error: {ve}")
+            messages.error(request, "Invalid date or time format. Please try again.")
+            return redirect('schedule')
+        except Exception as e:
+            print(f"Error creating session: {e}")
+            messages.error(request, f"There was an error creating the session: {str(e)}")
+            return redirect('schedule')
+
+    return redirect('schedule')

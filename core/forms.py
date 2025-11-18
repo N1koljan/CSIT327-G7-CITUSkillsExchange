@@ -162,24 +162,40 @@ class BarterProposalForm(forms.ModelForm):
             # This is the key part: only show skills owned by the current user.
             self.fields['offered_skill'].queryset = Skill.objects.filter(owner=user)
 
+
 class FeedbackForm(forms.ModelForm):
     class Meta:
         model = Rating
-        # The user only needs to fill out these two fields.
         fields = ['rating', 'comment']
         widgets = {
-            'rating': forms.NumberInput(attrs={
-                'type': 'number',
-                'min': '1',
-                'max': '5',
-                'class': 'rating-stars' # You can use this class for JS star widgets
+            # Hidden input since we use custom star rating in the modal
+            'rating': forms.HiddenInput(attrs={
+                'id': 'rating_value'
             }),
             'comment': forms.Textarea(attrs={
-                'rows': 4,
-                'placeholder': 'Share your experience with this exchange...'
+                'rows': 5,
+                'placeholder': 'Share your thoughts about the tutoring session...',
+                'class': 'form-textarea'
             })
         }
         labels = {
-            'rating': 'Your Rating (1-5 stars)',
-            'comment': 'Your Feedback'
+            'rating': 'Overall Rating',
+            'comment': 'Your Review'
         }
+
+    def clean_rating(self):
+        """Validate that rating is between 1 and 5"""
+        rating = self.cleaned_data.get('rating')
+        if rating and (rating < 1 or rating > 5):
+            raise forms.ValidationError('Rating must be between 1 and 5 stars.')
+        return rating
+
+    def clean_comment(self):
+        """Validate that comment is not empty and has minimum length"""
+        comment = self.cleaned_data.get('comment')
+        if comment:
+            # Strip whitespace
+            comment = comment.strip()
+            if len(comment) < 10:
+                raise forms.ValidationError('Please provide a more detailed review (at least 10 characters).')
+        return comment

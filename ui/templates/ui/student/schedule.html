@@ -22,6 +22,35 @@
     .item-content {
       flex: 1;
     }
+
+    /* Styles for user-created schedule cards */
+    .schedule-session-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid #ffdd00;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .schedule-session-card h4 {
+      margin: 0 0 0.5rem 0;
+      color: #333;
+      font-size: 1.1rem;
+    }
+
+    .schedule-session-card .session-time {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .schedule-session-card .session-time i {
+      color: #800000;
+    }
   </style>
 {% endblock %}
 
@@ -37,10 +66,52 @@
 
     <div class="schedule-layout">
 
-        <!-- DYNAMIC MAIN COLUMN (WITH PROFILE PICS) -->
+        <!-- DYNAMIC MAIN COLUMN -->
         <div class="main-column">
+
+            <!-- ALL SCHEDULED SESSIONS - Shows user-created Schedule objects -->
+            <div class="card all-sessions-list-container">
+                <div class="card-header">
+                    <i class="fa-solid fa-list-ul"></i>
+                    <h3>All Scheduled Sessions</h3>
+                </div>
+                <div class="card-content">
+                    {% if not user_schedules %}
+                        <div class="empty-list-message">
+                            <p>No sessions scheduled yet. Click "New Session" to create one.</p>
+                        </div>
+                    {% else %}
+                        {% for schedule in user_schedules %}
+                        <div class="schedule-session-card">
+                            <h4>{{ schedule.title }}</h4>
+
+                            <div class="session-time">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>{{ schedule.start_time|date:"Y-m-d" }}</span>
+                            </div>
+
+                            <div class="session-time">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>{{ schedule.start_time|time:"g:i A" }} - {{ schedule.end_time|time:"g:i A" }}</span>
+                            </div>
+
+                            {% if schedule.description %}
+                            <div class="session-time">
+                                <i class="fa-regular fa-file-lines"></i>
+                                <span>{{ schedule.description|truncatewords:15 }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- PENDING REQUESTS - Detailed view with avatars -->
             <div class="card pending-requests">
-                <div class="card-header"> <h3>Pending Requests</h3> </div>
+                <div class="card-header">
+                    <h3>Pending Requests</h3>
+                </div>
                 <div class="card-content">
                      {% if not pending_requests %}
                         <div class="empty-list-message">
@@ -67,9 +138,20 @@
                                 </div>
                                 <div class="item-content">
                                     <h4>{{ req.skill.title }}</h4>
-                                    {% if req.requested_date_time %}<div class="details"><i class="fa-regular fa-calendar-alt"></i><span>{{ req.requested_date_time }}</span></div>{% endif %}
+                                    {% if req.requested_date_time %}
+                                        <div class="details">
+                                            <i class="fa-regular fa-calendar-alt"></i>
+                                            <span>{{ req.requested_date_time }}</span>
+                                        </div>
+                                    {% endif %}
                                     <div class="details invited-by">
-                                        {% if req.requester == request.user %}<i class="fa-solid fa-arrow-up-right-from-square"></i><span>Request sent to: <strong>{{ req.skill.owner.username }}</strong></span>{% else %}<i class="fa-solid fa-inbox"></i><span>Request from: <strong>{{ req.requester.username }}</strong></span>{% endif %}
+                                        {% if req.requester == request.user %}
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                            <span>Request sent to: <strong>{{ req.skill.owner.username }}</strong></span>
+                                        {% else %}
+                                            <i class="fa-solid fa-inbox"></i>
+                                            <span>Request from: <strong>{{ req.requester.username }}</strong></span>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -78,8 +160,11 @@
                 </div>
             </div>
 
+            <!-- CONFIRMED SESSIONS - Detailed view with avatars -->
             <div class="card confirmed-sessions">
-                <div class="card-header"> <h3>Upcoming Confirmed Sessions</h3> </div>
+                <div class="card-header">
+                    <h3>Upcoming Confirmed Sessions</h3>
+                </div>
                 <div class="card-content">
                      {% if not confirmed_sessions %}
                         <div class="empty-list-message">
@@ -91,20 +176,36 @@
                             <div class="session-item schedule-item-layout">
                                 <div class="item-avatar">
                                     {% if session.requester == request.user %}
-                                        {% if session.skill.owner.profile_picture %}<img src="{{ session.skill.owner.profile_picture.url }}" alt="{{ session.skill.owner.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                                        {% if session.skill.owner.profile_picture %}
+                                            <img src="{{ session.skill.owner.profile_picture.url }}" alt="{{ session.skill.owner.username }}'s profile">
+                                        {% else %}
+                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                                        {% endif %}
                                     {% else %}
-                                        {% if session.requester.profile_picture %}<img src="{{ session.requester.profile_picture.url }}" alt="{{ session.requester.username }}'s profile">{% else %}<img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">{% endif %}
+                                        {% if session.requester.profile_picture %}
+                                            <img src="{{ session.requester.profile_picture.url }}" alt="{{ session.requester.username }}'s profile">
+                                        {% else %}
+                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                                 <div class="item-content">
                                     <h4>{{ session.skill.title }}</h4>
-                                    {% if session.requested_date_time %}<div class="details"><i class="fa-regular fa-calendar-days"></i><span>{{ session.requested_date_time }}</span></div>{% endif %}
+                                    {% if session.requested_date_time %}
+                                        <div class="details">
+                                            <i class="fa-regular fa-calendar-days"></i>
+                                            <span>{{ session.requested_date_time }}</span>
+                                        </div>
+                                    {% endif %}
                                     <div class="details">
                                         <i class="fa-regular fa-user"></i>
-                                        {% if session.requester == request.user %}<span>With: <strong>{{ session.skill.owner.username }}</strong> (Provider)</span>{% else %}<span>With: <strong>{{ session.requester.username }}</strong> (Requester)</span>{% endif %}
+                                        {% if session.requester == request.user %}
+                                            <span>With: <strong>{{ session.skill.owner.username }}</strong> (Provider)</span>
+                                        {% else %}
+                                            <span>With: <strong>{{ session.requester.username }}</strong> (Requester)</span>
+                                        {% endif %}
                                     </div>
 
-                                    <!-- 👇 THIS IS THE NEW "MARK AS DONE" BUTTON SECTION 👇 -->
                                     <div class="session-actions" style="margin-top: 1rem;">
                                         <form method="post" action="{% url 'core:complete_session' request_id=session.id %}">
                                             {% csrf_token %}
@@ -113,7 +214,6 @@
                                             </button>
                                         </form>
                                     </div>
-                                    <!-- 👆 END OF NEW SECTION 👆 -->
 
                                 </div>
                             </div>
@@ -123,7 +223,7 @@
             </div>
         </div>
 
-        <!-- SIDEBAR WITH CALENDAR (UNCHANGED) -->
+        <!-- SIDEBAR WITH CALENDAR -->
         <div class="sidebar-column">
             <a href="#schedule-session-modal" class="btn btn-new-session btn-sidebar">
                 <i class="fa-solid fa-plus"></i> New Session
@@ -148,7 +248,7 @@
     </div>
 </div>
 
-<!-- MODALS (UNCHANGED) -->
+<!-- NEW SESSION MODAL -->
 <div id="schedule-session-modal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-header">
@@ -157,14 +257,48 @@
     </div>
     <div class="modal-body">
       <p>Fill in the details to create a new tutoring session</p>
-      <form class="modal-form">
-        <div class="form-group"><label for="session-title">Session Title / Skill to Exchange <span class="required">*</span></label><input type="text" id="session-title" placeholder="e.g., React Hooks Tutorial" required></div>
-        <div class="form-group"><label for="session-date">Date <span class="required">*</span></label><div class="input-with-icon"><input type="text" id="session-date" placeholder="dd/mm/yyyy" required><i class="fa-regular fa-calendar-days"></i></div></div>
-        <div class="form-row"><div class="form-group"><label for="start-time">Start Time <span class="required">*</span></label><div class="input-with-icon"><input type="text" id="start-time" placeholder="--:--" required><i class="fa-regular fa-clock"></i></div></div><div class="form-group"><label for="end-time">End Time <span class="required">*</span></label><div class="input-with-icon"><input type="text" id="end-time" placeholder="--:--" required><i class="fa-regular fa-clock"></i></div></div></div>
-        <div class="form-group"><label for="session-details">Session Details <span class="required">*</span></label><textarea id="session-details" rows="4" placeholder="Describe what will be covered in this session..." required></textarea></div>
+
+      <form class="modal-form" method="POST" action="{% url 'core:create_session' %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="session-title">Session Title / Skill <span class="required">*</span></label>
+            <input type="text" id="session-title" name="title" placeholder="e.g., React Hooks Tutorial" required>
+        </div>
+
+        <div class="form-group">
+            <label for="session-date">Date <span class="required">*</span></label>
+            <div class="input-with-icon">
+                <input type="date" id="session-date" name="session_date" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="start-time">Start Time <span class="required">*</span></label>
+                <div class="input-with-icon">
+                    <input type="time" id="start-time" name="start_time" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="end-time">End Time <span class="required">*</span></label>
+                <div class="input-with-icon">
+                    <input type="time" id="end-time" name="end_time" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="session-details">Session Details <span class="required">*</span></label>
+            <textarea id="session-details" name="details" rows="4" placeholder="Describe what will be covered..." required></textarea>
+        </div>
+
+        <div class="modal-footer">
+            <a href="#" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-primary-gold">Save Schedule</button>
+        </div>
       </form>
     </div>
-    <div class="modal-footer"><a href="#" class="btn-secondary">Cancel</a><button type="submit" class="btn-primary-gold">Save Schedule</button></div>
   </div>
   <a href="#" class="modal-close-bg"></a>
 </div>
@@ -186,7 +320,7 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- CALENDAR SCRIPT (UNCHANGED) -->
+<!-- CALENDAR SCRIPT -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const monthYearDisplay = document.getElementById('monthYearDisplay');
@@ -201,6 +335,7 @@
         const todayMonth = today.getMonth();
         const todayYear = today.getFullYear();
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
         function renderCalendar(year, month) {
             const firstDayOfMonth = new Date(year, month, 1);
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -209,6 +344,7 @@
             const dayElements = calendarGrid.querySelectorAll('.day, .other-month');
             dayElements.forEach(day => day.remove());
             monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
+
             for (let i = 0; i < firstDayWeekday; i++) {
                 const day = daysInPrevMonth - firstDayWeekday + 1 + i;
                 const dayDiv = document.createElement('div');
@@ -216,6 +352,7 @@
                 dayDiv.textContent = day;
                 calendarGrid.appendChild(dayDiv);
             }
+
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayDiv = document.createElement('div');
                 dayDiv.classList.add('day');
@@ -228,6 +365,7 @@
                 });
                 calendarGrid.appendChild(dayDiv);
             }
+
             const totalCellsGenerated = firstDayWeekday + daysInMonth;
             const remainingCells = (totalCellsGenerated % 7 === 0) ? 0 : 7 - (totalCellsGenerated % 7);
             for (let i = 1; i <= remainingCells; i++) {
@@ -237,16 +375,19 @@
                 calendarGrid.appendChild(dayDiv);
             }
         }
+
         prevMonthBtn.addEventListener('click', () => {
             currentMonth--;
             if (currentMonth < 0) { currentMonth = 11; currentYear--; }
             renderCalendar(currentYear, currentMonth);
         });
+
         nextMonthBtn.addEventListener('click', () => {
             currentMonth++;
             if (currentMonth > 11) { currentMonth = 0; currentYear++; }
             renderCalendar(currentYear, currentMonth);
         });
+
         renderCalendar(currentYear, currentMonth);
     });
 </script>

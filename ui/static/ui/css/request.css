@@ -1,5 +1,5 @@
 /* ========================================================== */
-/* == YOUR ORIGINAL CSS STYLES (KEEP ALL OF THIS) == */
+/* BASE CONTAINER STYLES */
 /* ========================================================== */
 
 .container {
@@ -12,7 +12,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .page-title-section h1 {
@@ -27,198 +27,436 @@
   font-size: 1rem;
 }
 
-.post-request-btn {
-  display: inline-block;
-  background-color: #a10f0f;
-  color: white;
-  text-decoration: none;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  transition: background-color 0.3s, transform 0.2s;
-}
+/* ========================================================== */
+/* SLIDING TOGGLE TABS (NEW DESIGN) */
+/* ========================================================== */
 
-.post-request-btn:hover {
-  background-color: #800000;
-  transform: scale(1.02);
-}
-
-.tabs {
-  display: flex;
-  gap: 0;
+.tabs-slider-container {
   margin-bottom: 2rem;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #eee;
-  background: #f9f9f9;
+  display: flex;
+  justify-content: center;
 }
 
-.tab {
+.tabs-slider {
+  position: relative;
+  display: flex;
+  width: 100%;
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.tab-slider {
+  position: relative;
   flex: 1;
-  padding: 14px 0;
-  background: #ffcc00;
+  text-align: center;
+  padding: 12px 32px;
+  background: transparent;
   border: none;
-  color: #800000;
+  color: #6b7280;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  text-align: center;
-  transition: background 0.2s ease, color 0.2s ease;
+  border-radius: 10px;
+  transition: color 0.3s ease;
+  z-index: 2;
 }
 
-.tab:not(:last-child) {
-  border-right: 1px solid #eee;
+.tab-slider:hover {
+  color: #374151;
 }
 
-.tab:not(.active):hover {
-  background-color: #FFF0C4;
-  color: #a10f0f;
+.tab-slider.active {
+  color: #800000;
 }
 
-.tab.active {
-  background-color: #a10f0f;
-  color: #ffffff;
-  font-weight: 600;
+.slider-indicator {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px); /* set based on number of tabs */
+  height: calc(100% - 8px);
+  background: linear-gradient(135deg, #ffcc00 0%, #ffd633 100%);
+  border-radius: 10px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
 }
 
-.tab.active:hover {
-  background-color: #800000;
-}
+/* ========================================================== */
+/* TAB CONTENT */
+/* ========================================================== */
 
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  background: #fff;
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  color: #777;
-}
-
-.empty-state i {
-  font-size: 3rem;
-  color: #a10f0f;
-  margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-  color: #555;
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-/* Original request card style - we will use this as a base */
-.request-card {
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-
-/* --- ALL YOUR MODAL STYLES --- */
-/* (Keeping all of these untouched) */
-.modal-overlay { /* ... */ }
-/* ... etc ... */
-
-
-/* ====================================================================== */
-/* == NEW STYLES FOR DYNAMIC CONTENT (ADD THESE AT THE END) == */
-/* ====================================================================== */
-
-/* Tab Panes for showing/hiding content */
 .tab-pane {
-    display: none;
+  display: none;
+  animation: fadeIn 0.3s ease-in;
 }
+
 .tab-pane.active {
-    display: block;
+  display: block;
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================================== */
+/* REQUEST LIST AND CARDS */
+/* ========================================================== */
+
 .request-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* Space between cards */
+  gap: 1.5rem;
 }
 
-/* Styles for INSIDE the .request-card */
+.request-card {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.request-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.card-avatar img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #f3f4f6;
+}
+
+.card-details {
+  flex: 1;
+}
+
 .request-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
 }
+
 .request-card-header h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #333;
+  color: #111827;
+  margin: 0;
 }
+
 .request-meta {
   font-size: 0.875rem;
-  color: #666;
+  color: #6b7280;
   margin-bottom: 1rem;
 }
-.request-message {
-  background-color: #f9f9f9;
-  border-left: 3px solid #ffcc00; /* Gold accent */
+
+.request-meta strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+.card-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
   padding: 1rem;
-  border-radius: 4px;
-  color: #555;
-  font-style: italic;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.detail-item strong {
+  display: block;
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.detail-item p {
+  margin: 0;
+  color: #111827;
+  font-weight: 500;
+}
+
+.request-message-section {
   margin-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
 }
 
-/* Status Badges */
-.status-badge {
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-.status-pending { background-color: #FFF0C4; color: #73510d; border: 1px solid #ffe79e;}
-.status-accepted { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;}
-.status-declined { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca;}
-
-/* Accept/Decline Action Buttons */
-.request-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #eee;
-}
-
-.btn {
-  padding: 10px 20px;
+.request-message-section strong {
+  color: #374151;
   font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
+}
+
+.request-message-section p {
+  margin-top: 0.5rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.request-actions-footer {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* ========================================================== */
+/* BUTTON STYLES */
+/* ========================================================== */
+
+.btn-close {
+  background-color: #ef4444;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
   border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
 }
-.btn-accept { background-color: #16a34a; color: white; }
-.btn-accept:hover { background-color: #15803d; transform: scale(1.02); }
 
-.btn-decline { background-color: #dc2626; color: white; }
-.btn-decline:hover { background-color: #b91c1c; transform: scale(1.02); }
+.btn-close:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+}
 
-/* Styles for message banners */
+.btn-success {
+  background-color: #10b981;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-success:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background-color: #ef4444;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* ========================================================== */
+/* TEXT UTILITY CLASSES */
+/* ========================================================== */
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-green-600 {
+  color: #059669;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+/* ========================================================== */
+/* STATUS BADGES */
+/* ========================================================== */
+
+.status-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.status-accepted {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.status-declined {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.status-completed {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* ========================================================== */
+/* EMPTY STATE */
+/* ========================================================== */
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #fff;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  color: #6b7280;
+}
+
+.empty-state i {
+  font-size: 3.5rem;
+  color: #a10f0f;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.empty-state h3 {
+  color: #374151;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* ========================================================== */
+/* MESSAGE BANNERS (Optional - Keep if needed) */
+/* ========================================================== */
+
 .message-banner {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid transparent;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
 }
-.message-success { background-color: #d1fae5; color: #065f46; border-color: #a7f3d0;}
-.message-error { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
-.message-info { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+
+.message-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.message-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.message-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+/* ========================================================== */
+/* RESPONSIVE DESIGN */
+/* ========================================================== */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .tabs-slider {
+    width: 100%;
+  }
+
+  .tab-slider {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+
+  .request-card {
+    flex-direction: column;
+    padding: 1.25rem;
+  }
+
+  .card-avatar img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .card-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .request-actions-footer {
+    flex-direction: column;
+  }
+
+  .request-actions-footer button,
+  .request-actions-footer a {
+    width: 100%;
+  }
+}

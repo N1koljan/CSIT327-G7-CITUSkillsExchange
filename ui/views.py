@@ -7,9 +7,11 @@ from django.contrib import messages  # <-- THIS IS THE MISSING IMPORT
 from django.urls import reverse
 from django.contrib.auth import login, logout
 from django.db.models import Q      # <-- ADD THIS IMPORT FOR SEARCHING
-from core.models import Skill, Request,Comment,  Rating
+from core.models import Skill, Comment,  Rating
 from core.forms import CustomLoginForm, CustomSignUpForm, CommentForm
 from .forms import EditProfileForm, SkillForm
+from django.http import JsonResponse
+from core.models import Request, Schedule
 
 
 
@@ -77,26 +79,30 @@ def logout_view(request):
 @login_required
 def schedule_view(request):
     """
-    Fetches pending requests and confirmed sessions for the current user's schedule page.
+    Fetches pending requests, confirmed sessions, and user-created schedules.
     """
     # Get all requests that are 'Pending' where the current user is either
     # the one who sent it (requester) or the one who received it (skill owner).
-    # select_related is used for performance to pre-fetch related user and skill data.
     pending_requests = Request.objects.filter(
         Q(requester=request.user) | Q(skill__owner=request.user),
         status='Pending'
     ).select_related('skill', 'skill__owner', 'requester').order_by('-created_at')
 
     # Get all requests that are 'Accepted' where the current user is involved.
-    # These represent your confirmed sessions.
     confirmed_sessions = Request.objects.filter(
         Q(requester=request.user) | Q(skill__owner=request.user),
         status='Accepted'
-    ).select_related('skill', 'skill__owner', 'requester').order_by('-updated_at') # Order by when they were accepted
+    ).select_related('skill', 'skill__owner', 'requester').order_by('-updated_at')
+
+    # NEW: Get all Schedule objects created by the user or where they are a participant
+    user_schedules = Schedule.objects.filter(
+        Q(organizer=request.user) | Q(participants=request.user)
+    ).distinct().order_by('start_time')
 
     context = {
         'pending_requests': pending_requests,
         'confirmed_sessions': confirmed_sessions,
+        'user_schedules': user_schedules,  # NEW: Pass schedules to template
     }
     return render(request, 'ui/student/schedule.html', context)
 
@@ -312,3 +318,18 @@ def feedback_history_view(request):
 @login_required
 def chat_view(request):
     return render(request, 'ui/student/chat.html')
+
+@login_required
+def skill_get_json(request, pk):
+    """
+    Returns skill data as JSON for AJAX requests (used by the edit modal).
+    """
+    skill = get_object_or_404(Skill, pk=pk, owner=request.user)
+    return JsonResponse({
+        'title': skill.title,
+        'category': skill.category,
+        'exchange_type': skill.exchange_type,
+        'description': skill.description,
+    })
+
+

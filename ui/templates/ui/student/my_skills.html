@@ -14,8 +14,9 @@
         <h1>My Skills</h1>
         <p>Manage the skills you can teach and share with others</p>
       </div>
-      <!-- This button now correctly opens the modal using the href anchor -->
-      <a href="#add-skill-modal" class="add-skill-btn"><i class="fa-solid fa-plus"></i> Add New Skill</a>
+      <button class="add-skill-btn" onclick="openAddModal()">
+        <i class="fa-solid fa-plus"></i> Add New Skill
+      </button>
     </div>
 
     <!-- Display messages (success/error) -->
@@ -31,21 +32,42 @@
     {% endif %}
 
     <div class="skills-list">
-      <!-- DYNAMIC SKILL LIST -->
       {% if skills %}
         {% for skill in skills %}
           <div class="skill-card">
             <div class="skill-card-header">
-              <h3>{{ skill.title }}</h3>
-              <div class="skill-actions">
-                <a href="{% url 'skill_edit' skill.pk %}" class="action-btn edit-btn"><i class="fa-solid fa-pencil"></i> Edit</a>
-                <a href="{% url 'skill_delete' skill.pk %}" class="action-btn delete-btn"><i class="fa-solid fa-trash"></i> Delete</a>
+              <div class="skill-icon">
+                <i class="fa-solid fa-lightbulb"></i>
+              </div>
+              <div class="skill-card-title-section">
+                <h3>{{ skill.title }}</h3>
+                <div class="skill-tags">
+                  <span class="skill-tag tag-category">{{ skill.category }}</span>
+                  <span class="skill-tag tag-level">Intermediate</span>
+                </div>
+              </div>
+              <div class="skill-top-actions">
+                <button class="icon-btn" onclick="openEditModal({{ skill.pk }})" title="Edit">
+                  <i class="fa-solid fa-pencil"></i>
+                </button>
+                <button class="icon-btn" onclick="confirmDelete({{ skill.pk }})" title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
               </div>
             </div>
-            <p class="skill-category">{{ skill.category }}</p>
-            <p class="skill-description">{{ skill.description|truncatewords:30 }}</p>
-            <div class="skill-footer">
-              <span>Exchange: <strong>{{ skill.get_exchange_type_display }}</strong></span>
+            <div class="skill-card-body">
+              <p class="skill-description">{{ skill.description|truncatewords:20 }}</p>
+              <div class="skill-meta">
+                <div class="skill-rating">
+                  <i class="fa-solid fa-star"></i>
+                  <span>4.8</span>
+                </div>
+                <span><i class="fa-solid fa-handshake"></i> {{ skill.get_exchange_type_display }}</span>
+              </div>
+            </div>
+            <div class="skill-card-actions">
+              <button class="action-btn btn-view" onclick="openViewModal({{ skill.pk }}, '{{ skill.title|escapejs }}', '{{ skill.category|escapejs }}', '{{ skill.get_exchange_type_display|escapejs }}', '{{ skill.description|escapejs }}')">View Details</button>
+              <button class="action-btn btn-edit" onclick="openEditModal({{ skill.pk }})">Edit</button>
             </div>
           </div>
         {% endfor %}
@@ -59,53 +81,181 @@
     </div>
   </section>
 
-  <!-- MODAL FOR ADDING A NEW SKILL -->
-  <div id="add-skill-modal" class="modal-overlay">
+  <!-- VIEW DETAILS MODAL -->
+  <div id="view-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Skill Details</h2>
+        <button class="close-button" onclick="closeViewModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-section">
+          <h3>Title</h3>
+          <p id="view-title"></p>
+        </div>
+        <div class="detail-section">
+          <h3>Category</h3>
+          <p id="view-category"></p>
+        </div>
+        <div class="detail-section">
+          <h3>Exchange Type</h3>
+          <p id="view-exchange"></p>
+        </div>
+        <div class="detail-section">
+          <h3>Description</h3>
+          <p id="view-description"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeViewModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div id="edit-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Edit Skill</h2>
+        <button class="close-button" onclick="closeEditModal()">&times;</button>
+      </div>
+      <form class="modal-form" method="post" id="edit-form">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="edit-title">Skill Title</label>
+            <input type="text" id="edit-title" name="title" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-category">Category</label>
+            <input type="text" id="edit-category" name="category" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-exchange">Exchange Type</label>
+            <select id="edit-exchange" name="exchange_type" required>
+              <option value="free">Voluntary (Free)</option>
+              <option value="exchange">Skill Exchange</option>
+              <option value="paid">Paid Service</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-description">Description</label>
+            <textarea id="edit-description" name="description" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD SKILL MODAL -->
+  <div id="add-modal" class="modal-overlay">
     <div class="modal-box">
       <div class="modal-header">
         <h2>Add New Skill</h2>
-        <a href="#" class="close-button">&times;</a>
+        <button class="close-button" onclick="closeAddModal()">&times;</button>
       </div>
-
-      <!-- THE FORM NOW POSTS TO THE BACKEND -->
       <form class="modal-form" method="post" action="{% url 'my_skills' %}">
-        {% csrf_token %} <!-- IMPORTANT: Django security token -->
+        {% csrf_token %}
         <div class="modal-body">
           <p>Share your knowledge by adding a skill you can teach others.</p>
-
-          <!-- Skill Title -->
           <div class="form-group">
-            <label for="{{ form.title.id_for_label }}">Skill Title</label>
-            <!-- IMPORTANT: The 'name' attribute must match the form field name -->
-            <input type="text" id="{{ form.title.id_for_label }}" name="title" placeholder="e.g., React Development" required>
+            <label for="add-title">Skill Title</label>
+            <input type="text" id="add-title" name="title" placeholder="e.g., React Development" required>
           </div>
-
-          <!-- Category -->
           <div class="form-group">
-            <label for="{{ form.category.id_for_label }}">Category</label>
-            <input type="text" id="{{ form.category.id_for_label }}" name="category" placeholder="e.g., Technology, Arts, Academic" required>
+            <label for="add-category">Category</label>
+            <input type="text" id="add-category" name="category" placeholder="e.g., Technology, Arts, Academic" required>
           </div>
-
-          <!-- Exchange Type -->
           <div class="form-group">
-            <label for="{{ form.exchange_type.id_for_label }}">Exchange Type</label>
-            <!-- This renders the dropdown with choices from the model -->
+            <label for="add-exchange">Exchange Type</label>
             {{ form.exchange_type }}
           </div>
-
-          <!-- Description -->
           <div class="form-group">
-            <label for="{{ form.description.id_for_label }}">Description</label>
-            <textarea id="{{ form.description.id_for_label }}" name="description" rows="4" placeholder="Describe what you can teach and your experience..." required></textarea>
+            <label for="add-description">Description</label>
+            <textarea id="add-description" name="description" placeholder="Describe what you can teach and your experience..." required></textarea>
           </div>
         </div>
-
         <div class="modal-footer">
-          <a href="#" class="btn-secondary">Cancel</a>
+          <button type="button" class="btn-secondary" onclick="closeAddModal()">Cancel</button>
           <button type="submit" class="btn-primary">Add Skill</button>
         </div>
       </form>
     </div>
-    <a href="#" class="modal-close-bg"></a>
   </div>
+
+  <!-- Delete Confirmation Form (hidden) -->
+  <form id="delete-form" method="post" style="display: none;">
+    {% csrf_token %}
+  </form>
+
+  <script>
+    // View Modal Functions
+    function openViewModal(skillId, title, category, exchange, description) {
+      document.getElementById('view-title').textContent = title;
+      document.getElementById('view-category').textContent = category;
+      document.getElementById('view-exchange').textContent = exchange;
+      document.getElementById('view-description').textContent = description;
+      document.getElementById('view-modal').classList.add('active');
+    }
+
+    function closeViewModal() {
+      document.getElementById('view-modal').classList.remove('active');
+    }
+
+    // Edit Modal Functions
+    function openEditModal(skillId) {
+      // Set form action to your existing edit URL
+      document.getElementById('edit-form').action = `/skill/${skillId}/edit/`;
+
+      // Fetch skill data and populate form
+      fetch(`/skill/${skillId}/get/`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('edit-title').value = data.title;
+          document.getElementById('edit-category').value = data.category;
+          document.getElementById('edit-exchange').value = data.exchange_type;
+          document.getElementById('edit-description').value = data.description;
+        })
+        .catch(error => {
+          console.error('Error fetching skill data:', error);
+        });
+
+      document.getElementById('edit-modal').classList.add('active');
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.remove('active');
+    }
+
+    // Add Modal Functions
+    function openAddModal() {
+      document.getElementById('add-modal').classList.add('active');
+    }
+
+    function closeAddModal() {
+      document.getElementById('add-modal').classList.remove('active');
+    }
+
+    // Delete Function
+    function confirmDelete(skillId) {
+      if (confirm('Are you sure you want to delete this skill?')) {
+        const form = document.getElementById('delete-form');
+        form.action = `/skill/${skillId}/delete/`;
+        form.submit();
+      }
+    }
+
+    // Close modal when clicking outside
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('active');
+        }
+      });
+    });
+  </script>
 {% endblock %}

@@ -1,0 +1,364 @@
+/* Feedback Modal Styles */
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.modal.active .modal-content {
+  transform: scale(1);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 2px solid #f0f0f0;
+  background: linear-gradient(135deg, #fff5f5 0%, #fff9e6 100%);
+  border-radius: 20px 20px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #222;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #888;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s;
+  line-height: 1;
+}
+
+.close-modal:hover {
+  background-color: #f0f0f0;
+  color: #a10f0f;
+  transform: rotate(90deg);
+}
+
+/* Modal Body */
+.modal-body {
+  padding: 28px;
+}
+
+.modal-subtitle {
+  margin: 0 0 24px 0;
+  color: #666;
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.modal-subtitle strong {
+  color: #a10f0f;
+  font-weight: 600;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 28px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #333;
+  font-size: 1rem;
+}
+
+/* Star Rating */
+.star-rating {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.star-rating input {
+  display: none;
+}
+
+.star-rating label {
+  cursor: pointer;
+  font-size: 2.5rem;
+  color: #ddd;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating label.active {
+  color: #ffc107;
+  transform: scale(1.1);
+}
+
+.star-rating input:checked ~ label {
+  color: #ffc107;
+}
+
+/* Textarea */
+.form-group textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+  transition: all 0.3s;
+  background-color: #fafafa;
+  box-sizing: border-box;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: #a10f0f;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(161, 15, 15, 0.1);
+}
+
+.form-group textarea::placeholder {
+  color: #999;
+}
+
+/* Quick Tags */
+.quick-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-checkbox {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.tag-checkbox input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.tag-checkbox span {
+  display: inline-block;
+  padding: 10px 18px;
+  background-color: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555;
+  transition: all 0.3s;
+  user-select: none;
+}
+
+.tag-checkbox input:checked ~ span {
+  background-color: #fff9e6;
+  border-color: #ffcc00;
+  color: #800000;
+  font-weight: 600;
+}
+
+.tag-checkbox:hover span {
+  background-color: #e8e8e8;
+  border-color: #d0d0d0;
+}
+
+.tag-checkbox input:checked:hover ~ span {
+  background-color: #fff5d6;
+  border-color: #e6b800;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+
+.btn i {
+  font-size: 0.95rem;
+}
+
+.btn-primary {
+  background-color: #a10f0f;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #800000;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(161, 15, 15, 0.3);
+}
+
+.btn-secondary {
+  background-color: #f5f5f5;
+  color: #555;
+  border: 2px solid #ddd;
+}
+
+.btn-secondary:hover {
+  background-color: #e8e8e8;
+  border-color: #ccc;
+}
+
+/* Scrollbar for modal content */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+
+  .modal-header {
+    padding: 20px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .star-rating label {
+    font-size: 2rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .quick-tags {
+    gap: 8px;
+  }
+
+  .tag-checkbox span {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .close-modal {
+    font-size: 1.5rem;
+    width: 35px;
+    height: 35px;
+  }
+
+  .star-rating label {
+    font-size: 1.8rem;
+    gap: 4px;
+  }
+
+  .modal-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .form-group textarea {
+    min-height: 100px;
+  }
+}
