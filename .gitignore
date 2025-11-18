@@ -3,7 +3,7 @@ Django
 *.log
 *.pot
 *.pyc
-pycache/
+__pycache__/
 local_settings.py
 db.sqlite3
 media/
