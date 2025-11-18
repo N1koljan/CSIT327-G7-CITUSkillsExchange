@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings  # Use settings to reference the custom user model
 from django.contrib.postgres.search import SearchVectorField
+from .utils import get_conversation_id  # Add this line at the top with other imports
 
 # --- Your Existing CustomUser Model (No changes needed here) ---
 class CustomUser(AbstractUser):
@@ -276,21 +277,17 @@ class Exchange(models.Model):
 
 
 class Message(models.Model):
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='sent_messages',
-                               on_delete=models.CASCADE)
-    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='received_messages',
-                                  on_delete=models.CASCADE)
+    sender = models.ForeignKey(CustomUser, related_name="sent_messages", on_delete=models.CASCADE)
+    recipient = models.ForeignKey(CustomUser, related_name="received_messages", on_delete=models.CASCADE)
     content = models.TextField()
-    created_at = models.DateTimeField(default=timezone.now, db_index=True)
-    is_read = models.BooleanField(default=False, db_index=True)
-    conversation_id = models.CharField(max_length=255, blank=True, null=True, db_index=True)
+    conversation_id = models.CharField(max_length=50, db_index=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
 
-    class Meta:
-        ordering = ['created_at']
-        indexes = [
-            models.Index(fields=['recipient', 'is_read']),
-            models.Index(fields=['conversation_id', 'created_at']),
-        ]
+    def save(self, *args, **kwargs):
+        # Auto-generate conversation_id before saving
+        self.conversation_id = get_conversation_id(self.sender, self.recipient)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.sender} -> {self.recipient}: {self.content[:40]}"

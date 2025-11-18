@@ -11,6 +11,8 @@ from core.models import Skill, Request,Comment,  Rating
 from core.forms import CustomLoginForm, CustomSignUpForm, CommentForm
 from .forms import EditProfileForm, SkillForm
 
+
+
 # --- Existing Authentication & Profile Views ---
 
 def home(request):
@@ -148,7 +150,7 @@ def find_skill_view(request):
             Q(category__icontains=query)
         )
 
-    # We create one instance of the comment form to pass to the template for all skills.
+    # We create one instance of the comment form to pass to the templates for all skills.
     comment_form = CommentForm()
 
     context = {'skills': skills, 'query': query, 'comment_form': comment_form}

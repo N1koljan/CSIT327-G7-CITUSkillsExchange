@@ -19,16 +19,22 @@
 
         <div class="sidebar-search-bar">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" placeholder="Search in messages...">
+            <input type="text" id="contactSearch" placeholder="Search in messages...">
         </div>
 
         <div class="contact-list">
-            
             {% for conversation in conversations %}
-                <a href="#" class="contact-item {% if conversation.id == current_conversation_id %}active{% endif %}">
+                <a href="{% url 'core:chat_page' conversation.other_user.username %}"
+                   class="contact-item {% if other_user and conversation.other_user.id == other_user.id %}active{% endif %}">
                     <div class="contact-info">
-                        <span class="contact-name">{{ conversation.partner.name }}</span>
-                        <span class="last-message">{{ conversation.last_message|truncatewords:5 }}</span>
+                        <span class="contact-name">{{ conversation.other_user.username }}</span>
+                        <span class="last-message">
+                            {% if conversation.last_message %}
+                                {{ conversation.last_message.content|truncatewords:5 }}
+                            {% else %}
+                                No messages yet
+                            {% endif %}
+                        </span>
                     </div>
                     {% if conversation.unread_count > 0 %}
                         <span class="unread-count">{{ conversation.unread_count }}</span>
@@ -40,46 +46,41 @@
                     <p>No conversations started yet.</p>
                 </div>
             {% endfor %}
-
         </div>
     </aside>
 
     <main class="chat-main">
-        {% if current_chat_partner %}
+        {% if other_user %}
             <div class="chat-header">
-                <h2>{{ current_chat_partner.name }}</h2>
+                <h2>{{ other_user.username }}</h2>
             </div>
-            <div class="message-area">
-
+            <div class="message-area" id="messageArea">
                 {% for message in messages %}
                     <div class="message-bubble
-                                {% if message.sender == request.user %}outgoing{% else %}incoming{% endif %}
-                                {% if message.failed %}failed{% endif %}">
-
-                        <p>{{ message.text }}</p>
-
+                                {% if message.sender == request.user %}outgoing{% else %}incoming{% endif %}">
+                        <p>{{ message.content }}</p>
                         <span class="timestamp">
-                            {% if message.failed %}
-                                <i class="fa-solid fa-circle-exclamation"></i> Failed to send. <a href="#">Retry</a>
-                            {% else %}
-                                {{ message.timestamp|time:"f A" }}
-                            {% endif %}
+                            {{ message.created_at|date:"g:i A" }}
                         </span>
                     </div>
                 {% empty %}
                     <div class="chat-empty-state">
                         <i class="fa-regular fa-hand-peace"></i>
-                        <p>This is the start of your conversation with {{ current_chat_partner.name }}.</p>
+                        <p>This is the start of your conversation with {{ other_user.username }}.</p>
                         <span>Say hello!</span>
                     </div>
                 {% endfor %}
-
-            </div>
-            <div class="chat-input-area">
-                <textarea placeholder="Type a message..."></textarea>
-                <button class="send-button"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
 
+            <form id="messageForm" style="display: contents;">
+                {% csrf_token %}
+                <div class="chat-input-area">
+                    <textarea id="messageInput" placeholder="Type a message..." required></textarea>
+                    <button type="submit" class="send-button">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
         {% else %}
             <div class="chat-header">
                 <h2>Messages</h2>
@@ -93,7 +94,7 @@
     </main>
 </div>
 
-<!-- Modal placed AFTER chat-page-container closes -->
+<!-- New Message Modal -->
 <div class="modal-overlay" id="newMessageModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -104,15 +105,16 @@
         </div>
         <p class="modal-subtitle">Start a new conversation with a peer</p>
 
-        <form class="new-message-form">
+        <form class="new-message-form" id="newMessageForm">
+            {% csrf_token %}
             <div class="form-group">
-                <label for="recipientName">Recipient Name</label>
-                <input type="text" id="recipientName" placeholder="Enter user name..." required>
+                <label for="recipientName">Recipient Username</label>
+                <input type="text" id="recipientName" placeholder="Enter username..." required>
             </div>
 
             <div class="form-group">
-                <label for="messageText">Message (Optional)</label>
-                <textarea id="messageText" placeholder="Type your message..." rows="4"></textarea>
+                <label for="messageText">Message</label>
+                <textarea id="messageText" placeholder="Type your message..." rows="4" required></textarea>
             </div>
 
             <div class="modal-actions">
@@ -126,92 +128,215 @@
 
 {% block scripts %}
 <script>
-    console.log('Script is loading...');
+document.addEventListener('DOMContentLoaded', function() {
+    const messageArea = document.querySelector('.message-area');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const conversationId = "{{ conversation_id|default:'' }}";
+    const otherUsername = "{{ other_user.username|default:'' }}";
 
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM is ready!');
+    // Auto-scroll to bottom of messages
+    if (messageArea) {
+        messageArea.scrollTop = messageArea.scrollHeight;
+    }
 
-        const messageArea = document.querySelector('.message-area');
-        if (messageArea) {
-            messageArea.scrollTop = messageArea.scrollHeight;
+    // WebSocket connection for real-time messages
+    let chatSocket = null;
+    if (conversationId) {
+        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsPath = `${wsScheme}://${window.location.host}/ws/chat/${conversationId}/`;
+
+        chatSocket = new WebSocket(wsPath);
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            appendMessage(data.message, data.sender_username, false);
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+    }
+
+    // Handle message form submission
+    if (messageForm) {
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                // Send via WebSocket
+                chatSocket.send(JSON.stringify({
+                    'message': message,
+                    'sender_username': '{{ request.user.username }}'
+                }));
+
+                appendMessage(message, '{{ request.user.username }}', true);
+                messageInput.value = '';
+            } else {
+                // Fallback to AJAX if WebSocket not available
+                sendMessageAjax(message);
+            }
+        });
+    }
+
+    // AJAX fallback for sending messages
+    function sendMessageAjax(message) {
+    fetch(`/core/api/send-message/${otherUsername}/`, {  // ← Added /core/
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            appendMessage(message, '{{ request.user.username }}', true);
+            messageInput.value = '';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+    // Append message to chat area
+    function appendMessage(content, senderUsername, isOutgoing) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message-bubble ${isOutgoing ? 'outgoing' : 'incoming'}`;
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+
+        messageDiv.innerHTML = `
+            <p>${escapeHtml(content)}</p>
+            <span class="timestamp">${timeString}</span>
+        `;
+
+        // Remove empty state if exists
+        const emptyState = messageArea.querySelector('.chat-empty-state');
+        if (emptyState) {
+            emptyState.remove();
         }
 
-        const contactItems = document.querySelectorAll('.contact-item');
-        contactItems.forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                contactItems.forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
+        messageArea.appendChild(messageDiv);
+        messageArea.scrollTop = messageArea.scrollHeight;
+    }
 
-                const contactName = this.querySelector('.contact-name');
-                const chatHeader = document.querySelector('.chat-main .chat-header h2');
-                if (contactName && chatHeader) {
-                    chatHeader.textContent = contactName.textContent;
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // New Message Modal
+    const newMessageBtn = document.querySelector('.new-message-btn');
+    const modal = document.getElementById('newMessageModal');
+    const closeModalBtn = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const newMessageForm = document.getElementById('newMessageForm');
+
+    if (newMessageBtn && modal) {
+        newMessageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            modal.classList.add('active');
+        });
+    }
+
+    function closeModalFunc() {
+        modal.classList.remove('active');
+        if (newMessageForm) newMessageForm.reset();
+    }
+
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModalFunc);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModalFunc);
+
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModalFunc();
+        });
+    }
+
+    // Handle new message form submission
+    if (newMessageForm) {
+        newMessageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const recipientName = document.getElementById('recipientName').value.trim();
+            const messageText = document.getElementById('messageText').value.trim();
+
+            if (!recipientName || !messageText) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // FIXED: Use the correct URL path with /core/ prefix
+            fetch(`/core/api/send-message/${recipientName}/`, {  // ← Added /core/
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ message: messageText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = `/core/messages/${recipientName}/`;  // ← Added /core/
+                } else {
+                    alert(data.error || 'Failed to send message');
+                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to send message');
+            });
+        });
+    }
+
+    function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+    // Contact search functionality
+    const contactSearch = document.getElementById('contactSearch');
+    if (contactSearch) {
+        contactSearch.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const contacts = document.querySelectorAll('.contact-item');
+
+            contacts.forEach(contact => {
+                const name = contact.querySelector('.contact-name').textContent.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    contact.style.display = '';
+                } else {
+                    contact.style.display = 'none';
                 }
             });
         });
-
-        // Modal functionality
-        const newMessageBtn = document.querySelector('.new-message-btn');
-        const modal = document.getElementById('newMessageModal');
-
-        console.log('Button found:', newMessageBtn);
-        console.log('Modal found:', modal);
-
-        if (newMessageBtn && modal) {
-            console.log('Adding click listener to button...');
-
-            newMessageBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('BUTTON CLICKED!');
-                console.log('Modal before:', modal.className);
-                modal.classList.add('active');
-                console.log('Modal after:', modal.className);
-            });
-        } else {
-            console.error('Button or Modal not found!');
-        }
-
-        // Close modal functionality
-        const closeModal = document.getElementById('closeModal');
-        const cancelBtn = document.getElementById('cancelBtn');
-
-        function closeModalFunc() {
-            console.log('Closing modal...');
-            modal.classList.remove('active');
-            const form = document.querySelector('.new-message-form');
-            if (form) form.reset();
-        }
-
-        if (closeModal) {
-            closeModal.addEventListener('click', closeModalFunc);
-        }
-
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', closeModalFunc);
-        }
-
-        if (modal) {
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    closeModalFunc();
-                }
-            });
-        }
-
-        // Handle form submission
-        const form = document.querySelector('.new-message-form');
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const recipientName = document.getElementById('recipientName').value;
-                const messageText = document.getElementById('messageText').value;
-                console.log('New conversation with:', recipientName);
-                console.log('Initial message:', messageText);
-                closeModalFunc();
-            });
-        }
-    });
+    }
+});
 </script>
 {% endblock %}

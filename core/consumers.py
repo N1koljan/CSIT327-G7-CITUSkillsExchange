@@ -1,10 +1,13 @@
 # core/consumers.py
 
 import json
+from .utils import get_conversation_id
+from .models import CustomUser
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from django.utils import timezone
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -48,17 +51,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
     """
 
     async def connect(self):
-        """Called when the WebSocket is handshaking."""
-        self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
-        self.room_group_name = f'chat_{self.conversation_id}'
         self.user = self.scope['user']
 
-        # Require authentication
         if not self.user.is_authenticated:
             await self.close()
             return
 
-        # Join room group
+        # 👇 CHANGED: Get conversation_id directly from URL (not username)
+        self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
+
+        # WebSocket group name
+        self.room_group_name = f"chat_{self.conversation_id}"
+
+        # Join group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
@@ -66,10 +71,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        # Send connection confirmation
+        # 👇 Send chat history immediately on connect
+        history = await self.get_chat_history()
+
         await self.send(text_data=json.dumps({
-            'type': 'connection_established',
-            'message': 'Connected to chat'
+            "type": "chat_history",
+            "messages": [
+                {
+                    "id": msg["id"],
+                    "sender_id": msg["sender_id"],
+                    "recipient_id": msg["recipient_id"],
+                    "sender_username": await self.get_username(msg["sender_id"]),
+                    "content": msg["content"],
+                    "timestamp": msg["created_at"].isoformat(),
+                    "is_read": msg["is_read"]
+                }
+                for msg in history
+            ]
         }))
 
     async def disconnect(self, close_code):
@@ -205,7 +223,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     # Database operations
     @database_sync_to_async
     def save_message(self, sender, recipient_username, content, conversation_id):
-        """Save message to database. (Task 6.1.5: Save chat history in DB)"""
+        """Save message to database and return with sender username."""
         try:
             from .models import CustomUser, Message
             recipient = CustomUser.objects.get(username=recipient_username)
@@ -240,3 +258,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             print(f"Error marking message as read: {e}")
             return False
+
+    @database_sync_to_async
+    def get_chat_history(self):
+        from .models import Message
+
+        return list(
+            Message.objects.filter(conversation_id=self.conversation_id)
+            .order_by("created_at")
+            .values("id", "sender_id", "recipient_id", "content", "created_at", "is_read")
+        )
+
+    @database_sync_to_async
+    def get_username(self, user_id):
+        """Get username from user_id"""
+        try:
+            from .models import CustomUser
+            user = CustomUser.objects.get(id=user_id)
+            return user.username
+        except CustomUser.DoesNotExist:
+            return "Unknown"

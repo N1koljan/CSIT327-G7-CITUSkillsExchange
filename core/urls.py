@@ -4,7 +4,7 @@ from django.urls import path
 from . import views
 
 # 👇 ======================= THIS IS THE FIX ======================= 👇
-# Add this line to create the 'core' namespace that the template is looking for.
+# Add this line to create the 'core' namespace that the templates is looking for.
 app_name = 'core'
 # 👆 ============================================================= 👆
 
@@ -20,10 +20,11 @@ urlpatterns = [
     path('request/<int:request_id>/complete/', views.complete_session, name='complete_session'),
 
     #========== ADD THESE 4 CHAT URLs ==========
-    path('chat/<str:username>/', views.chat_page, name='chat_page'),
-    path('conversations/', views.conversation_list, name='conversation_list'),
+    path('messages/', views.conversation_list, name='conversation_list'),  # Changed from 'conversations/'
+    path('messages/<str:username>/', views.chat_page, name='chat_page'),  # Changed from 'chat/'
     path('api/unread-count/', views.get_unread_count, name='get_unread_count'),
     path('api/mark-read/<str:username>/', views.mark_conversation_as_read, name='mark_conversation_as_read'),
+    path('api/send-message/<str:username>/', views.send_message_api, name='send_message_api'),
 
     # ========== SEARCH URLs (Task 7.1.1) ==========
     path('search/', views.search_skills, name='search_skills'),

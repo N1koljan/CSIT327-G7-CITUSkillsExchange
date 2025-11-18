@@ -1,0 +1,443 @@
+{% extends 'ui/base.html' %}
+{% load static %}
+
+{% block title %}Messages - CIT-U Skills Exchange{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'ui/css/chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="chat-page-container">
+    <aside class="chat-sidebar">
+        <div class="sidebar-header">
+            <h2>Messages</h2>
+            <button class="new-message-btn" title="New Message">
+                <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="contactSearch" placeholder="Search in messages...">
+        </div>
+
+        <div class="contact-list">
+    {% for conversation in conversations %}
+        <a href="{% url 'core:chat_page' conversation.other_user.username %}"
+           class="contact-item {% if other_user and conversation.other_user.id == other_user.id %}active{% endif %}">
+            <div class="contact-info">
+                <span class="contact-name">{{ conversation.other_user.username }}</span>
+                <span class="last-message">
+                    {% if conversation.last_message %}
+                        {{ conversation.last_message.content|truncatewords:5 }}
+                    {% else %}
+                        No messages yet
+                    {% endif %}
+                </span>
+            </div>
+            {% if conversation.unread_count > 0 %}
+                <span class="unread-count">{{ conversation.unread_count }}</span>
+            {% endif %}
+        </a>
+    {% empty %}
+        <div class="contact-list-empty">
+            <i class="fa-regular fa-comments"></i>
+            <p>No conversations started yet.</p>
+        </div>
+    {% endfor %}
+</div>
+    </aside>
+
+    <main class="chat-main">
+        {% if other_user %}
+            <div class="chat-header">
+                <h2>{{ other_user.username }}</h2>
+            </div>
+            <div class="message-area" id="messageArea">
+    {% if chat_messages %}  {# ✅ CHANGED from 'messages' #}
+        {# Display existing messages from database #}
+        {% for message in chat_messages %}  {# ✅ CHANGED from 'messages' #}
+            <div class="message-bubble {% if message.sender == request.user %}outgoing{% else %}incoming{% endif %}">
+                <p>{{ message.content }}</p>
+                <span class="timestamp">
+                    {{ message.created_at|date:"g:i A" }}
+                </span>
+            </div>
+        {% endfor %}
+    {% else %}
+        {# Show empty state only if no messages exist #}
+        {% if other_user %}
+            <div class="chat-empty-state">
+                <i class="fa-regular fa-hand-peace"></i>
+                <p>This is the start of your conversation with {{ other_user.username }}.</p>
+                <span>Say hello!</span>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+            <form id="messageForm" style="display: contents;">
+                {% csrf_token %}
+                <div class="chat-input-area">
+                    <textarea id="messageInput" placeholder="Type a message..." required></textarea>
+                    <button type="submit" class="send-button">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <div class="chat-header">
+                <h2>Messages</h2>
+            </div>
+            <div class="message-area chat-empty-state-full">
+                <i class="fa-solid fa-inbox"></i>
+                <h3>Select a conversation</h3>
+                <p>Choose from your existing conversations on the left to start chatting.</p>
+            </div>
+        {% endif %}
+    </main>
+</div>
+
+<!-- New Message Modal -->
+<div class="modal-overlay" id="newMessageModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>New Message</h3>
+            <button class="modal-close" id="closeModal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <p class="modal-subtitle">Start a new conversation with a peer</p>
+
+        <form class="new-message-form" id="newMessageForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="recipientName">Recipient Username</label>
+                <input type="text" id="recipientName" placeholder="Enter username..." required>
+            </div>
+
+            <div class="form-group">
+                <label for="messageText">Message</label>
+                <textarea id="messageText" placeholder="Type your message..." rows="4" required></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+                <button type="submit" class="btn-start-chat">Start Chat</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messageArea = document.getElementById('messageArea');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const conversationId = "{{ conversation_id|default:'' }}";
+    const otherUsername = "{{ other_user.username|default:'' }}";
+    const currentUsername = "{{ request.user.username }}";
+    const currentUserId = {{ request.user.id }};
+
+    // Scroll to bottom on page load if there are messages
+    if (messageArea && messageArea.scrollHeight > messageArea.clientHeight) {
+        scrollToBottom();
+    }
+
+    // WebSocket connection
+    let chatSocket = null;
+    let wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+
+    function connectWebSocket() {
+        if (!conversationId) {
+            console.log('No conversation selected');
+            return;
+        }
+
+        const wsPath = `${wsScheme}://${window.location.host}/ws/chat/${conversationId}/`;
+        console.log('Connecting to WebSocket:', wsPath);
+
+        chatSocket = new WebSocket(wsPath);
+
+        chatSocket.onopen = function(e) {
+            console.log('✅ WebSocket connected successfully');
+            reconnectAttempts = 0;
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log('📩 Received:', data);
+
+            if (data.type === "chat_history") {
+                console.log('📜 WebSocket chat_history received - messages already rendered by template');
+                // Don't do anything - template already rendered the messages
+                // Just ensure we're scrolled to bottom
+                scrollToBottom();
+            }
+            else if (data.type === "chat_message") {
+                console.log('💬 New message from:', data.sender);
+                const isOutgoing = data.sender === currentUsername;
+
+                // Remove empty state if it exists
+                const emptyState = messageArea.querySelector('.chat-empty-state');
+                if (emptyState) emptyState.remove();
+
+                appendMessageFromHistory(data.message, data.timestamp, isOutgoing);
+            }
+            else if (data.type === "typing") {
+                if (data.username !== currentUsername) {
+                    showTypingIndicator(data.username);
+                }
+            }
+            else if (data.type === "typing_stop") {
+                hideTypingIndicator();
+            }
+        };
+
+        chatSocket.onerror = function(e) {
+            console.error('❌ WebSocket error:', e);
+        };
+
+        chatSocket.onclose = function(e) {
+            console.log('🔌 WebSocket closed. Code:', e.code, 'Reason:', e.reason);
+
+            // Attempt to reconnect
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                const delay = 2000 * reconnectAttempts;
+                console.log(`🔄 Reconnecting in ${delay/1000}s... (Attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+                setTimeout(connectWebSocket, delay);
+            } else {
+                console.error('❌ Max reconnection attempts reached');
+                showConnectionError();
+            }
+        };
+    }
+
+    // Initialize WebSocket if conversation exists
+    if (conversationId) {
+        console.log('🚀 Initializing chat for conversation:', conversationId);
+        connectWebSocket();
+    } else {
+        console.log('ℹ️ No conversation selected - showing conversation list');
+    }
+
+    // Message form submit
+    if (messageForm) {
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+
+            if (!message) {
+                console.warn('⚠️ Empty message, not sending');
+                return;
+            }
+
+            if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
+                console.error('❌ WebSocket not connected. State:', chatSocket?.readyState);
+                alert('Connection lost. Attempting to reconnect...');
+                connectWebSocket();
+                return;
+            }
+
+            console.log('📤 Sending message:', message);
+
+            chatSocket.send(JSON.stringify({
+                type: "chat_message",
+                message: message,
+                recipient: otherUsername
+            }));
+
+            messageInput.value = '';
+            messageInput.style.height = 'auto'; // Reset textarea height
+            messageInput.focus();
+        });
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+
+    // Append message from history (with ISO timestamp)
+    function appendMessageFromHistory(content, isoTimestamp, isOutgoing) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message-bubble ${isOutgoing ? 'outgoing' : 'incoming'}`;
+
+        // Convert ISO timestamp to readable format
+        const date = new Date(isoTimestamp);
+        const timeString = date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+
+        messageDiv.innerHTML = `
+            <p>${escapeHtml(content)}</p>
+            <span class="timestamp">${timeString}</span>
+        `;
+
+        messageArea.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    function scrollToBottom() {
+        if (messageArea) {
+            messageArea.scrollTop = messageArea.scrollHeight;
+        }
+    }
+
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function showConnectionError() {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'connection-error';
+        errorDiv.style.cssText = 'background: #fee; border: 1px solid #fcc; color: #c00; padding: 10px; border-radius: 8px; margin: 10px; text-align: center;';
+        errorDiv.innerHTML = `
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            <p>Connection lost. <a href="#" onclick="location.reload()">Refresh page</a></p>
+        `;
+        messageArea.insertBefore(errorDiv, messageArea.firstChild);
+    }
+
+    // Typing indicator
+    let typingTimeout;
+
+    if (messageInput) {
+        messageInput.addEventListener("input", () => {
+            if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) return;
+
+            chatSocket.send(JSON.stringify({
+                type: "typing",
+                is_typing: true
+            }));
+
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                chatSocket.send(JSON.stringify({
+                    type: "typing",
+                    is_typing: false
+                }));
+            }, 1500);
+        });
+    }
+
+    function showTypingIndicator(username) {
+        let indicator = document.getElementById("typingIndicator");
+        if (!indicator) {
+            indicator = document.createElement("div");
+            indicator.id = "typingIndicator";
+            indicator.className = "typing-indicator";
+            indicator.style.cssText = 'padding: 10px; margin: 10px 0; background: rgba(0,0,0,0.05); border-radius: 8px; font-size: 0.9em; color: #666;';
+            indicator.innerHTML = `
+                <div class="typing-dots">
+                    <span>${escapeHtml(username)} is typing</span>
+                    <span class="dots">
+                        <span>.</span><span>.</span><span>.</span>
+                    </span>
+                </div>
+            `;
+            messageArea.appendChild(indicator);
+            scrollToBottom();
+        }
+    }
+
+    function hideTypingIndicator() {
+        const indicator = document.getElementById("typingIndicator");
+        if (indicator) indicator.remove();
+    }
+
+    // New Message Modal functionality
+    const newMessageBtn = document.querySelector('.new-message-btn');
+    const newMessageModal = document.getElementById('newMessageModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const newMessageForm = document.getElementById('newMessageForm');
+
+    if (newMessageBtn) {
+        newMessageBtn.addEventListener('click', () => {
+            newMessageModal.style.display = 'flex';
+        });
+    }
+
+    if (closeModal) {
+        closeModal.addEventListener('click', () => {
+            newMessageModal.style.display = 'none';
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            newMessageModal.style.display = 'none';
+        });
+    }
+
+    if (newMessageModal) {
+        newMessageModal.addEventListener('click', (e) => {
+            if (e.target === newMessageModal) {
+                newMessageModal.style.display = 'none';
+            }
+        });
+    }
+
+    if (newMessageForm) {
+        newMessageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const recipientName = document.getElementById('recipientName').value.trim();
+
+            if (recipientName) {
+                // Redirect to chat with that user
+                window.location.href = `/core/messages/${recipientName}/`;
+            }
+        });
+    }
+
+    // Contact search functionality
+    const contactSearch = document.getElementById('contactSearch');
+    if (contactSearch) {
+        contactSearch.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const contactItems = document.querySelectorAll('.contact-item');
+
+            contactItems.forEach(item => {
+                const name = item.querySelector('.contact-name').textContent.toLowerCase();
+                const message = item.querySelector('.last-message')?.textContent.toLowerCase() || '';
+
+                if (name.includes(searchTerm) || message.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Enter key to send (Shift+Enter for new line)
+    if (messageInput) {
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                messageForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    }
+
+    console.log('✅ Chat initialization complete');
+});
+</script>
+{% endblock %}

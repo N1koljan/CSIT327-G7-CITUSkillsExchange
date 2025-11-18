@@ -7,6 +7,7 @@ from .forms import CustomSignUpForm, SkillRequestForm, BarterProposalForm, Feedb
 from .models import CustomUser, Skill, Request, BarterProposal, Transaction, Rating
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from django.http import JsonResponse
 
 # Real-time imports
 from channels.layers import get_channel_layer
@@ -14,6 +15,62 @@ from asgiref.sync import async_to_sync
 from django.db.models import Max
 from django.http import JsonResponse
 from .models import Message
+from django.db.models import Q, Max, Count, Case, When, IntegerField
+from .utils import get_conversation_id
+import json
+
+
+def get_user_conversations(user):
+    """
+    Helper function to get all conversations for a user with metadata.
+    Fixed to prevent duplicate conversation entries.
+    """
+
+    # Get all unique conversation_ids where user is involved
+    conversations_data = Message.objects.filter(
+        Q(sender=user) | Q(recipient=user)
+    ).values('conversation_id').annotate(
+        last_message_time=Max('created_at'),
+        unread_count=Count(
+            Case(
+                When(recipient=user, is_read=False, then=1),
+                output_field=IntegerField()
+            )
+        )
+    ).order_by('-last_message_time')
+
+
+    conversation_list = []
+    seen_users = set()  # Track users we've already added
+
+    for conv_data in conversations_data:
+        conv_id = conv_data['conversation_id']
+
+        # Get the last message for this conversation
+        last_msg = Message.objects.filter(
+            conversation_id=conv_id
+        ).select_related('sender', 'recipient').order_by('-created_at').first()
+
+        if last_msg:
+            # Determine who the "other user" is
+            other_user = last_msg.recipient if last_msg.sender == user else last_msg.sender
+
+            print(f"  Other user: {other_user.username}, ID: {other_user.id}")  # DEBUG
+
+            # Skip if we've already added this user
+            if other_user.id in seen_users:
+                continue
+
+            seen_users.add(other_user.id)
+
+            conversation_list.append({
+                'other_user': other_user,
+                'last_message': last_msg,
+                'unread_count': conv_data['unread_count'],
+                'conversation_id': conv_id
+            })
+
+    return conversation_list
 
 # This is your existing signup view. It's perfectly fine.
 def signup_view(request):
@@ -235,32 +292,38 @@ def complete_session(request, request_id):
 def chat_page(request, username):
     """
     Display chat page for a conversation with another user.
-    Task 6.1.3 dependency - This view will be used by Nicole's chat UI.
     """
     other_user = get_object_or_404(CustomUser, username=username)
     current_user = request.user
 
-    # Generate conversation_id (consistent for both users)
-    users_sorted = sorted([current_user.username, other_user.username])
-    conversation_id = f"{users_sorted[0]}_{users_sorted[1]}"
+    # Prevent users from chatting with themselves
+    if other_user == current_user:
+        messages.error(request, "You cannot chat with yourself.")
+        return redirect('core:conversation_list')
 
-    # Get chat history (Task 6.1.5: Save chat history in DB)
+    # Generate conversation_id
+    conversation_id = get_conversation_id(current_user, other_user)
+
+    # Get chat history using conversation_id
     messages_list = Message.objects.filter(
-        Q(sender=current_user, recipient=other_user) |
-        Q(sender=other_user, recipient=current_user)
-    ).order_by('created_at')
+        conversation_id=conversation_id
+    ).select_related('sender', 'recipient').order_by('created_at')
 
-    # Mark messages from other user as read (Task 6.1.8: Add unread message)
+    # Mark messages as read
     Message.objects.filter(
-        sender=other_user,
+        conversation_id=conversation_id,
         recipient=current_user,
         is_read=False
     ).update(is_read=True)
 
+    # Get all conversations for sidebar
+    conversations = get_user_conversations(current_user)
+
     context = {
         'other_user': other_user,
         'conversation_id': conversation_id,
-        'messages': messages_list,
+        'chat_messages': messages_list,  # ✅ CHANGED from 'messages' to 'chat_messages'
+        'conversations': conversations,
     }
 
     return render(request, 'core/chat.html', context)
@@ -270,67 +333,18 @@ def chat_page(request, username):
 def conversation_list(request):
     """
     Display list of all conversations for the current user.
-    Task 6.1.6 dependency - Will be implemented by Gerard Grant Estella.
-    Shows latest message preview and unread count.
+    This is the default chat page when no conversation is selected.
     """
-    current_user = request.user
-
-    # Get all users the current user has conversations with
-    conversations = Message.objects.filter(
-        Q(sender=current_user) | Q(recipient=current_user)
-    ).values(
-        'sender', 'recipient'
-    ).annotate(
-        last_message_time=Max('created_at')
-    ).order_by('-last_message_time')
-
-    # Build conversation list with details
-    conversation_list = []
-    seen_users = set()
-
-    for conv in conversations:
-        # Determine the other user
-        if conv['sender'] == current_user.id:
-            other_user_id = conv['recipient']
-        else:
-            other_user_id = conv['sender']
-
-        # Skip if we've already processed this user
-        if other_user_id in seen_users:
-            continue
-        seen_users.add(other_user_id)
-
-        other_user = CustomUser.objects.get(id=other_user_id)
-
-        # Get last message
-        last_message = Message.objects.filter(
-            Q(sender=current_user, recipient=other_user) |
-            Q(sender=other_user, recipient=current_user)
-        ).order_by('-created_at').first()
-
-        # Count unread messages (Task 6.1.8: Add unread message)
-        unread_count = Message.objects.filter(
-            sender=other_user,
-            recipient=current_user,
-            is_read=False
-        ).count()
-
-        # Generate conversation_id
-        users_sorted = sorted([current_user.username, other_user.username])
-        conversation_id = f"{users_sorted[0]}_{users_sorted[1]}"
-
-        conversation_list.append({
-            'other_user': other_user,
-            'last_message': last_message,
-            'unread_count': unread_count,
-            'conversation_id': conversation_id,
-        })
+    conversations = get_user_conversations(request.user)
 
     context = {
-        'conversations': conversation_list,
+        'conversations': conversations,
+        'other_user': None,
+        'conversation_id': None,
+        'chat_messages': [],  # ✅ CHANGED from 'messages' to 'chat_messages'
     }
 
-    return render(request, 'core/conversation_list.html', context)
+    return render(request, 'core/chat.html', context)
 
 
 @login_required
@@ -530,3 +544,41 @@ def search_autocomplete(request):
     return JsonResponse({
         'suggestions': suggestions[:8]  # Max 8 suggestions
     })
+
+
+@login_required
+@require_POST
+def send_message_api(request, username):
+    """
+    API endpoint to send a message via AJAX.
+    """
+    try:
+        other_user = get_object_or_404(CustomUser, username=username)
+        data = json.loads(request.body)
+        message_content = data.get('message', '').strip()
+
+        if not message_content:
+            return JsonResponse({'success': False, 'error': 'Message cannot be empty'})
+
+        # Calculate conversation_id
+        conversation_id = get_conversation_id(request.user, other_user)
+
+
+        # Create message
+        message = Message.objects.create(
+            sender=request.user,
+            recipient=other_user,
+            content=message_content,
+            conversation_id=conversation_id
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message_id': message.id,
+            'timestamp': message.created_at.strftime('%I:%M %p')
+        })
+
+    except CustomUser.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
