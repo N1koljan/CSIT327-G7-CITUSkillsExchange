@@ -1,12 +1,8 @@
-# in core/models.py
-
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.conf import settings  # Use settings to reference the custom user model
+from django.conf import settings
 
-
-# --- Your Existing CustomUser Model (No changes needed here) ---
 class CustomUser(AbstractUser):
     DEPARTMENT_CHOICES = [
         ('CS', 'Computer Science'),
@@ -30,40 +26,23 @@ class CustomUser(AbstractUser):
         return self.username
 
 
-# --- NEW MODELS FOR SPRINT 2 ---
-
 class Skill(models.Model):
-    """
-    Represents a skill that a student can offer.
-    Corresponds to User Story US-01: Skill Management.
-    """
-    # Define choices for the exchange type, as per WBS ID 4
     EXCHANGE_TYPE_CHOICES = [
         ('Voluntary', 'Voluntary (Free)'),
         ('Barter', 'Barter (Skill for Skill)'),
         ('Low-Cost', 'Low-Cost (Small Fee)'),
     ]
 
-    # The student who owns/offers this skill.
-    # ForeignKey creates a many-to-one relationship. One user can have many skills.
-    # related_name='skills' lets us do user.skills.all() to get all skills for a user.
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='skills')
-
     title = models.CharField(max_length=100)
     description = models.TextField(max_length=1000)
-    category = models.CharField(max_length=50)  # Example: 'Programming', 'Math', 'Writing'
-
-    # The exchange type field with the predefined choices.
+    category = models.CharField(max_length=50)
     exchange_type = models.CharField(max_length=20, choices=EXCHANGE_TYPE_CHOICES, default='Voluntary')
-
-    # Timestamps for tracking when the skill was created or last updated.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        # Ensures that a user cannot create two skills with the exact same title.
         unique_together = ('owner', 'title')
-        # Default ordering: show the newest skills first, as per US-01.6
         ordering = ['-created_at']
 
     def __str__(self):
@@ -71,99 +50,57 @@ class Skill(models.Model):
 
 
 class Request(models.Model):
-    """
-    Represents a request made by one student for another student's skill.
-    Corresponds to User Story US-02: Request Management.
-    """
     REQUEST_STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('Accepted', 'Accepted'),
         ('Declined', 'Declined'),
-        ('Completed', 'Completed'),  # <-- ADD THIS LINE
+        ('Completed', 'Completed'),
     ]
 
-    # 👇 NEW: Add choices for payment method
     PAYMENT_CHOICES = [
         ('Online', 'Online Payment'),
         ('Cash', 'Cash on Meetup'),
     ]
 
-    # The skill that is being requested.
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='requests')
-
-    # The student who is making the request.
     requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_requests')
-
-    # 👇 MODIFIED: Renamed from 'message' to be more specific
     extra_description = models.TextField(max_length=500, help_text="Explain what you need help with.")
-
-    # 👇 NEW: Field for the proposed date and time
     requested_date_time = models.CharField(max_length=100, blank=True, null=True, help_text="e.g., 'Tomorrow around 5 PM', or 'Weekend anytime'")
-
-    # 👇 NEW: Field for the payment choice
     payment_choice = models.CharField(max_length=10, choices=PAYMENT_CHOICES, null=True, blank=True)
-
-    # The current status of the request. Defaults to 'Pending'.
     status = models.CharField(max_length=20, choices=REQUEST_STATUS_CHOICES, default='Pending')
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        # A user can only request a specific skill once while a request is pending. (Adjust if needed)
         unique_together = ('skill', 'requester')
-        # Default ordering: show the newest requests first.
         ordering = ['-created_at']
 
     def __str__(self):
         return f"Request for '{self.skill.title}' from {self.requester.username} ({self.status})"
 
 class Comment(models.Model):
-        """
-        Represents a comment made by a user on a specific skill.
-        """
-        # The skill the comment is attached to. If a skill is deleted, all its comments are also deleted.
-        # related_name='comments' lets us easily access all comments for a skill with skill.comments.all()
-        skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='comments')
+    skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    content = models.TextField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-        # The user who wrote the comment.
-        author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    class Meta:
+        ordering = ['-created_at']
 
-        # The actual text content of the comment.
-        content = models.TextField(max_length=500)
-
-        # Automatically records the time the comment was created.
-        created_at = models.DateTimeField(auto_now_add=True)
-
-        class Meta:
-            # Orders the comments with the newest ones appearing first.
-            ordering = ['-created_at']
-
-        def __str__(self):
-            return f'Comment by {self.author.username} on {self.skill.title}'
+    def __str__(self):
+        return f'Comment by {self.author.username} on {self.skill.title}'
 
 
 class BarterProposal(models.Model):
-    """
-    Represents a barter proposal made in response to an accepted 'Barter' type skill request.
-    WBS ID: 5.2.1
-    """
     PROPOSAL_STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('Accepted', 'Accepted'),
         ('Declined', 'Declined'),
     ]
 
-    # The original request this proposal is for. A request can only have one barter proposal.
     request = models.OneToOneField(Request, on_delete=models.CASCADE, related_name='barter_proposal')
-
-    # The skill being offered by the original requester in exchange.
-    # We limit choices to skills owned by the requester in the form.
     offered_skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='barter_offers')
-
-    # Status of the proposal, managed by the skill owner.
     status = models.CharField(max_length=20, choices=PROPOSAL_STATUS_CHOICES, default='Pending')
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -172,32 +109,18 @@ class BarterProposal(models.Model):
 
 
 class Transaction(models.Model):
-    """
-    Logs a completed exchange, serving as a history record.
-    WBS ID: 5.3.1
-    """
     TRANSACTION_STATUS_CHOICES = [
         ('Completed', 'Completed'),
         ('Cancelled', 'Cancelled'),
     ]
 
-    # The original request that led to this transaction.
     request = models.ForeignKey(Request, on_delete=models.SET_NULL, null=True, related_name='transactions')
-
-    # The user who provided the skill/service.
     provider = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
                                  related_name='provided_transactions')
-
-    # The user who received the skill/service.
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
                                  related_name='received_transactions')
-
-    # The type of exchange, copied from the skill for historical record.
     exchange_type = models.CharField(max_length=20, choices=Skill.EXCHANGE_TYPE_CHOICES)
-
-    # If the transaction was a barter, this links to the final proposal.
     barter_proposal = models.OneToOneField(BarterProposal, on_delete=models.SET_NULL, null=True, blank=True)
-
     status = models.CharField(max_length=20, choices=TRANSACTION_STATUS_CHOICES, default='Completed')
     completed_at = models.DateTimeField(auto_now_add=True)
 
@@ -209,36 +132,17 @@ class Transaction(models.Model):
 
 
 class Rating(models.Model):
-    """
-    Represents a rating and comment left by a requester for a skill provider
-    after a request has been marked as 'Accepted'.
-    """
-    # The original request that this feedback is for.
-    # If the request is deleted, the rating remains but is unlinked.
     request = models.OneToOneField(Request, on_delete=models.SET_NULL, null=True, related_name='rating')
-
-    # The skill that was rated.
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='ratings')
-
-    # The user who is LEAVING the rating (the original requester).
     rater = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='given_ratings')
-
-    # The user who is RECEIVING the rating (the skill owner).
     rated_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_ratings')
-
-    # The star rating, from 1 to 5.
     rating = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-
-    # The textual feedback.
     comment = models.TextField(max_length=1000)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # A user can only rate a specific request once.
         unique_together = ('request', 'rater')
         ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.rating} stars for '{self.skill.title}' by {self.rater.username}"
-

@@ -1,22 +1,16 @@
-# in core/views.py
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .forms import CustomSignUpForm, SkillRequestForm, BarterProposalForm, FeedbackForm
-# 👇 CHANGE #1: Import 'Request', not 'SkillRequest'
 from .models import CustomUser, Skill, Request, BarterProposal, Transaction, Rating
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-
-# Real-time imports
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 
-# This is your existing signup view. It's perfectly fine.
 def signup_view(request):
     if request.method == 'POST':
-        # ... your existing code ...
         form = CustomSignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
@@ -27,16 +21,12 @@ def signup_view(request):
     return render(request, 'ui/auth/signup.html', {'form': form})
 
 
-# =========================================================================
-# === ADD THIS NEW VIEW TO HANDLE CREATING A REQUEST AND SENDING NOTIFICATIONS ===
-# =========================================================================
 @login_required
 def create_skill_request(request, skill_id):
     skill = get_object_or_404(Skill, id=skill_id)
 
     if skill.owner == request.user:
         messages.error(request, "You cannot request your own skill.")
-        # 👇 Assuming you have a URL named 'find_skills'
         return redirect('find_skills')
 
     existing_request = Request.objects.filter(skill=skill, requester=request.user).first()
@@ -54,7 +44,6 @@ def create_skill_request(request, skill_id):
             new_request.skill = skill
             new_request.save()
 
-            # --- REAL-TIME NOTIFICATION LOGIC (no changes here) ---
             channel_layer = get_channel_layer()
             notification_group_name = f'user_{skill.owner.id}_notifications'
             async_to_sync(channel_layer.group_send)(
@@ -69,7 +58,6 @@ def create_skill_request(request, skill_id):
             )
 
             messages.success(request, "Your skill request has been sent successfully!")
-            # 👇 MODIFIED: Redirect to the new requests list page
             return redirect('find_skills')
     else:
         form = SkillRequestForm()
@@ -81,18 +69,14 @@ def create_skill_request(request, skill_id):
 def create_barter_proposal(request, request_id):
     skill_request = get_object_or_404(Request, id=request_id)
 
-    # --- Validation Checks ---
-    # 1. Ensure the user is the one who made the request
     if skill_request.requester != request.user:
         messages.error(request, "You are not authorized to perform this action.")
-        return redirect('dashboard')  # Or wherever your main dashboard is
+        return redirect('dashboard')
 
-    # 2. Ensure the skill is actually a 'Barter' type
     if skill_request.skill.exchange_type != 'Barter':
         messages.error(request, "This skill is not listed for barter.")
         return redirect('find_skills')
 
-    # 3. Ensure a proposal doesn't already exist
     if hasattr(skill_request, 'barter_proposal'):
         messages.warning(request, "A barter proposal already exists for this request.")
         return redirect('dashboard')
@@ -104,7 +88,6 @@ def create_barter_proposal(request, request_id):
             proposal.request = skill_request
             proposal.save()
             messages.success(request, f"Your barter proposal offering '{proposal.offered_skill.title}' has been sent!")
-            # TODO: Add real-time notification to the skill owner
             return redirect('dashboard')
     else:
         form = BarterProposalForm(user=request.user)
@@ -115,12 +98,8 @@ def create_barter_proposal(request, request_id):
     })
 
 
-# =========================================================================
-# === NEW VIEW TO SHOW TRANSACTION HISTORY ===
-# =========================================================================
 @login_required
 def transaction_history(request):
-    # Get all transactions where the current user was either the provider OR the receiver
     transactions = Transaction.objects.filter(
         Q(provider=request.user) | Q(receiver=request.user)
     ).select_related('request__skill', 'provider', 'receiver').order_by('-completed_at')
@@ -128,24 +107,18 @@ def transaction_history(request):
     return render(request, 'ui/student/transaction_history.html', {'transactions': transactions})
 
 @login_required
-@require_POST  # This view only accepts POST requests
+@require_POST
 def update_request_status(request, request_id, status):
-    # Find the request object, or return a 404 error if not found
     skill_request = get_object_or_404(Request, id=request_id)
 
-    # --- SECURITY CHECK ---
-    # Ensure the person trying to update the request is the owner of the skill
     if skill_request.skill.owner != request.user:
         messages.error(request, "You are not authorized to perform this action.")
-        return redirect('requests') # Assuming 'requests' is the name of your request dashboard URL
+        return redirect('requests')
 
-    # --- LOGIC ---
-    # Check if the provided status is valid
     if status in ['Accepted', 'Declined']:
         skill_request.status = status
         skill_request.save()
         messages.success(request, f"Request has been successfully {status.lower()}.")
-        # TODO: Send a real-time notification back to the requester
     else:
         messages.error(request, "Invalid status update.")
 
@@ -156,7 +129,6 @@ def update_request_status(request, request_id, status):
 def leave_feedback(request, request_id):
     skill_request = get_object_or_404(Request, id=request_id)
 
-    # ... (keep the validation checks 1, 2, and 3 same as before) ...
     if skill_request.requester != request.user:
         messages.error(request, "You are not authorized to leave feedback for this request.")
         return redirect('requests')
@@ -167,7 +139,6 @@ def leave_feedback(request, request_id):
 
     if hasattr(skill_request, 'rating'):
         messages.warning(request, "You have already submitted feedback for this exchange.")
-        # 👇 CHANGE 1: If they try to rate again, send them to history
         return redirect('core:transaction_history')
 
     if request.method == 'POST':
@@ -180,8 +151,6 @@ def leave_feedback(request, request_id):
             feedback.rated_user = skill_request.skill.owner
             feedback.save()
             messages.success(request, "Thank you! Your feedback has been submitted.")
-
-            # 👇 CHANGE 2: Redirect to Transaction History after success
             return redirect('core:transaction_history')
     else:
         form = FeedbackForm()
@@ -197,24 +166,17 @@ def leave_feedback(request, request_id):
 def complete_session(request, request_id):
     skill_request = get_object_or_404(Request, id=request_id)
 
-    # --- SECURITY CHECKS ---
-    # 1. Ensure the user is part of this exchange
     if request.user != skill_request.requester and request.user != skill_request.skill.owner:
         messages.error(request, "You are not authorized to perform this action.")
         return redirect('schedule')
 
-    # 2. Ensure the request was accepted
     if skill_request.status != 'Accepted':
         messages.error(request, "This session is not in an accepted state.")
         return redirect('schedule')
 
-    # --- CORE LOGIC ---
-    # Update the request status to 'Completed'
     skill_request.status = 'Completed'
     skill_request.save()
 
-    # Create a transaction record. Use get_or_create to prevent duplicates
-    # if both users click the button around the same time.
     Transaction.objects.get_or_create(
         request=skill_request,
         defaults={

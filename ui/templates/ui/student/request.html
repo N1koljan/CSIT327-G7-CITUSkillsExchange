@@ -55,7 +55,6 @@
                             </div>
                             <div class="request-message-section"><strong>Your Message:</strong><p>{{ req.extra_description }}</p></div>
 
-                            <!-- 👇 THIS IS THE MODIFIED FEEDBACK BUTTON LOGIC 👇 -->
                             <div class="request-actions-footer">
                                 {% if req.status == 'Completed' %}
                                     {% if not req.rating %}
@@ -67,7 +66,6 @@
                                     {% endif %}
                                 {% endif %}
                             </div>
-                            <!-- 👆 END OF MODIFIED SECTION 👆 -->
 
                         </div>
                     </div>

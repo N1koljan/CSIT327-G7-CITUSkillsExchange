@@ -7,9 +7,7 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/find_skills.css' %}">
-
-  <!-- 👇 NEW STYLES for the comment section -->
-  <style>
+ <style>
     .comments-section {
         margin-top: 1.5rem;
         padding-top: 1rem;
@@ -47,7 +45,6 @@
 {% block content %}
 <div class="container">
     <main class="main-content">
-        <!-- ... (your page title and search bar are fine) ... -->
         <div class="page-title-section">
             <h1>Find Skills & Tutors</h1>
             <p>Discover skilled peers and find the perfect match for your learning goals</p>
@@ -61,9 +58,7 @@
         <div class="results-list">
             {% if skills %}
                 {% for skill in skills %}
-                    <!-- Add an ID to the card so we can link to it -->
                     <div class="skill-card-result" id="skill-{{ skill.id }}">
-                        <!-- ... (the main skill info and tutor info is fine) ... -->
                         <div class="skill-info">
                             <h3>{{ skill.title }}</h3>
                             <p class="skill-category-result">{{ skill.category }}</p>
@@ -78,7 +73,6 @@
                             <a href="{% url 'core:create_skill_request' skill_id=skill.id %}" class="btn btn-outline-primary">View & Request</a>
                         </div>
 
-                        <!-- ===================== NEW COMMENT SECTION ===================== -->
                         <div class="comments-section">
                             <h4>{{ skill.comments.count }} Comment{{ skill.comments.count|pluralize }}</h4>
 
@@ -108,7 +102,6 @@
                                 <button type-="submit" class="btn btn-secondary" style="margin-top: 10px;">Post Comment</button>
                             </form>
                         </div>
-                        <!-- ============================================================= -->
                     </div>
                 {% endfor %}
             {% else %}
@@ -118,7 +111,6 @@
     </main>
 
     <aside class="sidebar">
-        <!-- This sidebar can be made dynamic in a future sprint -->
         <h2>Suggested Matches</h2>
         <p class="sidebar-subtitle">Based on your "Skills Wanted"</p>
         <div class="match-card">

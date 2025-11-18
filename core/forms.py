@@ -1,7 +1,4 @@
-# in core/forms.py
-
 from django import forms
-
 from .models import CustomUser, Request, Skill, Comment, BarterProposal, Rating
 from django.db.models import Q
 
@@ -57,7 +54,6 @@ class CustomSignUpForm(forms.Form):
     username = forms.CharField(max_length=150, required=True)
     schoolId = forms.CharField(max_length=20, required=True)
 
-    # The choices for this field must match the <option> values in your HTML
     department = forms.ChoiceField(choices=[(k, v.replace('-', ' ').title()) for k, v in DEPARTMENT_MAPPING.items()],
                                    required=True)
 
@@ -65,21 +61,18 @@ class CustomSignUpForm(forms.Form):
     confirmPassword = forms.CharField(widget=forms.PasswordInput, required=True)
 
     def clean_username(self):
-        # Check if the username is already taken
         username = self.cleaned_data.get('username')
         if CustomUser.objects.filter(username=username).exists():
             raise forms.ValidationError("A user with that username already exists.")
         return username
 
     def clean_email(self):
-        # Check if the email is already in use
         email = self.cleaned_data.get('email')
         if CustomUser.objects.filter(email=email).exists():
             raise forms.ValidationError("This email address is already in use.")
         return email
 
     def clean(self):
-        # This method is for cross-field validation
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
         confirm_password = cleaned_data.get("confirmPassword")
@@ -106,14 +99,9 @@ class CustomSignUpForm(forms.Form):
 class SkillRequestForm(forms.ModelForm):
     class Meta:
         model = Request
-
-        # 👇 MODIFIED: Include the new fields
         fields = ['requested_date_time', 'payment_choice', 'extra_description']
-
         widgets = {
-            # This makes the datetime field use a text input compatible with calendar widgets
-
-            'payment_choice': forms.Select(),  # Use a dropdown for choices
+            'payment_choice': forms.Select(),
             'extra_description': forms.Textarea(
                 attrs={
                     'rows': 4,
@@ -121,7 +109,6 @@ class SkillRequestForm(forms.ModelForm):
                 }
             ),
         }
-
         labels = {
             'requested_date_time': 'Proposed Date & Time',
             'payment_choice': 'Payment Method',
@@ -129,21 +116,18 @@ class SkillRequestForm(forms.ModelForm):
         }
 
 class CommentForm(forms.ModelForm):
-            class Meta:
-                model = Comment
-                # The user only needs to provide the content.
-                # The 'skill' and 'author' will be set automatically in the view.
-                fields = ['content']
-                widgets = {
-                    'content': forms.Textarea(attrs={
-                        'rows': 3,
-                        'placeholder': 'Add a comment or ask a question...'
-                    })
-                }
-                # Hide the label for the content field to make the UI cleaner
-                labels = {
-                    'content': '',
-                }
+    class Meta:
+        model = Comment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': 'Add a comment or ask a question...'
+            })
+        }
+        labels = {
+            'content': '',
+        }
 
 class BarterProposalForm(forms.ModelForm):
     class Meta:
@@ -154,25 +138,22 @@ class BarterProposalForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # We need the user to filter the queryset of offered_skill
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
         if user:
-            # This is the key part: only show skills owned by the current user.
             self.fields['offered_skill'].queryset = Skill.objects.filter(owner=user)
 
 class FeedbackForm(forms.ModelForm):
     class Meta:
         model = Rating
-        # The user only needs to fill out these two fields.
         fields = ['rating', 'comment']
         widgets = {
             'rating': forms.NumberInput(attrs={
                 'type': 'number',
                 'min': '1',
                 'max': '5',
-                'class': 'rating-stars' # You can use this class for JS star widgets
+                'class': 'rating-stars'
             }),
             'comment': forms.Textarea(attrs={
                 'rows': 4,
