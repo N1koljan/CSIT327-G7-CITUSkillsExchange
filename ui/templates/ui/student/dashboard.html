@@ -4,7 +4,6 @@
 {% block title %}Dashboard - CIT-U Skills Exchange{% endblock %}
 
 {% block styles %}
-
   <link rel="stylesheet" href="{% static 'ui/css/dashboard.css' %}">
 {% endblock %}
 
@@ -51,14 +50,18 @@
     <div class="box">
       <h3><i class="fa-regular fa-clock red"></i> Recent Activity</h3>
       <p class="placeholder">No recent activity yet...</p>
-      <button class="btn yellow full">View All Activities</button>
+      <button class="btn yellow full" onclick="location.href='{% url 'transaction' %}'">
+        View All Activities
+      </button>
     </div>
 
     <!-- Upcoming Sessions -->
     <div class="box">
       <h3><i class="fa-regular fa-calendar orange"></i> Upcoming Sessions</h3>
       <p class="placeholder">No upcoming sessions scheduled...</p>
-      <button class="btn red full">Manage Schedule</button>
+      <button class="btn red full" onclick="location.href='{% url 'schedule' %}'">
+        Manage Schedule
+      </button>
     </div>
   </section>
 
@@ -66,15 +69,15 @@
   <section class="quick-actions">
     <h3>Quick Actions</h3>
     <div class="actions">
-      <button class="btn outline">
+      <button class="btn outline" onclick="location.href='{% url 'my_skills' %}'">
         <i class="fa-solid fa-plus fa-2x"></i>
         <p>Add New Skill</p>
       </button>
-      <button class="btn outline">
+      <button class="btn outline" onclick="location.href='{% url 'requests' %}'">
         <i class="fa-solid fa-question-circle fa-2x"></i>
         <p>Request Help</p>
       </button>
-      <button class="btn outline">
+      <button class="btn outline" onclick="location.href='{% url 'find_skills' %}'">
         <i class="fa-solid fa-users fa-2x"></i>
         <p>Find Study Partner</p>
       </button>

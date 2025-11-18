@@ -13,6 +13,8 @@ from .forms import EditProfileForm, SkillForm
 from django.http import JsonResponse
 from core.models import Request, Schedule
 
+from django.contrib.auth import get_user_model
+from core.models import Message
 
 
 # --- Existing Authentication & Profile Views ---
@@ -315,10 +317,65 @@ def feedback_history_view(request):
     }
     return render(request, 'ui/student/feedback_history.html', context)
 
-@login_required
-def chat_view(request):
-    return render(request, 'ui/student/chat.html')
 
+
+User = get_user_model()
+
+@login_required
+def chat_view(request, username=None):
+    current_user = request.user
+    other_user = None
+    messages_qs = []
+    conversation_id = None
+
+    # Fetch all conversations for the sidebar
+    conversations_raw = Message.objects.filter(
+        Q(sender=current_user) | Q(recipient=current_user)
+    ).order_by('-id')
+
+    # Build a unique list of conversations
+    conversation_dict = {}
+    for msg in conversations_raw:
+        ids = sorted([msg.sender.id, msg.recipient.id])
+        conv_id = f"chat_{ids[0]}_{ids[1]}"
+        other_id = ids[1] if ids[0] == current_user.id else ids[0]
+
+        if conv_id not in conversation_dict:
+            conversation_dict[conv_id] = {
+                'conversation_id': conv_id,
+                'other_user': User.objects.get(id=other_id),
+                'last_message': msg,
+                'unread_count': Message.objects.filter(
+                    conversation_id=conv_id,
+                    recipient=current_user,
+                    is_read=False
+                ).count()
+            }
+
+    conversations = list(conversation_dict.values())
+
+    # If a username is selected, fetch that conversation
+    if username:
+        try:
+            other_user = User.objects.get(username=username)
+            ids = sorted([current_user.id, other_user.id])
+            conversation_id = f"chat_{ids[0]}_{ids[1]}"
+            messages_qs = Message.objects.filter(conversation_id=conversation_id).order_by('id')
+        except User.DoesNotExist:
+            messages.error(request, f"User '{username}' does not exist.")
+            return redirect('conversation_list')  # redirect to your chat list page
+
+    return render(request, 'ui/student/chat.html', {
+        'messages': messages_qs,
+        'conversations': conversations,
+        'other_user': other_user,
+        'conversation_id': conversation_id,
+    })
+
+
+def transaction_view(request):
+    # You can pass context if needed
+    return render(request, 'ui/student/transaction_history.html')
 @login_required
 def skill_get_json(request, pk):
     """
