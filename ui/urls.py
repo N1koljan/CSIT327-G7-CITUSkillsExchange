@@ -16,7 +16,7 @@ urlpatterns = [
     path('find_skills/', views.find_skill_view, name='find_skills'),
     path('schedule/', views.schedule_view, name='schedule'),
     path('notification/', views.notification_view, name='notification'),
-path('feedback/', views.feedback_history_view, name='feedback_history'),
+    path('feedback/', views.feedback_history_view, name='feedback_history'),
 
     # --- NEW & UPDATED URLs for Skill Management ---
 
@@ -26,7 +26,7 @@ path('feedback/', views.feedback_history_view, name='feedback_history'),
     # Edit an existing skill (WBS 4.1.5)
     # The <int:pk> part captures the unique ID of the skill.
     path('skill/<int:pk>/edit/', views.skill_edit, name='skill_edit'),
-path('skill/<int:skill_id>/comment/', views.add_comment_to_skill, name='add_comment'),
+    path('skill/<int:skill_id>/comment/', views.add_comment_to_skill, name='add_comment'),
 
     # Delete a skill (WBS 4.1.6)
     path('skill/<int:pk>/delete/', views.skill_delete, name='skill_delete'),
@@ -39,4 +39,9 @@ path('skill/<int:skill_id>/comment/', views.add_comment_to_skill, name='add_comm
     path('request/<int:pk>/update/<str:action>/', views.update_request_status, name='request_update_status'),
     path('chat/', views.chat_view, name='chat'),
     path('logout/', views.logout_view, name='logout'),
+
+    # Chat URLs
+    path('chat/', views.chat_view, name='conversation_list'),
+    path('chat/<str:username>/', views.chat_view, name='chat_page'),
+
 ]

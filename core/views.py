@@ -304,8 +304,8 @@ def chat_page(request, username):
     # Generate conversation_id
     conversation_id = get_conversation_id(current_user, other_user)
 
-    # Get chat history using conversation_id
-    messages_list = Message.objects.filter(
+    # Get chat history
+    chat_messages = Message.objects.filter(
         conversation_id=conversation_id
     ).select_related('sender', 'recipient').order_by('created_at')
 
@@ -322,7 +322,7 @@ def chat_page(request, username):
     context = {
         'other_user': other_user,
         'conversation_id': conversation_id,
-        'chat_messages': messages_list,  # ✅ CHANGED from 'messages' to 'chat_messages'
+        'chat_messages': chat_messages,  # ✅ Pass as chat_messages
         'conversations': conversations,
     }
 
