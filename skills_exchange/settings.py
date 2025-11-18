@@ -1,4 +1,5 @@
 import os
+import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -17,9 +18,13 @@ load_dotenv(dotenv_path)
 # ---------------------------
 # Django secret key and debug
 # ---------------------------
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-key")
-DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
+SECRET_KEY = os.environ.get('SECRET_KEY')
+DEBUG = 'RENDER' not in os.environ
+ALLOWED_HOSTS = []
+
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # ---------------------------
 # Installed apps
@@ -42,6 +47,7 @@ INSTALLED_APPS = [
 # ---------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -89,19 +95,29 @@ WSGI_APPLICATION = 'skills_exchange.wsgi.application'
 #    }
 #}
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.getenv("PGHOST"),
-        "PORT": os.getenv("PGPORT"),
-        "USER": os.getenv("PGUSER"),
-        "PASSWORD": os.getenv("PGPASSWORD"),
-        "NAME": os.getenv("PGDATABASE"),
-        "OPTIONS": {
-            "sslmode": os.getenv("PGSSLMODE", "require"),
-        },
+if DEBUG:
+    # LOCAL DEVELOPMENT (reading from .env file for Supabase)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "HOST": os.getenv("PGHOST"),
+            "PORT": os.getenv("PGPORT"),
+            "USER": os.getenv("PGUSER"),
+            "PASSWORD": os.getenv("PGPASSWORD"),
+            "NAME": os.getenv("PGDATABASE"),
+            "OPTIONS": {
+                "sslmode": os.getenv("PGSSLMODE", "require"),
+            },
+        }
     }
-}
+else:
+    # RENDER DEPLOYMENT (reading the single DATABASE_URL env var)
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=True  # Ensure SSL is used for Render's database
+        )
+    }
 
 # ---------------------------
 # Password validation
@@ -125,6 +141,8 @@ USE_TZ = True
 # Static files
 # ---------------------------
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # ---------------------------
