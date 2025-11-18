@@ -364,3 +364,8 @@ def chat_view(request, username=None):
         'other_user': other_user,
         'conversation_id': conversation_id,
     })
+
+
+def transaction_view(request):
+    # You can pass context if needed
+    return render(request, 'ui/student/transaction_history.html')

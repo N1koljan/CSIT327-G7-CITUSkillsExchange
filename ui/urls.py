@@ -44,4 +44,6 @@ urlpatterns = [
     path('chat/', views.chat_view, name='conversation_list'),
     path('chat/<str:username>/', views.chat_view, name='chat_page'),
 
+    #transaction URLs
+    path('transactions/', views.transaction_view, name='transaction'),
 ]
