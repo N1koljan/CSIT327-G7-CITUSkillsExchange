@@ -93,5 +93,5 @@ Open your browser and go to:
 Deployed Link
 If deployed, the live version of the project can be accessed at:
 ```bash
- https://cit-u-peer-skills-exchange.vercel.app
+ https://csit327-g7-cituskillsexchange-1.onrender.com/
 ```
