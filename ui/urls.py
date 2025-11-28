@@ -48,4 +48,5 @@ urlpatterns = [
     #transaction URLs
     path('transactions/', views.transaction_view, name='transaction'),
 
+    path('schedule/delete/<int:schedule_id>/', views.delete_schedule, name='delete_schedule'),
 ]

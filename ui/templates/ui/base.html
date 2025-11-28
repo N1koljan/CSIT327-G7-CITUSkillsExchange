@@ -6,73 +6,109 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}CIT-U Peer-to-Peer Skills Exchange{% endblock %}</title>
 
-  <!-- Your base.css file, which is already correct -->
   <link rel="stylesheet" href="{% static 'ui/css/base.css' %}">
 
   {% block styles %}
   {% endblock %}
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" type="text/javascript" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+  <style>
+    .toastify { padding: 16px 20px; border-radius: 8px; font-family: sans-serif; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); min-width: 320px; max-width: 400px; }
+    .toastify.on { opacity: 1; }
+    .toast-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important; }
+    .toast-error { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important; }
+    .toast-warning { background: linear-gradient(135deg, #ffc837 0%, #ff8008 100%) !important; }
+    .toast-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important; }
+    .toastify:before { font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 10px; font-size: 18px; }
+    .toast-success:before { content: "\f058"; }
+    .toast-error:before { content: "\f06a"; }
+    .toast-warning:before { content: "\f071"; }
+    .toast-info:before { content: "\f05a"; }
+  </style>
 </head>
 <body>
-  <header>
-    <div class="logo">CIT-U Peer to Peer Skills Exchange</div>
-    <nav>
-      <!-- === NAVBAR WITH DYNAMIC ACTIVE LINKS === -->
-      <!-- This logic checks the URL name and adds your "active" class -->
 
-      <a href="{% url 'dashboard' %}"
-         {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
-         <i class="fa-solid fa-house"></i> Dashboard
+  <!-- Header bar with toggle button -->
+  <header class="top-header">
+    <button id="sidebarToggle" class="toggle-btn">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <div class="logo-text">CIT-U Peer to Peer<br>Skills Exchange</div>
+        <div class="logo-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+      </div>
+    </div>
+
+    <nav class="nav-links">
+      <div class="nav-label">Navigation</div>
+
+      <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
+          <i class="fa-solid fa-house"></i>
+          <span class="link-text">Dashboard</span>
       </a>
 
-      <a href="{% url 'my_skills' %}"
-         {% if request.resolver_match.url_name == 'my_skills' %}class="active"{% endif %}>
-         <i class="fa-solid fa-book"></i> My Skills
+      <a href="{% url 'my_skills' %}" {% if request.resolver_match.url_name == 'my_skills' %}class="active"{% endif %}>
+          <i class="fa-solid fa-book"></i>
+          <span class="link-text">My Skills</span>
       </a>
 
-      <a href="{% url 'requests' %}"
-         {% if request.resolver_match.url_name == 'requests' %}class="active"{% endif %}>
-         <i class="fa-solid fa-list"></i> Requests
+      <a href="{% url 'requests' %}" {% if request.resolver_match.url_name == 'requests' %}class="active"{% endif %}>
+          <i class="fa-solid fa-list"></i>
+          <span class="link-text">Requests</span>
       </a>
 
-      <a href="{% url 'find_skills' %}"
-         {% if request.resolver_match.url_name == 'find_skills' %}class="active"{% endif %}>
-         <i class="fa-solid fa-search"></i> Find Skills
+      <a href="{% url 'find_skills' %}" {% if request.resolver_match.url_name == 'find_skills' %}class="active"{% endif %}>
+          <i class="fa-solid fa-search"></i>
+          <span class="link-text">Find Skills</span>
       </a>
 
-      <a href="{% url 'schedule' %}"
-         {% if request.resolver_match.url_name == 'schedule' %}class="active"{% endif %}>
-         <i class="fa-solid fa-calendar-days"></i> Schedule
+      <a href="{% url 'schedule' %}" {% if request.resolver_match.url_name == 'schedule' %}class="active"{% endif %}>
+          <i class="fa-solid fa-calendar-days"></i>
+          <span class="link-text">Schedule</span>
       </a>
 
-      <a href="{% url 'chat' %}"
-         {% if request.resolver_match.url_name == 'chat' %}class="active"{% endif %}>
-         <i class="fa-solid fa-comment"></i> Chat
+      <a href="{% url 'chat' %}" {% if request.resolver_match.url_name == 'chat' %}class="active"{% endif %}>
+          <i class="fa-solid fa-comment"></i>
+          <span class="link-text">Chat</span>
       </a>
 
       <a href="{% url 'core:transaction_history' %}" {% if request.resolver_match.url_name == 'transaction_history' %}class="active"{% endif %}>
-        <i class="fa-solid fa-history"></i> Transactions
+        <i class="fa-solid fa-history"></i>
+        <span class="link-text">Transactions</span>
       </a>
 
       <a href="{% url 'feedback_history' %}" {% if request.resolver_match.url_name == 'feedback_history' %}class="active"{% endif %}>
-        <i class="fa-solid fa-comment"></i> Feedback
+        <i class="fa-solid fa-comment"></i>
+        <span class="link-text">Feedback</span>
       </a>
 
-      <a href="{% url 'notification' %}"
-         {% if request.resolver_match.url_name == 'notification' %}class="active"{% endif %}>
-         <i class="fa-solid fa-bell"></i> Notifications
+      <a href="{% url 'notification' %}" {% if request.resolver_match.url_name == 'notification' %}class="active"{% endif %}>
+          <i class="fa-solid fa-bell"></i>
+          <span class="link-text">Notifications</span>
       </a>
-
-      <a href="{% url 'profile' %}"
-         {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_profile' %}class="active"{% endif %}>
-         <i class="fa-solid fa-user"></i> Profile
-      </a>
-
-      <!-- === END OF LINKS === -->
     </nav>
-  </header>
 
-  <main>
+    <div class="profile-section">
+      <a href="{% url 'profile' %}" class="profile-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+          <img src="https://ui-avatars.com/api/?name={{ request.user.username|default:'User' }}&background=FEDC7D&color=800000" alt="Profile" class="profile-img">
+
+          <div class="profile-info">
+              <span class="profile-name">My Profile</span>
+              <span class="profile-sub">View Settings</span>
+          </div>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content" id="mainContent">
     {% block content %}
     {% endblock %}
   </main>
@@ -80,18 +116,33 @@
   <script src="{% static 'ui/js/notifications.js' %}"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const topHeader = document.querySelector('.top-header');
+    const toggleBtn = document.getElementById('sidebarToggle');
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+        topHeader.classList.toggle('expanded');
+    });
+  </script>
+
   {% if messages %}
   <script>
       document.addEventListener('DOMContentLoaded', function() {
           {% for message in messages %}
-              let backgroundColor;
-              switch ('{{ message.tags }}') {
-                  case 'success': backgroundColor = "linear-gradient(to right, #00b09b, #96c93d)"; break;
-                  case 'error': backgroundColor = "linear-gradient(to right, #ff5f6d, #ffc371)"; break;
-                  case 'warning': backgroundColor = "linear-gradient(to right, #f39c12, #f1c40f)"; break;
-                  default: backgroundColor = "linear-gradient(to right, #3498db, #2980b9)";
-              }
-              Toastify({ text: "{{ message|escapejs }}", duration: 5000, close: true, gravity: "top", position: "right", stopOnFocus: true, style: { background: backgroundColor, }, }).showToast();
+              Toastify({
+                  text: "{{ message|escapejs }}",
+                  duration: 5000,
+                  close: true,
+                  gravity: "top",
+                  position: "right",
+                  stopOnFocus: true,
+                  className: "toast-info",
+                  style: { background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
+              }).showToast();
           {% endfor %}
       });
   </script>
@@ -102,4 +153,3 @@
 
 </body>
 </html>
-

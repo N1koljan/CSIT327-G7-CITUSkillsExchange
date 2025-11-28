@@ -28,17 +28,266 @@
         <button class="tab" data-tab="settings">
             Settings
         </button>
+        <div class="tab-indicator"></div>
     </div>
 
-
-    <div class="notification-list-area">
-        <div class="empty-state">
-            <i class="fa-regular fa-bell-slash"></i>
-            <h3>No notifications yet</h3>
-            <p>We'll let you know when something important happens.</p>
+    <!-- All Notifications Tab Content -->
+    <div class="tab-content active" id="all-notifications">
+        <div class="notification-list-area">
+            <div class="empty-state">
+                <i class="fa-regular fa-bell-slash"></i>
+                <h3>No notifications yet</h3>
+                <p>We'll let you know when something important happens.</p>
+            </div>
         </div>
+    </div>
 
+    <!-- Settings Tab Content -->
+    <div class="tab-content" id="settings">
+        <div class="settings-container">
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h2>Notification Preferences</h2>
+                    <p>Choose what notifications you want to receive</p>
+                </div>
+
+                <div class="settings-group">
+                    <h3><i class="fa-solid fa-envelope"></i> Email Notifications</h3>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>New Skill Request</h4>
+                            <p>Get notified when someone requests your skill</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Request Accepted</h4>
+                            <p>Receive email when your request is accepted</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Schedule Reminders</h4>
+                            <p>Get reminded about upcoming sessions</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>New Messages</h4>
+                            <p>Be notified about new chat messages</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3><i class="fa-solid fa-bell"></i> Push Notifications</h3>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Enable Push Notifications</h4>
+                            <p>Receive instant notifications on your device</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Session Reminders</h4>
+                            <p>Get notified 30 minutes before a session</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3><i class="fa-solid fa-star"></i> Feedback & Reviews</h3>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Feedback Reminders</h4>
+                            <p>Remind me to leave feedback after sessions</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>New Reviews Received</h4>
+                            <p>Get notified when someone reviews your service</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3><i class="fa-solid fa-clock"></i> Digest Frequency</h3>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Daily Summary</h4>
+                            <p>Receive a daily summary of your activities</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Weekly Report</h4>
+                            <p>Get a weekly overview of completed exchanges</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button class="btn btn-save">
+                        <i class="fa-solid fa-check"></i> Save Preferences
+                    </button>
+                    <button class="btn btn-reset">
+                        <i class="fa-solid fa-rotate-left"></i> Reset to Default
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const indicator = document.querySelector('.tab-indicator');
+
+    // Function to update indicator position
+    function updateIndicator(activeTab) {
+        const tabsContainer = document.querySelector('.tabs');
+        const tabIndex = Array.from(tabs).indexOf(activeTab);
+        const tabWidth = activeTab.offsetWidth;
+        const translateX = tabIndex * (tabWidth + 4); // 4px is the gap
+
+        indicator.style.transform = `translateX(${translateX}px)`;
+        indicator.style.width = `${tabWidth}px`;
+    }
+
+    // Set initial position
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab) {
+        updateIndicator(activeTab);
+    }
+
+    // Tab switching functionality
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+
+            // Remove active class from all tabs and contents
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Add active class to clicked tab and corresponding content
+            this.classList.add('active');
+            document.getElementById(targetTab).classList.add('active');
+
+            // Update indicator position
+            updateIndicator(this);
+        });
+    });
+
+    // Update indicator on window resize
+    window.addEventListener('resize', function() {
+        const activeTab = document.querySelector('.tab.active');
+        if (activeTab) {
+            updateIndicator(activeTab);
+        }
+    });
+
+    // Save preferences button
+    const saveBtn = document.querySelector('.btn-save');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            // Show success message (you can implement actual save logic)
+            alert('Notification preferences saved successfully!');
+        });
+    }
+
+    // Reset button
+    const resetBtn = document.querySelector('.btn-reset');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to reset all settings to default?')) {
+                // Reset all toggles to default state
+                const toggles = document.querySelectorAll('.toggle-switch input');
+                toggles.forEach((toggle, index) => {
+                    // Set default states (customize as needed)
+                    if (index < 4 || index === 5 || index === 6 || index === 7) {
+                        toggle.checked = true;
+                    } else {
+                        toggle.checked = false;
+                    }
+                });
+                alert('Settings reset to default!');
+            }
+        });
+    }
+
+    // Mark all as read button
+    const markAllBtn = document.querySelector('.btn-mark-all');
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', function() {
+            // Mark all notifications as read (implement your logic)
+            const unreadNotifications = document.querySelectorAll('.notification-item.unread');
+            unreadNotifications.forEach(notification => {
+                notification.classList.remove('unread');
+            });
+
+            // Update badge count
+            const badge = document.querySelector('.badge');
+            if (badge) {
+                badge.textContent = '0';
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

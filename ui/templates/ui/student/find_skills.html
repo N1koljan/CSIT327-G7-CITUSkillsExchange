@@ -9,104 +9,238 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <main class="main-content">
-        <div class="page-title-section">
-            <h1>Find Skills & Tutors</h1>
-            <p>Discover skilled peers and find the perfect match for your learning goals</p>
-        </div>
+<!-- Messages Container for Success/Error notifications -->
+{% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+      <div class="alert {% if message.tags %}{{ message.tags }}{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
 
-        <form class="search-bar" method="GET" action="{% url 'find_skills' %}">
-            <i class="fa-solid fa-search search-icon"></i>
-            <input type="text" name="q" placeholder="Search for skills..." value="{{ query }}">
-            <button type="submit" class="btn btn-primary">Search</button>
-        </form>
+<main>
+    <div class="page-wrapper">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header Section -->
+            <div class="page-header">
+                <h1>Find Skills & Tutors</h1>
+                <p class="subtitle">Discover skilled peers and find the perfect match for your learning goals</p>
+            </div>
 
-        <div class="results-list">
-            {% if skills %}
-                {% for skill in skills %}
-                    <div class="skill-card-result" id="skill-{{ skill.id }}">
-                        <!-- Skill Information -->
-                        <div class="skill-info">
-                            <h3>{{ skill.title }}</h3>
-                            <p class="skill-category-result">{{ skill.category }}</p>
-                            <p class="skill-description-result">{{ skill.description|truncatewords:25 }}</p>
-                        </div>
+            <!-- Search and Filter Bar -->
+            <div class="search-filter-wrapper">
+                <form class="search-container" method="GET" action="{% url 'find_skills' %}">
+                    <div class="search-input-wrapper">
+                        <i class="fa-solid fa-search search-icon"></i>
+                        <input type="text" name="q" placeholder="Search skills, topics, or keywords..." value="{{ query }}" class="search-input">
+                    </div>
+                    {% if request.GET.category %}
+                    <input type="hidden" name="category" value="{{ request.GET.category }}">
+                    {% endif %}
+                    <button type="submit" class="btn-search">Search</button>
+                </form>
 
-                        <!-- Tutor Information -->
-                        <div class="tutor-info">
-                            {% if skill.owner.profile_picture %}
-                                <img src="{{ skill.owner.profile_picture.url }}" class="tutor-avatar" alt="{{ skill.owner.username }}">
-                            {% else %}
-                                <img src="{% static 'ui/img/profilepic.png' %}" class="tutor-avatar" alt="Default avatar">
-                            {% endif %}
-                            <div class="tutor-details">
-                                <strong>{{ skill.owner.get_full_name|default:skill.owner.username }}</strong>
-                                <p>{{ skill.owner.department }} Department</p>
-                            </div>
-                            <button class="btn btn-outline-primary open-modal-btn"
-                                    data-skill-id="{{ skill.id }}"
-                                    data-skill-title="{{ skill.title }}"
-                                    data-skill-category="{{ skill.category }}"
-                                    data-skill-exchange="{{ skill.get_exchange_type_display }}"
-                                    data-skill-description="{{ skill.description }}"
-                                    data-owner-name="{{ skill.owner.get_full_name|default:skill.owner.username }}"
-                                    data-owner-avatar="{% if skill.owner.profile_picture %}{{ skill.owner.profile_picture.url }}{% else %}{% static 'ui/img/profilepic.png' %}{% endif %}"
-                                    data-request-url="{% url 'core:create_skill_request' skill_id=skill.id %}">
-                                View & Request
-                            </button>
-                        </div>
+                <form method="GET" action="{% url 'find_skills' %}" class="filter-bar" id="categoryFilterForm">
+                    {% if query %}
+                    <input type="hidden" name="q" value="{{ query }}">
+                    {% endif %}
 
-                        <!-- Comments Section -->
-                        <div class="comments-section">
-                            <h4>{{ skill.comments.count }} Comment{{ skill.comments.count|pluralize }}</h4>
+                    <select name="category" id="categoryFilter" class="filter-select" onchange="this.form.submit()">
+                        <option value="">All Categories</option>
+                        <optgroup label="Technology">
+                            <option value="Programming" {% if request.GET.category == "Programming" %}selected{% endif %}>Programming</option>
+                            <option value="Web Development" {% if request.GET.category == "Web Development" %}selected{% endif %}>Web Development</option>
+                            <option value="Mobile Development" {% if request.GET.category == "Mobile Development" %}selected{% endif %}>Mobile Development</option>
+                            <option value="Data Science" {% if request.GET.category == "Data Science" %}selected{% endif %}>Data Science</option>
+                        </optgroup>
+                        <optgroup label="Sciences">
+                            <option value="Mathematics" {% if request.GET.category == "Mathematics" %}selected{% endif %}>Mathematics</option>
+                            <option value="Physics" {% if request.GET.category == "Physics" %}selected{% endif %}>Physics</option>
+                            <option value="Chemistry" {% if request.GET.category == "Chemistry" %}selected{% endif %}>Chemistry</option>
+                            <option value="Biology" {% if request.GET.category == "Biology" %}selected{% endif %}>Biology</option>
+                        </optgroup>
+                        <optgroup label="Languages">
+                            <option value="English" {% if request.GET.category == "English" %}selected{% endif %}>English</option>
+                            <option value="Foreign Languages" {% if request.GET.category == "Foreign Languages" %}selected{% endif %}>Foreign Languages</option>
+                        </optgroup>
+                        <optgroup label="Creative Arts">
+                            <option value="Graphic Design" {% if request.GET.category == "Graphic Design" %}selected{% endif %}>Graphic Design</option>
+                            <option value="Video Editing" {% if request.GET.category == "Video Editing" %}selected{% endif %}>Video Editing</option>
+                            <option value="Photography" {% if request.GET.category == "Photography" %}selected{% endif %}>Photography</option>
+                            <option value="Music" {% if request.GET.category == "Music" %}selected{% endif %}>Music</option>
+                            <option value="Drawing & Painting" {% if request.GET.category == "Drawing & Painting" %}selected{% endif %}>Drawing & Painting</option>
+                        </optgroup>
+                        <optgroup label="Business">
+                            <option value="Business" {% if request.GET.category == "Business" %}selected{% endif %}>Business</option>
+                            <option value="Marketing" {% if request.GET.category == "Marketing" %}selected{% endif %}>Marketing</option>
+                            <option value="Accounting" {% if request.GET.category == "Accounting" %}selected{% endif %}>Accounting</option>
+                        </optgroup>
+                        <optgroup label="Communication">
+                            <option value="Writing" {% if request.GET.category == "Writing" %}selected{% endif %}>Writing</option>
+                            <option value="Public Speaking" {% if request.GET.category == "Public Speaking" %}selected{% endif %}>Public Speaking</option>
+                        </optgroup>
+                        <optgroup label="Other">
+                            <option value="Sports & Fitness" {% if request.GET.category == "Sports & Fitness" %}selected{% endif %}>Sports & Fitness</option>
+                            <option value="Cooking" {% if request.GET.category == "Cooking" %}selected{% endif %}>Cooking</option>
+                            <option value="Other" {% if request.GET.category == "Other" %}selected{% endif %}>Other</option>
+                        </optgroup>
+                    </select>
 
-                            <div class="comment-list">
-                                {% for comment in skill.comments.all %}
-                                <div class="comment">
-                                    <div class="comment-avatar">
-                                        {% if comment.author.profile_picture %}
-                                            <img src="{{ comment.author.profile_picture.url }}" alt="{{ comment.author.username }}">
-                                        {% else %}
-                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default avatar">
-                                        {% endif %}
-                                    </div>
-                                    <div class="comment-body">
-                                        <strong>{{ comment.author.username }}</strong>
-                                        <p>{{ comment.content }}</p>
-                                    </div>
+                    {% if request.GET.category or query %}
+                    <a href="{% url 'find_skills' %}" class="btn-clear-filters">
+                        <i class="fa-solid fa-times"></i> Clear Filters
+                    </a>
+                    {% endif %}
+                </form>
+
+                {% if request.GET.category or query %}
+                <div class="active-filters">
+                    <span class="filter-label">Active filters:</span>
+                    {% if query %}
+                    <span class="filter-tag">
+                        Search: "{{ query }}"
+                        <a href="?{% if request.GET.category %}category={{ request.GET.category }}{% endif %}" class="remove-filter">×</a>
+                    </span>
+                    {% endif %}
+                    {% if request.GET.category %}
+                    <span class="filter-tag">
+                        Category: {{ request.GET.category }}
+                        <a href="?{% if query %}q={{ query }}{% endif %}" class="remove-filter">×</a>
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Results Header -->
+            <div class="results-header">
+                <h2 class="results-count">
+                    {{ skills.count }} skill{{ skills.count|pluralize }} found
+                    {% if request.GET.category or query %}
+                    <span class="results-filtered">(filtered)</span>
+                    {% endif %}
+                </h2>
+                <select class="sort-select">
+                    <option value="relevance">Relevance</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                </select>
+            </div>
+
+            <!-- Skills List -->
+            <div class="skills-list">
+                {% if skills %}
+                    {% for skill in skills %}
+                    <div class="skill-card" id="skill-{{ skill.id }}">
+                        <div class="skill-header">
+                            <div class="skill-title-section">
+                                <h3 class="skill-title">{{ skill.title }}</h3>
+                                <div class="skill-badges">
+                                    <span class="badge badge-category">{{ skill.category }}</span>
                                 </div>
-                                {% empty %}
-                                <p style="color: #999; font-style: italic; margin: 0;">No comments yet. Be the first to ask a question!</p>
-                                {% endfor %}
                             </div>
+                            <div class="skill-pricing">
+                                <span class="availability">
+                                    <i class="fa-solid fa-circle available-dot"></i>
+                                    Available now
+                                </span>
+                            </div>
+                        </div>
 
-                            <form class="comment-form" method="POST" action="{% url 'add_comment' skill_id=skill.id %}">
-                                {% csrf_token %}
-                                <textarea name="content" placeholder="Add a comment or ask a question..." rows="3" required></textarea>
-                                <button type="submit" class="btn btn-secondary" style="margin-top: 10px;">Post Comment</button>
-                            </form>
+                        <p class="skill-description">{{ skill.description|truncatewords:30 }}</p>
+
+                        <div class="skill-footer">
+                            <div class="tutor-info-compact">
+                                <div class="tutor-avatar-wrapper">
+                                    {% if skill.owner.profile_picture %}
+                                        <img src="{{ skill.owner.profile_picture.url }}" alt="{{ skill.owner.username }}" class="tutor-avatar-small">
+                                    {% else %}
+                                        <img src="{% static 'ui/img/profilepic.png' %}" alt="Default avatar" class="tutor-avatar-small">
+                                    {% endif %}
+                                </div>
+                                <span class="tutor-name">{{ skill.owner.get_full_name|default:skill.owner.username }}</span>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-secondary view-details-btn"
+                                        data-skill-id="{{ skill.id }}"
+                                        data-skill-title="{{ skill.title }}"
+                                        data-skill-category="{{ skill.category }}"
+                                        data-skill-description="{{ skill.description }}"
+                                        data-owner-name="{{ skill.owner.get_full_name|default:skill.owner.username }}"
+                                        data-owner-avatar="{% if skill.owner.profile_picture %}{{ skill.owner.profile_picture.url }}{% else %}{% static 'ui/img/profilepic.png' %}{% endif %}"
+                                        data-owner-department="{{ skill.owner.department }}">
+                                    View Details
+                                </button>
+                                <button class="btn-primary open-modal-btn"
+                                        data-skill-id="{{ skill.id }}"
+                                        data-skill-title="{{ skill.title }}"
+                                        data-skill-category="{{ skill.category }}"
+                                        data-skill-exchange="{{ skill.get_exchange_type_display }}"
+                                        data-skill-description="{{ skill.description }}"
+                                        data-owner-name="{{ skill.owner.get_full_name|default:skill.owner.username }}"
+                                        data-owner-avatar="{% if skill.owner.profile_picture %}{{ skill.owner.profile_picture.url }}{% else %}{% static 'ui/img/profilepic.png' %}{% endif %}"
+                                        data-request-url="{% url 'core:create_skill_request' skill_id=skill.id %}">
+                                    Request
+                                </button>
+                            </div>
                         </div>
                     </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <i class="fa-solid fa-search"></i>
-                    <h3>No skills found</h3>
-                    <p>Try adjusting your search terms</p>
-                </div>
-            {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fa-solid fa-search"></i>
+                        <h3>No skills found</h3>
+                        <p>Try adjusting your search terms or filters</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </main>
+    </div>
+</main>
 
-    <aside class="sidebar">
-        <h2>Suggested Matches</h2>
-        <p class="sidebar-subtitle">Based on your "Skills Wanted"</p>
-        <div class="match-card">
-            <h4>Suggested Skill</h4>
-            <p>Feature coming soon!</p>
+<!-- View Details Modal -->
+<div id="viewDetailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Skill Details</h2>
+            <button class="close-details-modal">&times;</button>
         </div>
-    </aside>
+
+        <div class="modal-body">
+            <div class="modal-skill-preview">
+                <img id="detailsOwnerAvatar" src="" alt="Owner avatar" class="modal-avatar">
+                <div class="modal-skill-info">
+                    <h3 id="detailsSkillTitle"></h3>
+                    <div class="modal-meta">
+                        <span class="meta-badge category" id="detailsSkillCategory"></span>
+                    </div>
+                    <p class="owner-info">
+                        <strong id="detailsOwnerName"></strong> •
+                        <span id="detailsOwnerDepartment"></span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="modal-description">
+                <h4>About this skill:</h4>
+                <p id="detailsSkillDescription"></p>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary close-details-btn">
+                    <i class="fa-solid fa-times"></i> Close
+                </button>
+                <button type="button" class="btn btn-primary request-from-details"
+                        data-skill-id="">
+                    <i class="fa-solid fa-paper-plane"></i> Request This Skill
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Request Modal -->
@@ -118,7 +252,6 @@
         </div>
 
         <div class="modal-body">
-            <!-- Skill Preview -->
             <div class="modal-skill-preview">
                 <img id="modalOwnerAvatar" src="" alt="Owner avatar" class="modal-avatar">
                 <div class="modal-skill-info">
@@ -137,7 +270,6 @@
 
             <hr class="modal-divider">
 
-            <!-- Request Form -->
             <form id="requestForm" method="POST">
                 {% csrf_token %}
 
@@ -154,12 +286,9 @@
                     </label>
                     <select id="payment_choice" name="payment_choice" required>
                         <option value="" disabled selected>Select Payment Option</option>
-                        <!-- Direct Payment Types -->
                         <option value="online">Online Payment</option>
-                        <!-- In-Person / Flexible Options -->
                         <option value="cash">Cash on Meetup</option>
                         <option value="negotiable">Negotiable</option>
-                        <!-- Platform-Specific Options -->
                         <option value="free">Free (Skill Exchange)</option>
                         <option value="paid">Paid Session</option>
                     </select>
@@ -191,12 +320,136 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ====================
+    // AUTO-REMOVE BLUE NOTIFICATIONS - SUPER ENHANCED
+    // ====================
+    function removeBlueNotifications() {
+        const allDivs = document.querySelectorAll('div, ul, li');
+        allDivs.forEach(element => {
+            const bgColor = window.getComputedStyle(element).backgroundColor;
+            const styles = element.getAttribute('style') || '';
+            const classList = element.className || '';
+            const position = window.getComputedStyle(element).position;
+
+            // Check for blue/cyan colors and Django message classes
+            if (bgColor.includes('0, 188, 212') ||
+                bgColor.includes('0, 172, 193') ||
+                (bgColor.includes('rgb(0') && bgColor.includes('212')) ||
+                styles.includes('rgb(0, 188, 212)') ||
+                styles.includes('#00bcd4') ||
+                styles.includes('cyan') ||
+                classList.includes('messagelist') ||
+                classList.includes('django-message') ||
+                (position === 'fixed' && bgColor.includes('188'))) {
+
+                // Don't remove our custom messages container
+                if (!element.classList.contains('messages') &&
+                    !element.closest('.messages')) {
+                    element.remove();
+                }
+            }
+        });
+    }
+
+    // Run immediately and multiple times to catch dynamically added elements
+    removeBlueNotifications();
+    setTimeout(removeBlueNotifications, 50);
+    setTimeout(removeBlueNotifications, 100);
+    setTimeout(removeBlueNotifications, 200);
+    setTimeout(removeBlueNotifications, 500);
+    setTimeout(removeBlueNotifications, 1000);
+
+    // Watch for new elements being added
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                removeBlueNotifications();
+            }
+        });
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    // Auto-remove success messages after 5 seconds
+    setTimeout(function() {
+        const messagesContainer = document.querySelector('.messages');
+        if (messagesContainer) {
+            messagesContainer.style.transition = 'opacity 0.5s, transform 0.5s';
+            messagesContainer.style.opacity = '0';
+            messagesContainer.style.transform = 'translateX(100%)';
+            setTimeout(function() {
+                messagesContainer.remove();
+            }, 500);
+        }
+    }, 5000);
+
+    // ====================
+    // VIEW DETAILS MODAL
+    // ====================
+    const detailsModal = document.getElementById('viewDetailsModal');
+    const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
+    const closeDetailsButtons = document.querySelectorAll('.close-details-modal, .close-details-btn');
+
+    viewDetailsButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const skillData = {
+                id: this.dataset.skillId,
+                title: this.dataset.skillTitle,
+                category: this.dataset.skillCategory,
+                description: this.dataset.skillDescription,
+                ownerName: this.dataset.ownerName,
+                ownerAvatar: this.dataset.ownerAvatar,
+                ownerDepartment: this.dataset.ownerDepartment
+            };
+
+            document.getElementById('detailsSkillTitle').textContent = skillData.title;
+            document.getElementById('detailsSkillCategory').textContent = skillData.category;
+            document.getElementById('detailsSkillDescription').textContent = skillData.description;
+            document.getElementById('detailsOwnerAvatar').src = skillData.ownerAvatar;
+            document.getElementById('detailsOwnerName').textContent = skillData.ownerName;
+            document.getElementById('detailsOwnerDepartment').textContent = skillData.ownerDepartment + ' Department';
+            document.querySelector('.request-from-details').dataset.skillId = skillData.id;
+
+            detailsModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    closeDetailsButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            detailsModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
+    });
+
+    detailsModal.addEventListener('click', function(e) {
+        if (e.target === detailsModal) {
+            detailsModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    });
+
+    // Request from details modal
+    document.querySelector('.request-from-details').addEventListener('click', function() {
+        const skillId = this.dataset.skillId;
+        const originalButton = document.querySelector(`.open-modal-btn[data-skill-id="${skillId}"]`);
+        if (originalButton) {
+            detailsModal.classList.remove('active');
+            originalButton.click();
+        }
+    });
+
+    // ====================
+    // REQUEST MODAL
+    // ====================
     const modal = document.getElementById('requestModal');
     const openButtons = document.querySelectorAll('.open-modal-btn');
     const closeButtons = document.querySelectorAll('.close-modal, .close-modal-btn');
     const requestForm = document.getElementById('requestForm');
 
-    // Open modal
     openButtons.forEach(button => {
         button.addEventListener('click', function() {
             const skillData = {
@@ -210,23 +463,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 requestUrl: this.dataset.requestUrl
             };
 
-            // Populate modal
             document.getElementById('modalSkillTitle').textContent = skillData.title;
             document.getElementById('modalSkillCategory').textContent = skillData.category;
             document.getElementById('modalSkillExchange').innerHTML = '<i class="fa-solid fa-handshake"></i> ' + skillData.exchange;
             document.getElementById('modalSkillDescription').textContent = skillData.description;
             document.getElementById('modalOwnerAvatar').src = skillData.ownerAvatar;
 
-            // Set form action
             requestForm.action = skillData.requestUrl;
 
-            // Show modal
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         });
     });
 
-    // Close modal
     closeButtons.forEach(button => {
         button.addEventListener('click', function() {
             modal.classList.remove('active');
@@ -235,7 +484,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Close on outside click
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
             modal.classList.remove('active');

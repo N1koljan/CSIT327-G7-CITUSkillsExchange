@@ -43,14 +43,13 @@
                 <h3>{{ skill.title }}</h3>
                 <div class="skill-tags">
                   <span class="skill-tag tag-category">{{ skill.category }}</span>
-                  <span class="skill-tag tag-level">Intermediate</span>
                 </div>
               </div>
               <div class="skill-top-actions">
                 <button class="icon-btn" onclick="openEditModal({{ skill.pk }})" title="Edit">
                   <i class="fa-solid fa-pencil"></i>
                 </button>
-                <button class="icon-btn" onclick="confirmDelete({{ skill.pk }})" title="Delete">
+                <button class="icon-btn" onclick="openDeleteModal({{ skill.pk }}, '{{ skill.title|escapejs }}')" title="Delete">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </div>
@@ -58,10 +57,6 @@
             <div class="skill-card-body">
               <p class="skill-description">{{ skill.description|truncatewords:20 }}</p>
               <div class="skill-meta">
-                <div class="skill-rating">
-                  <i class="fa-solid fa-star"></i>
-                  <span>4.8</span>
-                </div>
                 <span><i class="fa-solid fa-handshake"></i> {{ skill.get_exchange_type_display }}</span>
               </div>
             </div>
@@ -128,14 +123,39 @@
           </div>
           <div class="form-group">
             <label for="edit-category">Category</label>
-            <input type="text" id="edit-category" name="category" required>
+            <select id="edit-category" name="category" required>
+              <option value="">Select a category</option>
+              <option value="Programming">Programming</option>
+              <option value="Web Development">Web Development</option>
+              <option value="Mobile Development">Mobile Development</option>
+              <option value="Data Science">Data Science</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Biology">Biology</option>
+              <option value="English">English</option>
+              <option value="Foreign Languages">Foreign Languages</option>
+              <option value="Graphic Design">Graphic Design</option>
+              <option value="Video Editing">Video Editing</option>
+              <option value="Photography">Photography</option>
+              <option value="Music">Music</option>
+              <option value="Drawing & Painting">Drawing & Painting</option>
+              <option value="Business">Business</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Accounting">Accounting</option>
+              <option value="Writing">Writing</option>
+              <option value="Public Speaking">Public Speaking</option>
+              <option value="Sports & Fitness">Sports & Fitness</option>
+              <option value="Cooking">Cooking</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           <div class="form-group">
             <label for="edit-exchange">Exchange Type</label>
             <select id="edit-exchange" name="exchange_type" required>
-              <option value="free">Voluntary (Free)</option>
-              <option value="exchange">Skill Exchange</option>
-              <option value="paid">Paid Service</option>
+              <option value="Voluntary">Voluntary (Free)</option>
+              <option value="Barter">Barter (Skill for Skill)</option>
+              <option value="Low-Cost">Low-Cost (Small Fee)</option>
             </select>
           </div>
           <div class="form-group">
@@ -168,11 +188,41 @@
           </div>
           <div class="form-group">
             <label for="add-category">Category</label>
-            <input type="text" id="add-category" name="category" placeholder="e.g., Technology, Arts, Academic" required>
+            <select id="add-category" name="category" required>
+              <option value="">Select a category</option>
+              <option value="Programming">Programming</option>
+              <option value="Web Development">Web Development</option>
+              <option value="Mobile Development">Mobile Development</option>
+              <option value="Data Science">Data Science</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Biology">Biology</option>
+              <option value="English">English</option>
+              <option value="Foreign Languages">Foreign Languages</option>
+              <option value="Graphic Design">Graphic Design</option>
+              <option value="Video Editing">Video Editing</option>
+              <option value="Photography">Photography</option>
+              <option value="Music">Music</option>
+              <option value="Drawing & Painting">Drawing & Painting</option>
+              <option value="Business">Business</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Accounting">Accounting</option>
+              <option value="Writing">Writing</option>
+              <option value="Public Speaking">Public Speaking</option>
+              <option value="Sports & Fitness">Sports & Fitness</option>
+              <option value="Cooking">Cooking</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           <div class="form-group">
             <label for="add-exchange">Exchange Type</label>
-            {{ form.exchange_type }}
+            <select id="add-exchange" name="exchange_type" required>
+              <option value="">Select exchange type</option>
+              <option value="Voluntary">Voluntary (Free)</option>
+              <option value="Barter">Barter (Skill for Skill)</option>
+              <option value="Low-Cost">Low-Cost (Small Fee)</option>
+            </select>
           </div>
           <div class="form-group">
             <label for="add-description">Description</label>
@@ -187,12 +237,37 @@
     </div>
   </div>
 
-  <!-- Delete Confirmation Form (hidden) -->
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div id="delete-modal" class="modal-overlay">
+    <div class="modal-box modal-delete">
+      <div class="modal-header">
+        <h2>Delete Skill</h2>
+        <button class="close-button" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="delete-icon">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <p class="delete-message">Are you sure you want to delete <strong id="delete-skill-name"></strong>?</p>
+        <p class="delete-warning">This action cannot be undone. All related data will be permanently removed.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn-danger" onclick="confirmDelete()">
+          <i class="fa-solid fa-trash"></i> Delete Skill
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Form (hidden) -->
   <form id="delete-form" method="post" style="display: none;">
     {% csrf_token %}
   </form>
 
   <script>
+    let skillToDelete = null;
+
     // View Modal Functions
     function openViewModal(skillId, title, category, exchange, description) {
       document.getElementById('view-title').textContent = title;
@@ -208,10 +283,8 @@
 
     // Edit Modal Functions
     function openEditModal(skillId) {
-      // Set form action to your existing edit URL
       document.getElementById('edit-form').action = `/skill/${skillId}/edit/`;
 
-      // Fetch skill data and populate form
       fetch(`/skill/${skillId}/get/`)
         .then(response => response.json())
         .then(data => {
@@ -240,11 +313,22 @@
       document.getElementById('add-modal').classList.remove('active');
     }
 
-    // Delete Function
-    function confirmDelete(skillId) {
-      if (confirm('Are you sure you want to delete this skill?')) {
+    // Delete Modal Functions
+    function openDeleteModal(skillId, skillName) {
+      skillToDelete = skillId;
+      document.getElementById('delete-skill-name').textContent = skillName;
+      document.getElementById('delete-modal').classList.add('active');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('delete-modal').classList.remove('active');
+      skillToDelete = null;
+    }
+
+    function confirmDelete() {
+      if (skillToDelete) {
         const form = document.getElementById('delete-form');
-        form.action = `/skill/${skillId}/delete/`;
+        form.action = `/skill/${skillToDelete}/delete/`;
         form.submit();
       }
     }
@@ -254,7 +338,22 @@
       modal.addEventListener('click', function(e) {
         if (e.target === this) {
           this.classList.remove('active');
+          if (this.id === 'delete-modal') {
+            skillToDelete = null;
+          }
         }
+      });
+    });
+
+    // Auto-dismiss messages after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      const messages = document.querySelectorAll('.message-banner');
+      messages.forEach(message => {
+        setTimeout(() => {
+          message.style.transition = 'opacity 0.5s ease-out';
+          message.style.opacity = '0';
+          setTimeout(() => message.remove(), 500);
+        }, 5000);
       });
     });
   </script>

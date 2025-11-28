@@ -16,11 +16,18 @@
         </div>
     </div>
 
-    <!-- Sliding Toggle Tabs -->
     <div class="tabs-slider-container">
         <div class="tabs-slider">
-            <button class="tab-slider active" data-tab="sent-requests">Sent Requests</button>
-            <button class="tab-slider" data-tab="received-requests">Received Requests</button>
+            <button class="tab-slider active" data-tab="sent-requests">
+                Sent Requests
+                <span class="request-count-badge">{{ sent_requests|length|default:"0" }}</span>
+            </button>
+
+            <button class="tab-slider" data-tab="received-requests">
+                Received Requests
+                <span class="request-count-badge">{{ received_requests|length|default:"0" }}</span>
+            </button>
+
             <div class="slider-indicator"></div>
         </div>
     </div>
@@ -78,12 +85,9 @@
                                         </p>
                                     {% endif %}
                                 {% elif req.status == 'Pending' or req.status == 'Accepted' %}
-                                    <form method="post" action="{% url 'core:cancel_request' request_id=req.id %}" style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn-close" onclick="return confirm('Are you sure you want to cancel this request?')">
-                                            <i class="fa-solid fa-times"></i> Close Request
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn-close" onclick="openCancelModal({{ req.id }}, '{{ req.skill.title|escapejs }}', '{{ req.skill.owner.username|escapejs }}')">
+                                        <i class="fa-solid fa-times"></i> Close Request
+                                    </button>
                                 {% endif %}
                             </div>
                         </div>
@@ -118,7 +122,7 @@
                                 <span class="status-badge status-{{ req.status|lower }}">{{ req.get_status_display }}</span>
                             </div>
                             <p class="request-meta">From: <strong>{{ req.requester.username }}</strong> | On: {{ req.created_at|date:"F d, Y" }}</p>
-                            
+
                             <div class="card-details-grid">
                                 {% if req.requested_date_time %}
                                     <div class="detail-item">
@@ -133,26 +137,20 @@
                                     </div>
                                 {% endif %}
                             </div>
-                            
+
                             <div class="request-message-section">
                                 <strong>Their Message:</strong>
                                 <p>{{ req.extra_description }}</p>
                             </div>
-                            
+
                             {% if req.status == 'Pending' %}
                             <div class="request-actions-footer">
-                                <form method="post" action="{% url 'core:update_request_status' request_id=req.id status='Accepted' %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-success">
-                                        <i class="fa-solid fa-check"></i> Accept Request
-                                    </button>
-                                </form>
-                                <form method="post" action="{% url 'core:update_request_status' request_id=req.id status='Declined' %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-danger">
-                                        <i class="fa-solid fa-times"></i> Reject Request
-                                    </button>
-                                </form>
+                                <button type="button" class="btn-success" onclick="openAcceptModal({{ req.id }}, '{{ req.skill.title|escapejs }}', '{{ req.requester.username|escapejs }}')">
+                                    <i class="fa-solid fa-check"></i> Accept Request
+                                </button>
+                                <button type="button" class="btn-danger" onclick="openRejectModal({{ req.id }}, '{{ req.skill.title|escapejs }}', '{{ req.requester.username|escapejs }}')">
+                                    <i class="fa-solid fa-times"></i> Reject Request
+                                </button>
                             </div>
                             {% endif %}
                         </div>
@@ -169,40 +167,205 @@
         </div>
     </div>
 </div>
+
+<!-- CANCEL REQUEST MODAL -->
+<div id="cancel-modal" class="modal-overlay">
+    <div class="modal-box modal-cancel">
+        <div class="modal-header">
+            <h2>Cancel Request</h2>
+            <button class="close-button" onclick="closeCancelModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-icon cancel-icon">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </div>
+            <p class="modal-message">Are you sure you want to cancel your request for <strong id="cancel-skill-name"></strong>?</p>
+            <p class="modal-submessage">This will notify <strong id="cancel-user-name"></strong> that you're no longer interested.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeCancelModal()">Keep Request</button>
+            <button type="button" class="btn-cancel-confirm" onclick="confirmCancel()">
+                <i class="fa-solid fa-times"></i> Cancel Request
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ACCEPT REQUEST MODAL -->
+<div id="accept-modal" class="modal-overlay">
+    <div class="modal-box modal-accept">
+        <div class="modal-header">
+            <h2>Accept Request</h2>
+            <button class="close-button" onclick="closeAcceptModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-icon accept-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <p class="modal-message">Accept the request for <strong id="accept-skill-name"></strong>?</p>
+            <p class="modal-submessage">This will notify <strong id="accept-user-name"></strong> that you're ready to help them learn this skill.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeAcceptModal()">Cancel</button>
+            <button type="button" class="btn-accept-confirm" onclick="confirmAccept()">
+                <i class="fa-solid fa-check"></i> Accept Request
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- REJECT REQUEST MODAL -->
+<div id="reject-modal" class="modal-overlay">
+    <div class="modal-box modal-reject">
+        <div class="modal-header">
+            <h2>Reject Request</h2>
+            <button class="close-button" onclick="closeRejectModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-icon reject-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <p class="modal-message">Reject the request for <strong id="reject-skill-name"></strong>?</p>
+            <p class="modal-submessage">This will notify <strong id="reject-user-name"></strong> that you cannot help with this request at this time.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeRejectModal()">Cancel</button>
+            <button type="button" class="btn-reject-confirm" onclick="confirmReject()">
+                <i class="fa-solid fa-times"></i> Reject Request
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Forms -->
+<form id="cancel-form" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<form id="accept-form" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<form id="reject-form" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
+let requestToCancel = null;
+let requestToAccept = null;
+let requestToReject = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('.tab-slider');
     const tabPanes = document.querySelectorAll('.tab-pane');
     const indicator = document.querySelector('.slider-indicator');
-    
+
     // Set initial indicator position
     updateIndicator(document.querySelector('.tab-slider.active'));
-    
+
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
             // Remove active class from all tabs and panes
             tabs.forEach(t => t.classList.remove('active'));
             tabPanes.forEach(p => p.classList.remove('active'));
-            
+
             // Add active class to clicked tab
             this.classList.add('active');
-            
+
             // Show corresponding pane
             const targetPaneId = 'tab-content-' + this.dataset.tab;
             document.getElementById(targetPaneId).classList.add('active');
-            
+
             // Update indicator position
             updateIndicator(this);
         });
     });
-    
+
     function updateIndicator(activeTab) {
         const index = Array.from(tabs).indexOf(activeTab);
         indicator.style.transform = `translateX(${index * 100}%)`;
     }
+});
+
+// Cancel Modal Functions
+function openCancelModal(requestId, skillName, userName) {
+    requestToCancel = requestId;
+    document.getElementById('cancel-skill-name').textContent = skillName;
+    document.getElementById('cancel-user-name').textContent = userName;
+    document.getElementById('cancel-modal').classList.add('active');
+}
+
+function closeCancelModal() {
+    document.getElementById('cancel-modal').classList.remove('active');
+    requestToCancel = null;
+}
+
+function confirmCancel() {
+    if (requestToCancel) {
+        const form = document.getElementById('cancel-form');
+        // Match the actual URL pattern: cancel-request/<int:request_id>/
+        form.action = `/core/cancel-request/${requestToCancel}/`;
+        form.submit();
+    }
+}
+
+// Accept Modal Functions
+function openAcceptModal(requestId, skillName, userName) {
+    requestToAccept = requestId;
+    document.getElementById('accept-skill-name').textContent = skillName;
+    document.getElementById('accept-user-name').textContent = userName;
+    document.getElementById('accept-modal').classList.add('active');
+}
+
+function closeAcceptModal() {
+    document.getElementById('accept-modal').classList.remove('active');
+    requestToAccept = null;
+}
+
+function confirmAccept() {
+    if (requestToAccept) {
+        const form = document.getElementById('accept-form');
+        // Match the actual URL pattern: request/<int:request_id>/update/<str:status>/
+        form.action = `/core/request/${requestToAccept}/update/Accepted/`;
+        form.submit();
+    }
+}
+
+// Reject Modal Functions
+function openRejectModal(requestId, skillName, userName) {
+    requestToReject = requestId;
+    document.getElementById('reject-skill-name').textContent = skillName;
+    document.getElementById('reject-user-name').textContent = userName;
+    document.getElementById('reject-modal').classList.add('active');
+}
+
+function closeRejectModal() {
+    document.getElementById('reject-modal').classList.remove('active');
+    requestToReject = null;
+}
+
+function confirmReject() {
+    if (requestToReject) {
+        const form = document.getElementById('reject-form');
+        // Match the actual URL pattern: request/<int:request_id>/update/<str:status>/
+        form.action = `/core/request/${requestToReject}/update/Declined/`;
+        form.submit();
+    }
+}
+
+// Close modal when clicking outside
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+            requestToCancel = null;
+            requestToAccept = null;
+            requestToReject = null;
+        }
+    });
 });
 </script>
 {% endblock %}
