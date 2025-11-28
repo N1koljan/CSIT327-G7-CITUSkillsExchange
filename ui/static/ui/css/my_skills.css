@@ -1,8 +1,35 @@
-/* Skills Container */
+/* --- 1. LAYOUT FIXES (Same as Dashboard) --- */
+
+/* Ensure padding doesn't increase element width */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f9f9f9;
+  color: #333;
+}
+
+/* This creates the consistent 30px spacing around the whole page */
+main {
+  padding: 30px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* --- 2. SKILLS SPECIFIC STYLES --- */
+
+/* Skills Container
+   Updated: Removed padding/margins here because 'main' handles it now.
+   Increased max-width so it takes up more space like the dashboard.
+*/
 .skills-container {
-  max-width: 1200px;
-  margin: 30px auto;
-  padding: 20px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .skills-header {
@@ -16,7 +43,7 @@
 
 .skills-header h1 {
   font-size: 2.2rem;
-  color: #333;
+  color: #660000; /* Matched Dashboard Red */
   margin: 0;
 }
 
@@ -28,12 +55,12 @@
 
 .add-skill-btn {
   display: inline-block;
-  background-color: #a10f0f;
+  background-color: #cc0000; /* Matched Dashboard Button Red */
   color: white;
   text-decoration: none;
   border: none;
   padding: 12px 20px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
   font-size: 1rem;
@@ -41,7 +68,7 @@
 }
 
 .add-skill-btn:hover {
-  background-color: #800000;
+  background-color: #a00000;
   transform: scale(1.02);
 }
 
@@ -51,32 +78,78 @@
 
 /* Message Banners */
 .message-banner {
-  padding: 12px 20px;
+  padding: 15px 20px;
   margin-bottom: 20px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message-success {
   background-color: #d4edda;
   color: #155724;
   border: 1px solid #c3e6cb;
+  border-left: 4px solid #28a745;
 }
 
 .message-error {
   background-color: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
+  border-left: 4px solid #dc3545;
+}
+
+.message-success::before {
+  content: "✓";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #28a745;
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.message-error::before {
+  content: "✕";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #dc3545;
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  flex-shrink: 0;
 }
 
 /* Skills List Grid */
 .skills-list {
   display: grid;
+  /* Auto-fill will nicely arrange cards based on available width */
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 25px;
 }
 
-/* New Skill Card Design */
+/* Skill Card Design */
 .skill-card {
   background: #ffffff;
   border: 1px solid #e0e0e0;
@@ -94,7 +167,7 @@
   box-shadow: 0 6px 16px rgba(0,0,0,0.12);
 }
 
-/* Card Header with Icon */
+/* Card Header */
 .skill-card-header {
   display: flex;
   align-items: flex-start;
@@ -106,7 +179,7 @@
 .skill-icon {
   width: 50px;
   height: 50px;
-  background: #ffe5e5;
+  background: #fff7e6; /* Light yellow/cream to match dashboard theme */
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -116,7 +189,7 @@
 
 .skill-icon i {
   font-size: 24px;
-  color: #a10f0f;
+  color: #800000;
 }
 
 .skill-card-title-section {
@@ -146,8 +219,8 @@
 }
 
 .tag-category {
-  background: #ffd966;
-  color: #333;
+  background: #ffcc00; /* Dashboard Yellow */
+  color: #000;
 }
 
 .tag-level {
@@ -179,7 +252,7 @@
 }
 
 .skill-meta i {
-  color: #a10f0f;
+  color: #800000;
   margin-right: 5px;
 }
 
@@ -227,13 +300,13 @@
 }
 
 .btn-edit {
-  background-color: #a10f0f;
+  background-color: #cc0000;
   color: white;
-  border: 1px solid #a10f0f;
+  border: 1px solid #cc0000;
 }
 
 .btn-edit:hover {
-  background-color: #800000;
+  background-color: #a00000;
 }
 
 /* Top action buttons */
@@ -253,7 +326,7 @@
 }
 
 .icon-btn:hover {
-  color: #a10f0f;
+  color: #800000;
 }
 
 /* Empty State */
@@ -270,7 +343,7 @@
 
 .no-skills i {
   font-size: 48px;
-  color: #a10f0f;
+  color: #800000;
   display: block;
   margin-bottom: 15px;
 }
@@ -361,7 +434,7 @@
 
 .detail-section h3 {
   font-size: 1rem;
-  color: #a10f0f;
+  color: #800000;
   margin: 0 0 8px 0;
   font-weight: 600;
 }
@@ -402,8 +475,8 @@
 .modal-form .form-group select:focus,
 .modal-form .form-group textarea:focus {
   outline: none;
-  border-color: #a10f0f;
-  box-shadow: 0 0 0 3px rgba(161, 15, 15, 0.15);
+  border-color: #800000;
+  box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.15);
 }
 
 .modal-form .form-group textarea {
@@ -433,12 +506,12 @@
 }
 
 .modal-footer .btn-primary {
-  background: #a10f0f;
+  background: #cc0000;
   color: white;
 }
 
 .modal-footer .btn-primary:hover {
-  background: #800000;
+  background: #a00000;
 }
 
 .modal-footer .btn-secondary {
@@ -476,4 +549,57 @@
     width: 100%;
     text-align: center;
   }
+}
+
+/* Delete Modal Specific Styles */
+.modal-delete {
+  max-width: 480px;
+}
+
+.delete-icon {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.delete-icon i {
+  font-size: 64px;
+  color: #dc3545;
+  animation: warning-pulse 2s ease-in-out infinite;
+}
+
+@keyframes warning-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.delete-message {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.delete-message strong {
+  color: #800000;
+}
+
+.delete-warning {
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+  background: #fff3cd;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid #ffc107;
+  margin-bottom: 0;
+}
+
+.btn-danger i {
+  margin-right: 6px;
 }

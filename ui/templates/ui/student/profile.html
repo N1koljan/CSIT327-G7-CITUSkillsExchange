@@ -1,15 +1,24 @@
 {% extends 'ui/base.html' %}
 {% load static %}
 
-
 {% block title %}My Profile - CIT-U Skills Exchange{% endblock %}
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/profile.css' %}">
 {% endblock %}
 
-
 {% block content %}
+  <!-- Messages Container for Success/Error notifications -->
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="alert {% if message.tags %}{{ message.tags }}{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <div class="profile-container">
     <h1 class="title">My Profile</h1>
     <p class="subtitle">Manage your account information and preferences</p>
@@ -21,7 +30,7 @@
         {% if user.profile_picture %}
           <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-pic">
         {% else %}
-          <img src="{% static 'ui/img/profilepic.png' %}" alt="Profile Pictu    re" class="profile-pic">
+          <img src="{% static 'ui/img/profilepic.png' %}" alt="Profile Picture" class="profile-pic">
         {% endif %}
       </div>
       <div class="profile-info">
@@ -60,8 +69,8 @@
       </p>
     </div>
 
-      <div class="sign-out-section" style="text-align: center; margin-top: 30px;">
-        <a href="{% url 'logout' %}" class="sign-out-btn" style="padding: 10px 20px; background-color: #d9534f; color: white; text-decoration: none; border-radius: 5px;">Sign Out</a>
+    <div class="sign-out-section">
+      <a href="{% url 'logout' %}" class="sign-out-btn">Sign Out</a>
     </div>
 
     <!-- Footer -->
@@ -69,4 +78,38 @@
       <p>Need help? Contact our support team at <span class="support-email">skills.exchange@cit.edu</span></p>
     </div>
   </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove any blue notification bars
+    setTimeout(function() {
+        // Find all divs with blue/cyan background
+        const allDivs = document.querySelectorAll('div');
+        allDivs.forEach(div => {
+            const bgColor = window.getComputedStyle(div).backgroundColor;
+            // Check if background is cyan/blue (rgb(0, 188, 212) or similar)
+            if (bgColor.includes('0, 188, 212') ||
+                bgColor.includes('0, 172, 193') ||
+                (bgColor.includes('rgb(0') && bgColor.includes('212'))) {
+                div.remove();
+            }
+        });
+    }, 100);
+
+    // Auto-remove success messages after 5 seconds
+    setTimeout(function() {
+        const messagesContainer = document.querySelector('.messages');
+        if (messagesContainer) {
+            messagesContainer.style.transition = 'opacity 0.5s, transform 0.5s';
+            messagesContainer.style.opacity = '0';
+            messagesContainer.style.transform = 'translateX(100%)';
+            setTimeout(function() {
+                messagesContainer.remove();
+            }, 500);
+        }
+    }, 5000);
+});
+</script>
 {% endblock %}

@@ -1,18 +1,31 @@
 /* ========================================================== */
 /* BASE CONTAINER STYLES */
 /* ========================================================== */
-
-.container {
-  max-width: 1200px;
-  margin: 30px auto;
-  padding: 2rem;
+* {
+  box-sizing: border-box;
 }
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f9f9f9;
+  color: #333;
+}
+
+/* Primary page container - This creates the balanced spacing */
+main {
+  padding: 30px; /* Consistent 30px padding around the content */
+  max-width: 1600px; /* Matches the wider layout of the reference page */
+  margin: 0 auto; /* Centers the container horizontally */
+}
+
+/* .container class is no longer needed as 'main' handles the layout */
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 30px; /* Standardized margin to match padding */
 }
 
 .page-title-section h1 {
@@ -25,8 +38,8 @@
 .page-title-section p {
   color: #666;
   font-size: 1rem;
+  margin: 0;
 }
-
 /* ========================================================== */
 /* SLIDING TOGGLE TABS (NEW DESIGN) */
 /* ========================================================== */
@@ -81,6 +94,31 @@
   border-radius: 10px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
+}
+
+/* ... existing tab styles ... */
+
+.request-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e5e7eb; /* Light gray neutral background */
+  color: #4b5563;            /* Dark gray text */
+  font-size: 0.75rem;
+  font-weight: 700;
+  height: 22px;              /* Fixed height for pill shape */
+  min-width: 22px;           /* Ensures roundness for single digits */
+  padding: 0 6px;
+  border-radius: 12px;       /* Pill shape */
+  margin-left: 8px;          /* Space between text and badge */
+  transition: all 0.3s ease;
+}
+
+/* Make the badge highlight when the tab is active */
+.tab-slider.active .request-count-badge {
+  background-color: #800000; /* Matches your active text color */
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(128, 0, 0, 0.2);
 }
 
 /* ========================================================== */
@@ -458,5 +496,248 @@
   .request-actions-footer button,
   .request-actions-footer a {
     width: 100%;
+  }
+}
+
+/* ========================================================== */
+/* MODAL STYLES */
+/* ========================================================== */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+  display: flex;
+  opacity: 1;
+}
+
+.modal-box {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-box {
+  transform: scale(1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #111827;
+  font-weight: 700;
+}
+
+.close-button {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.close-button:hover {
+  color: #111827;
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: 32px 28px;
+  text-align: center;
+}
+
+.modal-icon {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.modal-icon i {
+  font-size: 72px;
+}
+
+.cancel-icon i {
+  color: #ef4444;
+  animation: shake 0.5s ease-in-out;
+}
+
+.accept-icon i {
+  color: #10b981;
+  animation: bounce 0.6s ease-in-out;
+}
+
+.reject-icon i {
+  color: #f59e0b;
+  animation: warning-pulse 2s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes warning-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.modal-message {
+  font-size: 1.15rem;
+  color: #111827;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.modal-message strong {
+  color: #800000;
+}
+
+.modal-submessage {
+  font-size: 0.95rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.modal-submessage strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 28px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.modal-footer button {
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.btn-cancel-confirm {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-cancel-confirm:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-accept-confirm {
+  background: #10b981;
+  color: white;
+}
+
+.btn-accept-confirm:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-reject-confirm {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-reject-confirm:hover {
+  background: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+  .modal-box {
+    max-width: 90%;
+    margin: 20px;
+  }
+
+  .modal-header {
+    padding: 20px;
+  }
+
+  .modal-body {
+    padding: 24px 20px;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    padding: 16px 20px;
+  }
+
+  .modal-footer button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-icon i {
+    font-size: 56px;
   }
 }

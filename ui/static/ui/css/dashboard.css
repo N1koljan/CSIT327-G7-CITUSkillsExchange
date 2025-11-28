@@ -1,3 +1,8 @@
+/* 1. Global Reset to ensure padding doesn't break layout width */
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -5,33 +10,110 @@ body {
   color: #333;
 }
 
+/* Fix for messages container - prevents layout shift */
+.messages {
+  position: fixed;
+  top: 80px;
+  left: 300px;
+  right: auto;
+  z-index: 9999;
+  max-width: 450px;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none;
+}
+
+.messages li {
+  list-style: none;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  animation: slideInFromLeft 0.4s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.messages li:before {
+  content: "✓";
+  font-size: 20px;
+  font-weight: bold;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.messages .success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.messages .error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+.messages .info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
+.messages .warning {
+  background: #fff3cd;
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+/* 2. Main Container - This padding creates the balance on Left & Right */
 main {
-  padding-top: 1px;
+  padding: 30px;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 h1 {
-  margin: 20px;
-  color: #660000;
+  margin: 0 0 10px 0;
+  color: #000000;
 }
 
 p {
-  margin: 0 20px 20px;
+  margin: 0 0 30px 0;
   color: #666;
 }
 
-/* Stats Section */
+/* Stats Section - Updated to 3 columns */
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
-  margin: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 25px;
 }
 
 .card {
-  background: #fff7e6;
+  background: linear-gradient(135deg, #fff7e6 0%, #ffeed4 100%);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.15);
 }
 
 .card-top {
@@ -43,19 +125,25 @@ p {
 .card-top i {
   font-size: 18px;
   color: #800000;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .card-top i {
+  transform: scale(1.2);
 }
 
 .card h2 {
   margin: 10px 0 0;
   color: #800000;
+  font-size: 2em;
 }
 
 /* Activity & Sessions */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin: 20px;
+  gap: 20px;
+  margin-bottom: 25px;
 }
 
 .box {
@@ -66,9 +154,16 @@ p {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 .box h3 {
+  margin-top: 0;
   margin-bottom: 15px;
   color: #333;
 }
@@ -95,7 +190,7 @@ p {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s ease;
   padding: 12px 15px;
   font-size: 14px;
 }
@@ -112,6 +207,8 @@ p {
 
 .btn.yellow:hover {
   background: #e6b800;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .btn.red {
@@ -121,6 +218,8 @@ p {
 
 .btn.red:hover {
   background: #a00000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .btn.outline {
@@ -135,11 +234,21 @@ p {
 .btn.outline:hover {
   border-color: #800000;
   color: #800000;
+  background: #fff7e6;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.btn.outline i {
+  transition: transform 0.3s ease;
+}
+
+.btn.outline:hover i {
+  transform: scale(1.1);
 }
 
 /* Quick Actions */
 .quick-actions {
-  margin: 20px;
   padding: 20px;
   background: #fff;
   border-radius: 10px;
@@ -147,6 +256,7 @@ p {
 }
 
 .quick-actions h3 {
+  margin-top: 0;
   margin-bottom: 15px;
   color: #800000;
 }
@@ -159,4 +269,220 @@ p {
 .actions .btn p {
   margin: 8px 0 0 0;
   font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  main {
+    padding: 20px;
+  }
+
+  .messages {
+    top: 10px;
+    left: 10px;
+    right: auto;
+    max-width: none;
+  }
+}
+
+/* Activity and Session Lists - Scrollable */
+.activity-list,
+.session-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  padding-right: 5px;
+}
+
+/* Custom Scrollbar */
+.activity-list::-webkit-scrollbar,
+.session-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.activity-list::-webkit-scrollbar-track,
+.session-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.activity-list::-webkit-scrollbar-thumb,
+.session-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.activity-list::-webkit-scrollbar-thumb:hover,
+.session-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Activity Item */
+.activity-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+  background: #fff7e6;
+  transform: translateX(5px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.activity-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background: #800000;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.activity-subtitle {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: #800000;
+  font-weight: 600;
+}
+
+.activity-time {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Session Item */
+.session-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+  border-left: 3px solid #ff9900;
+}
+
+.session-item:hover {
+  background: #fff7e6;
+  transform: translateX(5px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.session-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background: #ff9900;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.session-content {
+  flex: 1;
+}
+
+.session-title {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.session-subtitle {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.session-time {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-accepted {
+  background: #d4edda;
+  color: #155724;
+}
+
+/* Empty State */
+.placeholder {
+  padding: 40px 15px;
+  text-align: center;
+  color: #aaa;
+  font-style: italic;
+  background: #f3f3f3;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .activity-list,
+  .session-list {
+    max-height: 250px;
+  }
+
+  .activity-item,
+  .session-item {
+    padding: 10px;
+  }
+
+  .activity-icon,
+  .session-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
 }

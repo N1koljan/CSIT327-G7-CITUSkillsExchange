@@ -646,18 +646,18 @@ def cancel_request(request, request_id):
     # Ensure ONLY the sender can cancel their own request
     if req_to_cancel.requester != request.user:
         messages.error(request, "You are not authorized to cancel this request.")
-        return redirect('request_dashboard')
+        return redirect('requests')  # Changed from 'request_dashboard'
 
     # Only Pending requests can be cancelled
     if req_to_cancel.status != 'Pending':
         messages.error(request, "Only pending requests can be canceled.")
-        return redirect('request_dashboard')
+        return redirect('requests')  # Changed from 'request_dashboard'
 
     req_to_cancel.status = 'Cancelled'
     req_to_cancel.save()
 
     messages.success(request, "Your request has been cancelled successfully.")
-    return redirect('request_dashboard')
+    return redirect('requests')  # Changed from 'request_dashboard'
 
 
 @login_required

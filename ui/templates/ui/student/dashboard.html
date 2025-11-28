@@ -8,8 +8,15 @@
 {% endblock %}
 
 {% block content %}
+{% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+      <li class="{{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
 
-  <h1>Welcome back, Student!</h1>
+  <h1>Welcome back, {{ user.first_name|default:user.username }}!</h1>
   <p>Here's what's happening with your skill exchanges</p>
 
   <!-- Stats Section -->
@@ -19,28 +26,21 @@
         <p>Skills Offered</p>
         <i class="fa-solid fa-book-open"></i>
       </div>
-      <h2>0</h2>
+      <h2>{{ skills_count }}</h2>
     </div>
     <div class="card">
       <div class="card-top">
         <p>Active Requests</p>
         <i class="fa-solid fa-clipboard-list"></i>
       </div>
-      <h2>0</h2>
+      <h2>{{ active_requests_count }}</h2>
     </div>
     <div class="card">
       <div class="card-top">
         <p>Completed Sessions</p>
         <i class="fa-solid fa-check"></i>
       </div>
-      <h2>0</h2>
-    </div>
-    <div class="card">
-      <div class="card-top">
-        <p>Community Rank</p>
-        <i class="fa-solid fa-ranking-star"></i>
-      </div>
-      <h2>#0</h2>
+      <h2>{{ completed_sessions_count }}</h2>
     </div>
   </section>
 
@@ -49,7 +49,32 @@
     <!-- Recent Activity -->
     <div class="box">
       <h3><i class="fa-regular fa-clock red"></i> Recent Activity</h3>
-      <p class="placeholder">No recent activity yet...</p>
+
+      <div class="activity-list">
+        {% if recent_transactions %}
+          {% for transaction in recent_transactions %}
+            <div class="activity-item">
+              <div class="activity-icon">
+                <i class="fa-solid fa-check-circle"></i>
+              </div>
+              <div class="activity-content">
+                <p class="activity-title">
+                  {% if transaction.provider == user %}
+                    You taught <strong>{{ transaction.receiver.username }}</strong>
+                  {% else %}
+                    You learned from <strong>{{ transaction.provider.username }}</strong>
+                  {% endif %}
+                </p>
+                <p class="activity-subtitle">{{ transaction.request.skill.title }}</p>
+                <p class="activity-time">{{ transaction.completed_at|timesince }} ago</p>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="placeholder">No recent activity yet...</p>
+        {% endif %}
+      </div>
+
       <button class="btn yellow full" onclick="location.href='{% url 'transaction' %}'">
         View All Activities
       </button>
@@ -58,7 +83,53 @@
     <!-- Upcoming Sessions -->
     <div class="box">
       <h3><i class="fa-regular fa-calendar orange"></i> Upcoming Sessions</h3>
-      <p class="placeholder">No upcoming sessions scheduled...</p>
+
+      <div class="session-list">
+        {% if upcoming_requests or upcoming_schedules %}
+
+          <!-- Show Accepted Requests -->
+          {% for request in upcoming_requests %}
+            <div class="session-item">
+              <div class="session-icon">
+                <i class="fa-solid fa-handshake"></i>
+              </div>
+              <div class="session-content">
+                <p class="session-title">{{ request.skill.title }}</p>
+                <p class="session-subtitle">
+                  {% if request.requester == user %}
+                    with {{ request.skill.owner.username }}
+                  {% else %}
+                    with {{ request.requester.username }}
+                  {% endif %}
+                </p>
+                <p class="session-time">
+                  <span class="badge badge-accepted">Accepted</span>
+                </p>
+              </div>
+            </div>
+          {% endfor %}
+
+          <!-- Show Scheduled Sessions -->
+          {% for schedule in upcoming_schedules %}
+            <div class="session-item">
+              <div class="session-icon">
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+              <div class="session-content">
+                <p class="session-title">{{ schedule.title }}</p>
+                <p class="session-subtitle">{{ schedule.description|truncatewords:8 }}</p>
+                <p class="session-time">
+                  {{ schedule.start_time|date:"M d, Y - g:i A" }}
+                </p>
+              </div>
+            </div>
+          {% endfor %}
+
+        {% else %}
+          <p class="placeholder">No upcoming sessions scheduled...</p>
+        {% endif %}
+      </div>
+
       <button class="btn red full" onclick="location.href='{% url 'schedule' %}'">
         Manage Schedule
       </button>
@@ -83,4 +154,27 @@
       </button>
     </div>
   </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-hide messages after 4 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = document.querySelectorAll('.messages li');
+
+    messages.forEach(function(message, index) {
+        // Stagger the fade out if multiple messages
+        setTimeout(function() {
+            message.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            message.style.opacity = '0';
+            message.style.transform = 'translateX(-100%)';
+
+            // Remove from DOM after animation
+            setTimeout(function() {
+                message.remove();
+            }, 500);
+        }, 4000 + (index * 500));
+    });
+});
+</script>
 {% endblock %}

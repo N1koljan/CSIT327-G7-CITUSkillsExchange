@@ -5,56 +5,20 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/schedule.css' %}">
-
-  <!-- CSS for the new avatar layout -->
-  <style>
-    .schedule-item-layout {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .item-avatar img {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .item-content {
-      flex: 1;
-    }
-
-    /* Styles for user-created schedule cards */
-    .schedule-session-card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-left: 4px solid #ffdd00;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .schedule-session-card h4 {
-      margin: 0 0 0.5rem 0;
-      color: #333;
-      font-size: 1.1rem;
-    }
-
-    .schedule-session-card .session-time {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #666;
-      font-size: 0.9rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .schedule-session-card .session-time i {
-      color: #800000;
-    }
-  </style>
 {% endblock %}
 
 {% block content %}
+<!-- Messages Container for Success/Error notifications -->
+{% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+      <div class="alert {% if message.tags %}{{ message.tags }}{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 <div class="schedule-container">
     <!-- Header -->
     <div class="schedule-header">
@@ -69,98 +33,7 @@
         <!-- DYNAMIC MAIN COLUMN -->
         <div class="main-column">
 
-            <!-- ALL SCHEDULED SESSIONS - Shows user-created Schedule objects -->
-            <div class="card all-sessions-list-container">
-                <div class="card-header">
-                    <i class="fa-solid fa-list-ul"></i>
-                    <h3>All Scheduled Sessions</h3>
-                </div>
-                <div class="card-content">
-                    {% if not user_schedules %}
-                        <div class="empty-list-message">
-                            <p>No sessions scheduled yet. Click "New Session" to create one.</p>
-                        </div>
-                    {% else %}
-                        {% for schedule in user_schedules %}
-                        <div class="schedule-session-card">
-                            <h4>{{ schedule.title }}</h4>
-
-                            <div class="session-time">
-                                <i class="fa-regular fa-calendar"></i>
-                                <span>{{ schedule.start_time|date:"Y-m-d" }}</span>
-                            </div>
-
-                            <div class="session-time">
-                                <i class="fa-regular fa-clock"></i>
-                                <span>{{ schedule.start_time|time:"g:i A" }} - {{ schedule.end_time|time:"g:i A" }}</span>
-                            </div>
-
-                            {% if schedule.description %}
-                            <div class="session-time">
-                                <i class="fa-regular fa-file-lines"></i>
-                                <span>{{ schedule.description|truncatewords:15 }}</span>
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- PENDING REQUESTS - Detailed view with avatars -->
-            <div class="card pending-requests">
-                <div class="card-header">
-                    <h3>Pending Requests</h3>
-                </div>
-                <div class="card-content">
-                     {% if not pending_requests %}
-                        <div class="empty-list-message">
-                            <i class="fa-regular fa-folder-open"></i>
-                            <p>No Pending Requests</p>
-                        </div>
-                     {% else %}
-                        {% for req in pending_requests %}
-                            <div class="request-item schedule-item-layout">
-                                <div class="item-avatar">
-                                    {% if req.requester == request.user %}
-                                        {% if req.skill.owner.profile_picture %}
-                                            <img src="{{ req.skill.owner.profile_picture.url }}" alt="{{ req.skill.owner.username }}'s profile">
-                                        {% else %}
-                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                                        {% endif %}
-                                    {% else %}
-                                        {% if req.requester.profile_picture %}
-                                            <img src="{{ req.requester.profile_picture.url }}" alt="{{ req.requester.username }}'s profile">
-                                        {% else %}
-                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                                <div class="item-content">
-                                    <h4>{{ req.skill.title }}</h4>
-                                    {% if req.requested_date_time %}
-                                        <div class="details">
-                                            <i class="fa-regular fa-calendar-alt"></i>
-                                            <span>{{ req.requested_date_time }}</span>
-                                        </div>
-                                    {% endif %}
-                                    <div class="details invited-by">
-                                        {% if req.requester == request.user %}
-                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                            <span>Request sent to: <strong>{{ req.skill.owner.username }}</strong></span>
-                                        {% else %}
-                                            <i class="fa-solid fa-inbox"></i>
-                                            <span>Request from: <strong>{{ req.requester.username }}</strong></span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                     {% endif %}
-                </div>
-            </div>
-
-            <!-- CONFIRMED SESSIONS - Detailed view with avatars -->
+            <!-- CONFIRMED SESSIONS - NOW AT TOP -->
             <div class="card confirmed-sessions">
                 <div class="card-header">
                     <h3>Upcoming Confirmed Sessions</h3>
@@ -221,6 +94,98 @@
                      {% endif %}
                 </div>
             </div>
+
+            <!-- ALL SCHEDULED SESSIONS - NOW SECOND -->
+            <div class="card all-sessions-list-container">
+                <div class="card-header">
+                    <i class="fa-solid fa-list-ul"></i>
+                    <h3>All Scheduled Sessions</h3>
+                </div>
+                <div class="card-content">
+                    {% if not user_schedules %}
+                        <div class="empty-list-message">
+                            <p>No sessions scheduled yet. Click "New Session" to create one.</p>
+                        </div>
+                    {% else %}
+                        {% for schedule in user_schedules %}
+                        <div class="schedule-session-card" data-schedule-id="{{ schedule.id }}">
+                            <h4>{{ schedule.title }}</h4>
+
+                            <div class="session-time">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>{{ schedule.start_time|date:"F d, Y" }}</span>
+                            </div>
+
+                            <div class="session-time">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>{{ schedule.start_time|time:"g:i A" }} - {{ schedule.end_time|time:"g:i A" }}</span>
+                            </div>
+
+                            {% if schedule.description %}
+                            <div class="session-time">
+                                <i class="fa-regular fa-file-lines"></i>
+                                <span>{{ schedule.description|truncatewords:15 }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- PENDING REQUESTS - NOW THIRD -->
+            <div class="card pending-requests">
+                <div class="card-header">
+                    <h3>Pending Requests</h3>
+                </div>
+                <div class="card-content">
+                     {% if not pending_requests %}
+                        <div class="empty-list-message">
+                            <i class="fa-regular fa-folder-open"></i>
+                            <p>No Pending Requests</p>
+                        </div>
+                     {% else %}
+                        {% for req in pending_requests %}
+                            <div class="request-item schedule-item-layout">
+                                <div class="item-avatar">
+                                    {% if req.requester == request.user %}
+                                        {% if req.skill.owner.profile_picture %}
+                                            <img src="{{ req.skill.owner.profile_picture.url }}" alt="{{ req.skill.owner.username }}'s profile">
+                                        {% else %}
+                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                                        {% endif %}
+                                    {% else %}
+                                        {% if req.requester.profile_picture %}
+                                            <img src="{{ req.requester.profile_picture.url }}" alt="{{ req.requester.username }}'s profile">
+                                        {% else %}
+                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="item-content">
+                                    <h4>{{ req.skill.title }}</h4>
+                                    {% if req.requested_date_time %}
+                                        <div class="details">
+                                            <i class="fa-regular fa-calendar-alt"></i>
+                                            <span>{{ req.requested_date_time }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <div class="details invited-by">
+                                        {% if req.requester == request.user %}
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                            <span>Request sent to: <strong>{{ req.skill.owner.username }}</strong></span>
+                                        {% else %}
+                                            <i class="fa-solid fa-inbox"></i>
+                                            <span>Request from: <strong>{{ req.requester.username }}</strong></span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                     {% endif %}
+                </div>
+            </div>
+
         </div>
 
         <!-- SIDEBAR WITH CALENDAR -->
@@ -303,92 +268,261 @@
   <a href="#" class="modal-close-bg"></a>
 </div>
 
-<div id="session-details-placeholder" class="modal-overlay session-details-modal">
+<!-- VIEW SESSION DETAILS MODAL -->
+<div id="view-session-modal" class="modal-overlay session-details-modal">
   <div class="modal-box">
-    <div class="modal-header"><h2>Session Details</h2><a href="#" class="close-button">&times;</a></div>
-    <div class="modal-body details-body">
-        <div class="detail-group"><label>Session Title</label><p>React Hooks Deep Dive</p></div>
-        <div class="detail-group"><label>Date</label><p>2024-01-15</p></div>
-        <div class="detail-row"><div class="detail-group"><label>Start Time</label><p>3:00 PM</p></div><div class="detail-group"><label>End Time</label><p>4:30 PM</p></div></div>
-        <div class="detail-group"><label>Details</label><p>Focus on useState, useEffect, and custom hooks</p></div>
-        <div class="detail-group"><label>With</label><p>Alex Johnson</p></div>
+    <div class="modal-header">
+      <h2>Session Details</h2>
+      <a href="#" class="close-button">&times;</a>
     </div>
-    <div class="modal-footer"><a href="#reschedule-placeholder" class="btn-secondary btn-icon"><i class="fa-solid fa-calendar-days"></i> Reschedule</a><a href="#" class="btn-secondary">Close</a></div>
+    <div class="modal-body">
+        <div class="detail-group">
+            <label>Session Title</label>
+            <p id="modal-session-title">--</p>
+        </div>
+
+        <div class="detail-group">
+            <label>Date</label>
+            <p id="modal-session-date">--</p>
+        </div>
+
+        <div class="detail-group">
+            <label>Time</label>
+            <p id="modal-session-time">--</p>
+        </div>
+
+        <div class="detail-group">
+            <label>Description</label>
+            <p id="modal-session-description">--</p>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn-delete-session">
+            <i class="fa-solid fa-trash"></i> Remove Session
+        </button>
+        <a href="#" class="btn-secondary">Close</a>
+    </div>
   </div>
   <a href="#" class="modal-close-bg"></a>
 </div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div id="delete-confirm-modal" class="modal-overlay delete-modal-overlay">
+  <div class="modal-box delete-modal-box">
+    <div class="modal-header delete-modal-header">
+      <i class="fa-solid fa-triangle-exclamation warning-icon"></i>
+      <h2>Confirm Deletion</h2>
+    </div>
+    <div class="modal-body">
+      <p class="delete-warning-text">Are you sure you want to remove this session?</p>
+      <p class="delete-session-name" id="delete-session-name">Session Name</p>
+      <p class="delete-warning-subtext">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer delete-modal-footer">
+      <a href="#" class="btn-cancel-delete">Cancel</a>
+      <form id="confirm-delete-form" method="POST" action="#" style="display: inline-block;">
+        {% csrf_token %}
+        <button type="submit" class="btn-confirm-delete">
+          <i class="fa-solid fa-trash"></i> Yes, Remove Session
+        </button>
+      </form>
+    </div>
+  </div>
+  <a href="#" class="modal-close-bg"></a>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
-<!-- CALENDAR SCRIPT -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // ====================
+// AUTO-REMOVE MESSAGES - ENHANCED
+// ====================
+// Function to remove blue notification bars
+function removeBlueNotifications() {
+    // Remove by background color
+    const allDivs = document.querySelectorAll('div');
+    allDivs.forEach(div => {
+        const bgColor = window.getComputedStyle(div).backgroundColor;
+        const styles = div.getAttribute('style') || '';
+
+        // Check for cyan/blue colors
+        if (bgColor.includes('0, 188, 212') ||
+            bgColor.includes('0, 172, 193') ||
+            bgColor.includes('rgb(0') && bgColor.includes('212') ||
+            styles.includes('rgb(0, 188, 212)') ||
+            styles.includes('#00bcd4') ||
+            styles.includes('cyan')) {
+            div.remove();
+        }
+    });
+}
+
+// Run immediately
+removeBlueNotifications();
+
+// Run again after a short delay
+setTimeout(removeBlueNotifications, 100);
+setTimeout(removeBlueNotifications, 500);
+
+// Auto-remove success messages after 5 seconds
+setTimeout(function() {
+    const messagesContainer = document.querySelector('.messages');
+    if (messagesContainer) {
+        messagesContainer.style.transition = 'opacity 0.5s, transform 0.5s';
+        messagesContainer.style.opacity = '0';
+        messagesContainer.style.transform = 'translateX(100%)';
+        setTimeout(function() {
+            messagesContainer.remove();
+        }, 500);
+    }
+}, 5000);
+
+        // ====================
+        // SESSION DELETION LOGIC
+        // ====================
+        let sessionToDelete = {
+            id: null,
+            name: null
+        };
+
+        // ====================
+        // SESSION CARD CLICK TO VIEW DETAILS
+        // ====================
+        const sessionCards = document.querySelectorAll('.schedule-session-card');
+        sessionCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const title = this.querySelector('h4').textContent;
+                const dateElement = this.querySelector('.session-time:nth-child(2)').textContent.trim();
+                const timeElement = this.querySelector('.session-time:nth-child(3)').textContent.trim();
+                const descElement = this.querySelector('.session-time:nth-child(4)');
+                const description = descElement ? descElement.textContent.trim() : 'No description';
+                const scheduleId = this.dataset.scheduleId;
+
+                // Store session info for potential deletion
+                sessionToDelete.id = scheduleId;
+                sessionToDelete.name = title;
+
+                // Populate modal with session data
+                document.getElementById('modal-session-title').textContent = title;
+                document.getElementById('modal-session-date').textContent = dateElement;
+                document.getElementById('modal-session-time').textContent = timeElement;
+                document.getElementById('modal-session-description').textContent = description;
+
+                // Show modal
+                window.location.hash = 'view-session-modal';
+            });
+        });
+
+        // Handle Remove Session button click
+        const removeSessionBtn = document.querySelector('.btn-delete-session');
+        if (removeSessionBtn) {
+            removeSessionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Close the view details modal
+                window.location.hash = '';
+
+                // Show delete confirmation modal after a brief delay
+                setTimeout(() => {
+                    document.getElementById('delete-session-name').textContent = sessionToDelete.name;
+                    document.getElementById('confirm-delete-form').action = `/schedule/delete/${sessionToDelete.id}/`;
+                    window.location.hash = 'delete-confirm-modal';
+                }, 300);
+            });
+        }
+
+        // Handle cancel delete button
+        const cancelDeleteBtn = document.querySelector('.btn-cancel-delete');
+        if (cancelDeleteBtn) {
+            cancelDeleteBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.hash = '';
+            });
+        }
+
+        // Close delete modal when clicking background
+        const deleteModalBg = document.querySelector('#delete-confirm-modal .modal-close-bg');
+        if (deleteModalBg) {
+            deleteModalBg.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.hash = '';
+            });
+        }
+
+        // ====================
+        // CALENDAR LOGIC
+        // ====================
         const monthYearDisplay = document.getElementById('monthYearDisplay');
         const calendarGrid = document.getElementById('calendarGrid');
         const prevMonthBtn = document.getElementById('prevMonthBtn');
         const nextMonthBtn = document.getElementById('nextMonthBtn');
-        let currentDate = new Date();
-        let currentMonth = currentDate.getMonth();
-        let currentYear = currentDate.getFullYear();
-        const today = new Date();
-        const todayDate = today.getDate();
-        const todayMonth = today.getMonth();
-        const todayYear = today.getFullYear();
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-        function renderCalendar(year, month) {
-            const firstDayOfMonth = new Date(year, month, 1);
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const firstDayWeekday = firstDayOfMonth.getDay();
-            const daysInPrevMonth = new Date(year, month, 0).getDate();
-            const dayElements = calendarGrid.querySelectorAll('.day, .other-month');
-            dayElements.forEach(day => day.remove());
-            monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
+        if (monthYearDisplay && calendarGrid && prevMonthBtn && nextMonthBtn) {
+            let currentDate = new Date();
+            let currentMonth = currentDate.getMonth();
+            let currentYear = currentDate.getFullYear();
+            const today = new Date();
+            const todayDate = today.getDate();
+            const todayMonth = today.getMonth();
+            const todayYear = today.getFullYear();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-            for (let i = 0; i < firstDayWeekday; i++) {
-                const day = daysInPrevMonth - firstDayWeekday + 1 + i;
-                const dayDiv = document.createElement('div');
-                dayDiv.classList.add('day', 'other-month');
-                dayDiv.textContent = day;
-                calendarGrid.appendChild(dayDiv);
-            }
+            function renderCalendar(year, month) {
+                const firstDayOfMonth = new Date(year, month, 1);
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDayWeekday = firstDayOfMonth.getDay();
+                const daysInPrevMonth = new Date(year, month, 0).getDate();
+                const dayElements = calendarGrid.querySelectorAll('.day, .other-month');
+                dayElements.forEach(day => day.remove());
+                monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
 
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayDiv = document.createElement('div');
-                dayDiv.classList.add('day');
-                dayDiv.textContent = day;
-                if (day === todayDate && month === todayMonth && year === todayYear) {
-                    dayDiv.classList.add('current-day');
+                for (let i = 0; i < firstDayWeekday; i++) {
+                    const day = daysInPrevMonth - firstDayWeekday + 1 + i;
+                    const dayDiv = document.createElement('div');
+                    dayDiv.classList.add('day', 'other-month');
+                    dayDiv.textContent = day;
+                    calendarGrid.appendChild(dayDiv);
                 }
-                dayDiv.addEventListener('click', () => {
-                    console.log(`Clicked on: ${day}/${month + 1}/${year}`);
-                });
-                calendarGrid.appendChild(dayDiv);
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.classList.add('day');
+                    dayDiv.textContent = day;
+                    if (day === todayDate && month === todayMonth && year === todayYear) {
+                        dayDiv.classList.add('current-day');
+                    }
+                    dayDiv.addEventListener('click', () => {
+                        console.log(`Clicked on: ${day}/${month + 1}/${year}`);
+                    });
+                    calendarGrid.appendChild(dayDiv);
+                }
+
+                const totalCellsGenerated = firstDayWeekday + daysInMonth;
+                const remainingCells = (totalCellsGenerated % 7 === 0) ? 0 : 7 - (totalCellsGenerated % 7);
+                for (let i = 1; i <= remainingCells; i++) {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.classList.add('day', 'other-month');
+                    dayDiv.textContent = i;
+                    calendarGrid.appendChild(dayDiv);
+                }
             }
 
-            const totalCellsGenerated = firstDayWeekday + daysInMonth;
-            const remainingCells = (totalCellsGenerated % 7 === 0) ? 0 : 7 - (totalCellsGenerated % 7);
-            for (let i = 1; i <= remainingCells; i++) {
-                const dayDiv = document.createElement('div');
-                dayDiv.classList.add('day', 'other-month');
-                dayDiv.textContent = i;
-                calendarGrid.appendChild(dayDiv);
-            }
+            prevMonthBtn.addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+                renderCalendar(currentYear, currentMonth);
+            });
+
+            nextMonthBtn.addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+                renderCalendar(currentYear, currentMonth);
+            });
+
+            renderCalendar(currentYear, currentMonth);
         }
-
-        prevMonthBtn.addEventListener('click', () => {
-            currentMonth--;
-            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-            renderCalendar(currentYear, currentMonth);
-        });
-
-        nextMonthBtn.addEventListener('click', () => {
-            currentMonth++;
-            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-            renderCalendar(currentYear, currentMonth);
-        });
-
-        renderCalendar(currentYear, currentMonth);
     });
 </script>
 {% endblock %}

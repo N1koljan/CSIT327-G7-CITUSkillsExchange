@@ -1,41 +1,62 @@
+/* ========================================================== */
+/* BASE CONTAINER STYLES - BALANCED SPACING */
+/* ========================================================== */
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
-  background-color: #fdfaf8;
+  background: #ffffff;
   margin: 0;
   padding: 0;
   color: #333;
 }
 
+/* Container with balanced spacing */
 .container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
+  min-height: calc(100vh - 120px);
+  padding: 0px; /* Consistent 30px padding around the content */
+  max-width: 1600px; /* Matches the wider layout of the reference page */
+  margin: 0 auto; /* Centers the container horizontally */
 }
 
+/* ========================================================== */
+/* PAGE HEADER */
+/* ========================================================== */
 .title {
   text-align: center;
   color: #a10f0f;
-  margin-bottom: 5px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0 0 5px 0;
 }
 
 .subtitle {
   text-align: center;
-  color: #7a7a7a;
-  margin-bottom: 20px;
+  color: #666;
+  font-size: 1rem;
+  margin: 0 0 30px 0;
 }
 
+/* ========================================================== */
+/* PROFILE HEADER */
+/* ========================================================== */
 .profile-header {
   display: flex;
   align-items: center;
   background-color: #a10f0f;
-  padding: 20px;
-  border-radius: 6px 6px 0 0;
+  padding: 2rem;
+  border-radius: 12px 12px 0 0;
   color: white;
+  margin-bottom: 0;
+  box-shadow: 0 2px 8px rgba(161, 15, 15, 0.2);
 }
 
 .profile-pic-wrapper {
   position: relative;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .profile-pic {
@@ -44,6 +65,7 @@ body {
   border-radius: 50%;
   overflow: hidden;
   border: 4px solid #ffcc00;
+  background-color: #f0f0f0;
 }
 
 .profile-pic img {
@@ -59,48 +81,76 @@ body {
   right: 0;
   background-color: #ffcc00;
   border-radius: 50%;
-  padding: 8px;
+  padding: 10px;
   cursor: pointer;
   color: #800000;
-  border: 2px solid #fff;
+  border: 3px solid #fff;
   transform: translate(10%, 10%);
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 40px;
+  height: 40px;
+  transition: all 0.2s ease;
+}
+
+.camera-icon:hover {
+  background-color: #e6b800;
+  transform: translate(10%, 10%) scale(1.1);
+}
+
+.camera-icon i {
+  font-size: 1rem;
 }
 
 .profile-pic-wrapper input[type="file"] {
   display: none;
 }
 
+/* ========================================================== */
+/* PROFILE FORM */
+/* ========================================================== */
 .profile-form {
   flex: 1;
-  margin-left: 30px;
+  margin-left: 2rem;
 }
 
 .profile-form input {
   display: block;
   width: 100%;
   max-width: 450px;
-  padding: 10px;
+  padding: 12px;
   margin-bottom: 12px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.profile-form input:focus {
+  outline: none;
+  border-color: #ffcc00;
+  background: white;
 }
 
 .buttons {
   display: flex;
-  gap: 10px;
-  margin-top: 5px;
+  gap: 12px;
+  margin-top: 1rem;
 }
 
-.save-btn, .cancel-btn {
-  padding: 10px 20px;
-  border-radius: 4px;
+.save-btn,
+.cancel-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
   cursor: pointer;
   border: none;
-  font-weight: bold;
-  transition: background-color 0.3s, transform 0.2s;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .save-btn {
@@ -110,88 +160,228 @@ body {
 
 .save-btn:hover {
   background-color: #e6b800;
-  transform: scale(1.02);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3);
 }
 
 .cancel-btn {
-  background-color: #f1f1f1;
-  color: #333;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 .cancel-btn:hover {
-  background-color: #ddd;
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
+/* ========================================================== */
+/* INFO SECTION */
+/* ========================================================== */
 .info-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
   background-color: #fff;
-  padding: 25px;
-  border: 1px solid #eee;
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
   border-top: none;
-  border-radius: 0 0 6px 6px;
-  margin-bottom: 20px;
+  border-radius: 0 0 12px 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.info-box {
+  background: #f9fafb;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
 .info-box h3 {
   color: #a10f0f;
-  margin-top: 0;
-  margin-bottom: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
 }
 
 .field {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 1rem;
+}
+
+.field:last-child {
+  margin-bottom: 0;
 }
 
 .field i {
-  margin-right: 10px;
+  margin-right: 12px;
   color: #a10f0f;
   width: 20px;
   text-align: center;
+  flex-shrink: 0;
+  font-size: 1rem;
 }
 
-.field input {
+.field input,
+.field select {
   flex: 1;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
 }
 
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: #a10f0f;
+  box-shadow: 0 0 0 3px rgba(161, 15, 15, 0.1);
+}
+
+/* ========================================================== */
+/* ABOUT ME SECTION */
+/* ========================================================== */
 .about-me {
   background-color: #fff;
-  padding: 25px;
-  border: 1px solid #eee;
-  border-radius: 6px;
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
 }
 
 .about-me h3 {
   color: #a10f0f;
-  margin-top: 0;
-  margin-bottom: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
 }
 
 .about-me textarea {
   width: 100%;
   box-sizing: border-box;
-  min-height: 100px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 10px;
+  min-height: 120px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-family: Arial, sans-serif;
   resize: vertical;
+  transition: all 0.2s ease;
 }
 
+.about-me textarea:focus {
+  outline: none;
+  border-color: #a10f0f;
+  box-shadow: 0 0 0 3px rgba(161, 15, 15, 0.1);
+}
+
+/* ========================================================== */
+/* FOOTER */
+/* ========================================================== */
 footer {
   text-align: center;
-  margin-top: 30px;
-  padding-bottom: 20px;
-  font-size: 14px;
-  color: #888;
+  margin-top: 2rem;
+  padding: 1.5rem 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  border-top: 1px solid #e5e7eb;
 }
 
 footer a {
   color: #a10f0f;
   text-decoration: none;
+  font-weight: 600;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* ========================================================== */
+/* FORM FIELD STYLING */
+/* ========================================================== */
+#id_profile_picture {
+  display: none;
+}
+
+/* Style Django form fields */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+select,
+textarea {
+  font-family: Arial, sans-serif;
+}
+
+/* ========================================================== */
+/* RESPONSIVE DESIGN */
+/* ========================================================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+  }
+
+  .profile-form {
+    margin-left: 0;
+    margin-top: 1.5rem;
+    width: 100%;
+  }
+
+  .profile-form input {
+    max-width: 100%;
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+
+  .save-btn,
+  .cancel-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .info-section {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+  }
+
+  .info-box {
+    padding: 1.25rem;
+  }
+
+  .about-me {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-pic {
+    width: 100px;
+    height: 100px;
+  }
+
+  .camera-icon {
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+  }
+
+  .camera-icon i {
+    font-size: 0.9rem;
+  }
 }

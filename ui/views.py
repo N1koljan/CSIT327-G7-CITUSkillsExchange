@@ -7,11 +7,12 @@ from django.contrib import messages  # <-- THIS IS THE MISSING IMPORT
 from django.urls import reverse
 from django.contrib.auth import login, logout
 from django.db.models import Q      # <-- ADD THIS IMPORT FOR SEARCHING
-from core.models import Skill, Comment,  Rating
+from core.models import Skill, Comment, Rating, Transaction
 from core.forms import CustomLoginForm, CustomSignUpForm, CommentForm
 from .forms import EditProfileForm, SkillForm
 from django.http import JsonResponse
 from core.models import Request, Schedule
+from django.utils import timezone
 
 from django.contrib.auth import get_user_model
 from core.models import Message
@@ -24,6 +25,7 @@ def home(request):
 
 def login_view(request):
     if request.user.is_authenticated:
+        messages.success(request, 'Successfully logged in!')
         return redirect('dashboard')
     if request.method == 'POST':
         form = CustomLoginForm(request.POST)
@@ -52,9 +54,59 @@ def profile_view(request):
     context = {'user': request.user}
     return render(request, 'ui/student/profile.html', context)
 
+
 @login_required
 def dashboard_view(request):
-    return render(request, 'ui/student/dashboard.html')
+    user = request.user
+
+    # Count skills offered by the user
+    skills_count = Skill.objects.filter(owner=user).count()
+
+    # Count active requests (Pending and Accepted only, exclude Completed, Declined, Cancelled)
+    active_requests_count = Request.objects.filter(
+        Q(requester=user) | Q(skill__owner=user),
+        status__in=['Pending', 'Accepted']
+    ).count()
+
+    # Count completed sessions (Completed requests)
+    completed_sessions_count = Request.objects.filter(
+        Q(requester=user) | Q(skill__owner=user),
+        status='Completed'
+    ).count()
+
+    # Get recent transactions (last 5)
+    recent_transactions = Transaction.objects.filter(
+        Q(provider=user) | Q(receiver=user)
+    ).select_related(
+        'request__skill', 'provider', 'receiver'
+    ).order_by('-completed_at')[:5]
+
+    # Get upcoming sessions (Accepted requests + future Schedules)
+    from datetime import datetime
+    from django.utils import timezone
+
+    # Get accepted requests
+    upcoming_requests = Request.objects.filter(
+        Q(requester=user) | Q(skill__owner=user),
+        status='Accepted'
+    ).select_related('skill', 'skill__owner', 'requester').order_by('-updated_at')[:3]
+
+    # Get future schedules
+    upcoming_schedules = Schedule.objects.filter(
+        Q(organizer=user) | Q(participants=user),
+        start_time__gte=timezone.now()
+    ).distinct().order_by('start_time')[:3]
+
+    context = {
+        'skills_count': skills_count,
+        'active_requests_count': active_requests_count,
+        'completed_sessions_count': completed_sessions_count,
+        'recent_transactions': recent_transactions,
+        'upcoming_requests': upcoming_requests,
+        'upcoming_schedules': upcoming_schedules,
+    }
+
+    return render(request, 'ui/student/dashboard.html', context)
 
 @login_required
 def edit_profile_view(request):
@@ -145,12 +197,12 @@ def find_skill_view(request):
     Displays all available skills and handles search/filtering.
     """
     query = request.GET.get('q', '')
+    category = request.GET.get('category', '')  # ✅ Add this line
 
-    # 👇 MODIFIED: Use prefetch_related for a massive performance boost!
-    # This fetches all skills and their related comments + authors in just 2-3 database queries
-    # instead of hundreds.
+    # Use prefetch_related for performance
     skills = Skill.objects.exclude(owner=request.user).prefetch_related('comments__author')
 
+    # Apply search filter
     if query:
         skills = skills.filter(
             Q(title__icontains=query) |
@@ -158,10 +210,19 @@ def find_skill_view(request):
             Q(category__icontains=query)
         )
 
-    # We create one instance of the comment form to pass to the templates for all skills.
+    # ✅ Apply category filter
+    if category:
+        skills = skills.filter(category=category)
+
+    # Create one instance of the comment form
     comment_form = CommentForm()
 
-    context = {'skills': skills, 'query': query, 'comment_form': comment_form}
+    context = {
+        'skills': skills,
+        'query': query,
+        'selected_category': category,  # ✅ Add this to preserve selection
+        'comment_form': comment_form
+    }
     return render(request, 'ui/student/find_skills.html', context)
 
 
@@ -282,17 +343,17 @@ def update_request_status(request, pk, action):
 def request_dashboard(request):
     """
     Displays the main request dashboard.
-    Excludes 'Completed' requests as they belong in Transaction History.
+    Excludes 'Completed' and 'Cancelled' requests as they don't need action.
     """
-    # Fetch requests sent BY the current user (Excluding Completed)
+    # Fetch requests sent BY the current user (Excluding Completed and Cancelled)
     sent_requests = Request.objects.filter(
         requester=request.user
-    ).exclude(status='Completed').select_related('skill', 'skill__owner').order_by('-created_at')
+    ).exclude(status__in=['Completed', 'Cancelled']).select_related('skill', 'skill__owner').order_by('-created_at')
 
-    # Fetch requests sent TO the current user (Excluding Completed)
+    # Fetch requests sent TO the current user (Excluding Completed and Cancelled)
     received_requests = Request.objects.filter(
         skill__owner=request.user
-    ).exclude(status='Completed').select_related('skill', 'requester').order_by('-created_at')
+    ).exclude(status__in=['Completed', 'Cancelled']).select_related('skill', 'requester').order_by('-created_at')
 
     context = {
         'sent_requests': sent_requests,
@@ -390,3 +451,23 @@ def skill_get_json(request, pk):
     })
 
 
+@login_required
+def delete_schedule(request, schedule_id):
+    """
+    Deletes a schedule session.
+    Only the organizer can delete their own schedule.
+    """
+    if request.method == 'POST':
+        schedule = get_object_or_404(Schedule, id=schedule_id)
+
+        if schedule.organizer != request.user:
+            messages.error(request, "You are not authorized to delete this session.")
+            return redirect('schedule')
+
+        schedule_title = schedule.title
+        schedule.delete()
+
+        messages.success(request, f"Session '{schedule_title}' has been successfully removed!")
+        return redirect('schedule')
+
+    return redirect('schedule')

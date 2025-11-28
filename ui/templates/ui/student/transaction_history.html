@@ -11,6 +11,18 @@
 {% block content %}
 <div class="transaction-wrapper">
     <div class="container">
+        <!-- Success Alert (shows after submitting review) -->
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    <div class="success-alert">
+                        <i class="fa-solid fa-check"></i>
+                        {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
         <div class="page-header">
             <div class="page-title-section">
                 <h1>Transaction History</h1>
@@ -22,18 +34,43 @@
             {% for tx in transactions %}
                 <div class="transaction-card">
                     <!-- Avatar Section -->
-                    <div class="card-avatar">
-                        {% if request.user == tx.provider %}
-                            {% if tx.receiver.profile_picture %}
-                                <img src="{{ tx.receiver.profile_picture.url }}" alt="{{ tx.receiver.username }}">
+                    <div class="card-avatar-column">
+                        <div class="user-profile-img">
+                            {% if request.user == tx.provider %}
+                                {% if tx.receiver.profile_picture %}
+                                    <img src="{{ tx.receiver.profile_picture.url }}" alt="{{ tx.receiver.username }}">
+                                {% else %}
+                                    <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                                {% endif %}
                             {% else %}
-                                <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                                {% if tx.provider.profile_picture %}
+                                    <img src="{{ tx.provider.profile_picture.url }}" alt="{{ tx.provider.username }}">
+                                {% else %}
+                                    <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                                {% endif %}
                             {% endif %}
-                        {% else %}
-                            {% if tx.provider.profile_picture %}
-                                <img src="{{ tx.provider.profile_picture.url }}" alt="{{ tx.provider.username }}">
-                            {% else %}
-                                <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
+                        </div>
+
+                        <!-- Green success message for submitted reviews -->
+                        {% if request.user == tx.receiver %}
+                            {% if tx.request.rating %}
+                                <div class="review-success-badge">
+                                    <div class="success-icon">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="success-text">
+                                        <strong>Review Submitted</strong>
+                                        <div class="rating-stars">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= tx.request.rating.rating %}
+                                                    <i class="fa-solid fa-star"></i>
+                                                {% else %}
+                                                    <i class="fa-regular fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
                             {% endif %}
                         {% endif %}
                     </div>
@@ -98,20 +135,6 @@
                                             data-feedback-url="{% url 'core:leave_feedback' request_id=tx.request.id %}">
                                         <i class="fa-solid fa-star"></i> Leave Review
                                     </button>
-                                {% else %}
-                                    <div class="feedback-submitted">
-                                        <i class="fa-solid fa-check-circle"></i>
-                                        <span>Review Submitted</span>
-                                        <div class="rating-display">
-                                            {% for i in "12345" %}
-                                                {% if forloop.counter <= tx.request.rating.rating %}
-                                                    <i class="fa-solid fa-star"></i>
-                                                {% else %}
-                                                    <i class="fa-regular fa-star"></i>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </div>
-                                    </div>
                                 {% endif %}
                             </div>
                         {% endif %}
@@ -126,6 +149,10 @@
             {% endfor %}
         </div>
     </div>
+</div>
+
+<!-- Success Message Toast (appears after review submission) -->
+<div id="successToast" class="success-toast" style="display: none;">
 </div>
 
 <!-- Feedback Modal -->
