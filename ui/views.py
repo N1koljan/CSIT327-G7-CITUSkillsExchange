@@ -13,7 +13,8 @@ from .forms import EditProfileForm, SkillForm
 from django.http import JsonResponse
 from core.models import Request, Schedule
 from django.utils import timezone
-
+from core.models import Notification, NotificationPreference
+from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from core.models import Message
 
@@ -160,9 +161,42 @@ def schedule_view(request):
     }
     return render(request, 'ui/student/schedule.html', context)
 
+
 @login_required
 def notification_view(request):
-    return render(request, 'ui/student/notification.html')
+    """
+    Display user notifications and preferences.
+    """
+    # Get all notifications for the current user
+    notifications = Notification.objects.filter(
+        recipient=request.user
+    ).select_related('related_user', 'related_request__skill').order_by('-created_at')
+
+    # Get or create notification preferences
+    preferences, created = NotificationPreference.objects.get_or_create(
+        user=request.user
+    )
+
+    # Count unread notifications
+    unread_count = notifications.filter(is_read=False).count()
+
+    # DEBUG: Print to console
+    print(f"=== NOTIFICATION VIEW DEBUG ===")
+    print(f"User: {request.user.username}")
+    print(f"Total notifications: {notifications.count()}")
+    print(f"Unread count: {unread_count}")
+    print(f"Preferences exist: {not created}")
+
+    # DEBUG: Print first few notifications
+    for notif in notifications[:5]:
+        print(f"  - [{notif.notification_type}] {notif.title} (Read: {notif.is_read})")
+
+    context = {
+        'notifications': notifications,
+        'preferences': preferences,
+        'unread_count': unread_count,
+    }
+    return render(request, 'ui/student/notification.html', context)
 
 # --- NEW & UPDATED Skill Management Views ---
 
@@ -471,3 +505,96 @@ def delete_schedule(request, schedule_id):
         return redirect('schedule')
 
     return redirect('schedule')
+
+
+@login_required
+@require_POST
+def mark_notification_read(request, notification_id):
+    """
+    Mark a single notification as read.
+    """
+    notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+    notification.is_read = True
+    notification.save()
+
+    return JsonResponse({
+        'success': True,
+        'notification_id': notification_id
+    })
+
+
+@login_required
+@require_POST
+def mark_all_notifications_read(request):
+    """
+    Mark all notifications as read for the current user.
+    """
+    updated_count = Notification.objects.filter(
+        recipient=request.user,
+        is_read=False
+    ).update(is_read=True)
+
+    return JsonResponse({
+        'success': True,
+        'updated_count': updated_count
+    })
+
+
+@login_required
+@require_POST
+def delete_notification(request, notification_id):
+    """
+    Delete a specific notification.
+    """
+    notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+    notification.delete()
+
+    return JsonResponse({
+        'success': True,
+        'notification_id': notification_id
+    })
+
+
+@login_required
+@require_POST
+def update_notification_preferences(request):
+    """
+    Update user's notification preferences.
+    """
+    preferences, created = NotificationPreference.objects.get_or_create(
+        user=request.user
+    )
+
+    # Update email notification preferences
+    preferences.email_new_request = request.POST.get('email_new_request') == 'on'
+    preferences.email_request_accepted = request.POST.get('email_request_accepted') == 'on'
+    preferences.email_schedule_reminders = request.POST.get('email_schedule_reminders') == 'on'
+    preferences.email_new_messages = request.POST.get('email_new_messages') == 'on'
+
+    # Update push notification preferences
+    preferences.push_enabled = request.POST.get('push_enabled') == 'on'
+    preferences.push_session_reminders = request.POST.get('push_session_reminders') == 'on'
+
+    # Update feedback preferences
+    preferences.feedback_reminders = request.POST.get('feedback_reminders') == 'on'
+    preferences.feedback_received = request.POST.get('feedback_received') == 'on'
+
+    preferences.save()
+
+    messages.success(request, 'Notification preferences saved successfully!')
+    return redirect('notification')
+
+
+@login_required
+def get_unread_notification_count(request):
+    """
+    API endpoint to get unread notification count.
+    """
+    count = Notification.objects.filter(
+        recipient=request.user,
+        is_read=False
+    ).count()
+
+    return JsonResponse({
+        'unread_count': count
+    })

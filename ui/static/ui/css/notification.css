@@ -16,9 +16,9 @@ body {
 .notifications-container {
   min-height: calc(100vh - 120px);
   background: #ffffff;
-  padding: 0px; /* Consistent 30px padding around the content */
-  max-width: 1600px; /* Matches the wider layout of the reference page */
-  margin: 0 auto; /* Centers the container horizontally */
+  padding: 0px;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 /* ========================================================== */
@@ -28,7 +28,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px; /* Standardized margin to match padding */
+  margin-bottom: 30px;
 }
 
 .page-title-section h1 {
@@ -208,13 +208,14 @@ body {
 .notification-item.unread {
   background-color: #fffbeb;
   border-color: #fde68a;
+  border-left: 4px solid #ffcc00;
 }
 
 .notification-item.unread .message {
   font-weight: 600;
 }
 
-/* Icon Area */
+/* Icon Area - Different colors for different notification types */
 .notification-item .icon-area {
   width: 40px;
   height: 40px;
@@ -226,29 +227,44 @@ body {
   font-size: 1rem;
 }
 
-.notification-item .icon-area.message {
+.notification-item .icon-area.request_received {
   background-color: #DBEAFE;
   color: #1E40AF;
 }
 
-.notification-item .icon-area.reminder {
-  background-color: #FEF3C7;
-  color: #9A3412;
-}
-
-.notification-item .icon-area.review {
-  background-color: #FFF7ED;
-  color: #D97706;
-}
-
-.notification-item .icon-area.match {
+.notification-item .icon-area.request_accepted {
   background-color: #D1FAE5;
   color: #065F46;
 }
 
-.notification-item .icon-area.profile {
+.notification-item .icon-area.request_declined {
   background-color: #FEE2E2;
   color: #DC2626;
+}
+
+.notification-item .icon-area.new_message {
+  background-color: #E0E7FF;
+  color: #4338CA;
+}
+
+.notification-item .icon-area.session_reminder {
+  background-color: #FEF3C7;
+  color: #9A3412;
+}
+
+.notification-item .icon-area.feedback_received {
+  background-color: #FFF7ED;
+  color: #D97706;
+}
+
+.notification-item .icon-area.barter_proposal {
+  background-color: #F3E8FF;
+  color: #7C3AED;
+}
+
+.notification-item .icon-area.session_completed {
+  background-color: #D1FAE5;
+  color: #065F46;
 }
 
 .notification-item .icon-area.default {
@@ -286,6 +302,7 @@ body {
   cursor: pointer;
   padding: 0;
   transition: all 0.2s;
+  text-decoration: none;
 }
 
 .notification-item .btn-action.btn-delete {

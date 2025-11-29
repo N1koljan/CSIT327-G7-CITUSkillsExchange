@@ -19,6 +19,15 @@ from .utils import get_conversation_id
 from datetime import datetime
 from django.utils.dateparse import parse_datetime
 import json
+from .notification_utils import (
+    notify_new_request,
+    notify_request_accepted,
+    notify_request_declined,
+    notify_new_message,
+    notify_feedback_received,
+    notify_barter_proposal,
+    notify_session_completed
+)
 
 
 def get_user_conversations(user):
@@ -39,7 +48,6 @@ def get_user_conversations(user):
             )
         )
     ).order_by('-last_message_time')
-
 
     conversation_list = []
     seen_users = set()  # Track users we've already added
@@ -73,10 +81,10 @@ def get_user_conversations(user):
 
     return conversation_list
 
+
 # This is your existing signup view. It's perfectly fine.
 def signup_view(request):
     if request.method == 'POST':
-        # ... your existing code ...
         form = CustomSignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
@@ -88,7 +96,7 @@ def signup_view(request):
 
 
 # =========================================================================
-# === ADD THIS NEW VIEW TO HANDLE CREATING A REQUEST AND SENDING NOTIFICATIONS ===
+# ✅ UPDATED: CREATE SKILL REQUEST WITH NOTIFICATION
 # =========================================================================
 @login_required
 def create_skill_request(request, skill_id):
@@ -117,19 +125,8 @@ def create_skill_request(request, skill_id):
             new_request.skill = skill
             new_request.save()
 
-            # Send real-time notification
-            channel_layer = get_channel_layer()
-            notification_group_name = f'user_{skill.owner.id}_notifications'
-            async_to_sync(channel_layer.group_send)(
-                notification_group_name,
-                {
-                    'type': 'send_notification',
-                    'message': {
-                        'text': f'{request.user.username} sent you a request for: "{skill.title}"',
-                        'url': '/requests/'
-                    }
-                }
-            )
+            # ✅ SEND NOTIFICATION TO SKILL OWNER
+            notify_new_request(new_request)
 
             messages.success(request, f"Your request for '{skill.title}' has been sent successfully!")
             return redirect('find_skills')
@@ -141,15 +138,12 @@ def create_skill_request(request, skill_id):
             return redirect('find_skills')
 
     # For GET requests (fallback if someone accesses the URL directly)
-    # Since we're using modal now, just redirect to find_skills
-    # Optionally, you can still render the old page as a fallback
     return redirect('find_skills')
 
-    # OR keep the old template as fallback:
-    # form = SkillRequestForm()
-    # return render(request, 'ui/student/request_form.html', {'form': form, 'skill': skill})
 
-
+# =========================================================================
+# ✅ UPDATED: CREATE BARTER PROPOSAL WITH NOTIFICATION
+# =========================================================================
 @login_required
 def create_barter_proposal(request, request_id):
     skill_request = get_object_or_404(Request, id=request_id)
@@ -158,7 +152,7 @@ def create_barter_proposal(request, request_id):
     # 1. Ensure the user is the one who made the request
     if skill_request.requester != request.user:
         messages.error(request, "You are not authorized to perform this action.")
-        return redirect('dashboard')  # Or wherever your main dashboard is
+        return redirect('dashboard')
 
     # 2. Ensure the skill is actually a 'Barter' type
     if skill_request.skill.exchange_type != 'Barter':
@@ -176,8 +170,11 @@ def create_barter_proposal(request, request_id):
             proposal = form.save(commit=False)
             proposal.request = skill_request
             proposal.save()
+
+            # ✅ SEND NOTIFICATION TO SKILL OWNER
+            notify_barter_proposal(proposal)
+
             messages.success(request, f"Your barter proposal offering '{proposal.offered_skill.title}' has been sent!")
-            # TODO: Add real-time notification to the skill owner
             return redirect('dashboard')
     else:
         form = BarterProposalForm(user=request.user)
@@ -200,8 +197,12 @@ def transaction_history(request):
 
     return render(request, 'ui/student/transaction_history.html', {'transactions': transactions})
 
+
+# =========================================================================
+# ✅ UPDATED: UPDATE REQUEST STATUS WITH NOTIFICATIONS
+# =========================================================================
 @login_required
-@require_POST  # This view only accepts POST requests
+@require_POST
 def update_request_status(request, request_id, status):
     # Find the request object, or return a 404 error if not found
     skill_request = get_object_or_404(Request, id=request_id)
@@ -210,21 +211,30 @@ def update_request_status(request, request_id, status):
     # Ensure the person trying to update the request is the owner of the skill
     if skill_request.skill.owner != request.user:
         messages.error(request, "You are not authorized to perform this action.")
-        return redirect('requests') # Assuming 'requests' is the name of your request dashboard URL
+        return redirect('requests')
 
     # --- LOGIC ---
     # Check if the provided status is valid
     if status in ['Accepted', 'Declined']:
         skill_request.status = status
         skill_request.save()
-        messages.success(request, f"Request has been successfully {status.lower()}.")
-        # TODO: Send a real-time notification back to the requester
+
+        # ✅ SEND APPROPRIATE NOTIFICATION
+        if status == 'Accepted':
+            notify_request_accepted(skill_request)
+            messages.success(request, "Request has been successfully accepted.")
+        elif status == 'Declined':
+            notify_request_declined(skill_request)
+            messages.success(request, "Request has been successfully declined.")
     else:
         messages.error(request, "Invalid status update.")
 
     return redirect('requests')
 
 
+# =========================================================================
+# ✅ UPDATED: LEAVE FEEDBACK WITH NOTIFICATION
+# =========================================================================
 @login_required
 def leave_feedback(request, request_id):
     skill_request = get_object_or_404(Request, id=request_id)
@@ -245,49 +255,39 @@ def leave_feedback(request, request_id):
         return redirect('core:transaction_history')
 
     if request.method == 'POST':
-        # Get the rating and comment from POST data
-        # The modal uses name="rating" and name="feedback"
-        # But your model uses "rating" and "comment"
         rating_value = request.POST.get('rating')
-        comment_text = request.POST.get('feedback')  # Modal uses "feedback"
-        tags = request.POST.getlist('tags')  # Optional quick tags
+        comment_text = request.POST.get('feedback')
+        tags = request.POST.getlist('tags')
 
-        # Validate required fields
         if not rating_value or not comment_text:
             messages.error(request, "Please provide both a rating and a review.")
             return redirect('core:transaction_history')
 
         try:
-            # Create a dictionary with the correct field names for your model
             form_data = {
                 'rating': int(rating_value),
                 'comment': comment_text
             }
 
-            # If tags were selected, append them to the comment
             if tags:
                 form_data['comment'] += f"\n\n✓ {', '.join(tags).replace('_', ' ').title()}"
 
-            # Create the form instance with the data
             form = FeedbackForm(form_data)
 
             if form.is_valid():
-                # Save the form but don't commit to DB yet
                 rating = form.save(commit=False)
-
-                # Set the required foreign key relationships
                 rating.request = skill_request
                 rating.skill = skill_request.skill
                 rating.rater = request.user
                 rating.rated_user = skill_request.skill.owner
-
-                # Now save to database
                 rating.save()
+
+                # ✅ SEND NOTIFICATION TO RATED USER
+                notify_feedback_received(rating)
 
                 messages.success(request, "Thank you! Your feedback has been submitted successfully.")
                 return redirect('core:transaction_history')
             else:
-                # If form validation fails, show the errors
                 for field, errors in form.errors.items():
                     for error in errors:
                         messages.error(request, f"{field}: {error}")
@@ -300,10 +300,12 @@ def leave_feedback(request, request_id):
             messages.error(request, f"An error occurred: {str(e)}")
             return redirect('core:transaction_history')
 
-    # For GET requests, redirect to transaction history
-    # (since we're using a modal, direct access should redirect)
     return redirect('core:transaction_history')
 
+
+# =========================================================================
+# ✅ UPDATED: COMPLETE SESSION WITH NOTIFICATION
+# =========================================================================
 @login_required
 @require_POST
 def complete_session(request, request_id):
@@ -325,9 +327,8 @@ def complete_session(request, request_id):
     skill_request.status = 'Completed'
     skill_request.save()
 
-    # Create a transaction record. Use get_or_create to prevent duplicates
-    # if both users click the button around the same time.
-    Transaction.objects.get_or_create(
+    # Create a transaction record
+    transaction, created = Transaction.objects.get_or_create(
         request=skill_request,
         defaults={
             'provider': skill_request.skill.owner,
@@ -336,6 +337,10 @@ def complete_session(request, request_id):
             'status': 'Completed'
         }
     )
+
+    # ✅ SEND NOTIFICATION TO BOTH PARTIES
+    if created:
+        notify_session_completed(transaction)
 
     messages.success(request, f"Session for '{skill_request.skill.title}' has been marked as complete!")
     return redirect('schedule')
@@ -375,7 +380,7 @@ def chat_page(request, username):
     context = {
         'other_user': other_user,
         'conversation_id': conversation_id,
-        'chat_messages': chat_messages,  # ✅ Pass as chat_messages
+        'chat_messages': chat_messages,
         'conversations': conversations,
     }
 
@@ -394,7 +399,7 @@ def conversation_list(request):
         'conversations': conversations,
         'other_user': None,
         'conversation_id': None,
-        'chat_messages': [],  # ✅ CHANGED from 'messages' to 'chat_messages'
+        'chat_messages': [],
     }
 
     return render(request, 'core/chat.html', context)
@@ -599,6 +604,9 @@ def search_autocomplete(request):
     })
 
 
+# =========================================================================
+# ✅ UPDATED: SEND MESSAGE API WITH NOTIFICATION
+# =========================================================================
 @login_required
 @require_POST
 def send_message_api(request, username):
@@ -616,7 +624,6 @@ def send_message_api(request, username):
         # Calculate conversation_id
         conversation_id = get_conversation_id(request.user, other_user)
 
-
         # Create message
         message = Message.objects.create(
             sender=request.user,
@@ -624,6 +631,9 @@ def send_message_api(request, username):
             content=message_content,
             conversation_id=conversation_id
         )
+
+        # ✅ SEND NOTIFICATION TO MESSAGE RECIPIENT
+        notify_new_message(message)
 
         return JsonResponse({
             'success': True,
@@ -636,6 +646,7 @@ def send_message_api(request, username):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+
 @login_required
 def cancel_request(request, request_id):
     """
@@ -646,18 +657,18 @@ def cancel_request(request, request_id):
     # Ensure ONLY the sender can cancel their own request
     if req_to_cancel.requester != request.user:
         messages.error(request, "You are not authorized to cancel this request.")
-        return redirect('requests')  # Changed from 'request_dashboard'
+        return redirect('requests')
 
     # Only Pending requests can be cancelled
     if req_to_cancel.status != 'Pending':
         messages.error(request, "Only pending requests can be canceled.")
-        return redirect('requests')  # Changed from 'request_dashboard'
+        return redirect('requests')
 
     req_to_cancel.status = 'Cancelled'
     req_to_cancel.save()
 
     messages.success(request, "Your request has been cancelled successfully.")
-    return redirect('requests')  # Changed from 'request_dashboard'
+    return redirect('requests')
 
 
 @login_required

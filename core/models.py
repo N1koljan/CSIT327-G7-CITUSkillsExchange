@@ -324,3 +324,81 @@ class Schedule(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.start_time.isoformat()})"
+
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('request_received', 'New Skill Request'),
+        ('request_accepted', 'Request Accepted'),
+        ('request_declined', 'Request Declined'),
+        ('session_reminder', 'Session Reminder'),
+        ('new_message', 'New Message'),
+        ('feedback_received', 'Feedback Received'),
+        ('barter_proposal', 'Barter Proposal'),
+        ('session_completed', 'Session Completed'),
+    ]
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    link = models.CharField(max_length=500, blank=True, null=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Optional: Link to related objects
+    related_request = models.ForeignKey(
+        'Request',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    related_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notifications_about'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['recipient', '-created_at']),
+            models.Index(fields=['recipient', 'is_read']),
+        ]
+
+    def __str__(self):
+        return f"{self.notification_type} for {self.recipient.username}"
+
+
+class NotificationPreference(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notification_preferences'
+    )
+
+    # Email Notifications
+    email_new_request = models.BooleanField(default=True)
+    email_request_accepted = models.BooleanField(default=True)
+    email_schedule_reminders = models.BooleanField(default=True)
+    email_new_messages = models.BooleanField(default=True)
+
+    # Push Notifications
+    push_enabled = models.BooleanField(default=False)
+    push_session_reminders = models.BooleanField(default=True)
+
+    # Feedback & Reviews
+    feedback_reminders = models.BooleanField(default=True)
+    feedback_received = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Notification preferences for {self.user.username}"

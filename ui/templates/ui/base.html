@@ -74,9 +74,9 @@
           <span class="link-text">Schedule</span>
       </a>
 
-      <a href="{% url 'chat' %}" {% if request.resolver_match.url_name == 'chat' %}class="active"{% endif %}>
-          <i class="fa-solid fa-comment"></i>
-          <span class="link-text">Chat</span>
+      <a href="{% url 'conversation_list' %}" {% if request.resolver_match.url_name == 'conversation_list' or request.resolver_match.url_name == 'chat_page' %}class="active"{% endif %}>
+        <i class="fa-solid fa-comment"></i>
+        <span class="link-text">Chat</span>
       </a>
 
       <a href="{% url 'core:transaction_history' %}" {% if request.resolver_match.url_name == 'transaction_history' %}class="active"{% endif %}>
