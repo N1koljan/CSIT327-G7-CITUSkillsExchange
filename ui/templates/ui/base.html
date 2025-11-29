@@ -129,24 +129,7 @@
     });
   </script>
 
-  {% if messages %}
-  <script>
-      document.addEventListener('DOMContentLoaded', function() {
-          {% for message in messages %}
-              Toastify({
-                  text: "{{ message|escapejs }}",
-                  duration: 5000,
-                  close: true,
-                  gravity: "top",
-                  position: "right",
-                  stopOnFocus: true,
-                  className: "toast-info",
-                  style: { background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
-              }).showToast();
-          {% endfor %}
-      });
-  </script>
-  {% endif %}
+
 
   {% block scripts %}
   {% endblock %}

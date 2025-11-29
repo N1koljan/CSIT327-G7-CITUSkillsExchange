@@ -468,9 +468,18 @@ def chat_view(request, username=None):
     })
 
 
+@login_required
 def transaction_view(request):
-    # You can pass context if needed
-    return render(request, 'ui/student/transaction_history.html')
+    # Fetch all transactions where the user is provider or receiver
+    transactions = Transaction.objects.filter(
+        Q(provider=request.user) | Q(receiver=request.user)
+    ).select_related('request__skill', 'provider', 'receiver').order_by('-completed_at')
+
+    context = {
+        'transactions': transactions
+    }
+    return render(request, 'ui/student/transaction_history.html', context)
+
 @login_required
 def skill_get_json(request, pk):
     """
