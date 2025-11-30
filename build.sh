@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# Exit on error
+set -o errexit
 
 echo "==> Installing dependencies"
 pip install --upgrade pip
