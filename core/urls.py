@@ -1,6 +1,8 @@
 # in core/urls.py
 
 from django.urls import path
+from django.urls import path, reverse_lazy
+from django.contrib.auth import views as auth_views
 from . import views
 
 # 👇 ======================= THIS IS THE FIX ======================= 👇
@@ -33,4 +35,23 @@ urlpatterns = [
     path('api/search/autocomplete/', views.search_autocomplete, name='search_autocomplete'),
     path('cancel-request/<int:request_id>/', views.cancel_request, name='cancel_request'),
     path('create-session/', views.create_session, name='create_session'),
+
+path('password-reset/',
+         views.CustomPasswordResetView.as_view(),
+         name='password_reset'),
+
+    # 2. Enter New Password Page
+    path('reset/<uidb64>/<token>/',
+         auth_views.PasswordResetConfirmView.as_view(
+             template_name='ui/student/password_reset_confirm.html',
+             success_url=reverse_lazy('core:password_reset_complete')
+         ),
+         name='password_reset_confirm'),
+
+    # 3. Success Page (After changing password)
+    path('reset/done/',
+         auth_views.PasswordResetCompleteView.as_view(
+             template_name='ui/student/password_reset_complete.html'
+         ),
+         name='password_reset_complete'),
 ]

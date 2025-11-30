@@ -114,6 +114,7 @@ if DEBUG:
             "USER": os.getenv("PGUSER"),
             "PASSWORD": os.getenv("PGPASSWORD"),
             "NAME": os.getenv("PGDATABASE"),
+            "CONN_MAX_AGE": 0,
             "OPTIONS": {
                 "sslmode": os.getenv("PGSSLMODE", "require"),
             },
@@ -209,3 +210,17 @@ if not DEBUG:
         SECURE_CONTENT_TYPE_NOSNIFF = True
 
         SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Your real Gmail address
+EMAIL_HOST_USER = 'mgerardgrant@gmail.com'
+
+# The 16-character App Password you just generated (NOT your login password)
+EMAIL_HOST_PASSWORD = 'maol ijal bydo sbnu'
+
+# Optional: Default "From" email
+DEFAULT_FROM_EMAIL = 'CIT-U Skills Exchange <your-email@gmail.com>'

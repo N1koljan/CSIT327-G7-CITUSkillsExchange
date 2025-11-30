@@ -6,6 +6,8 @@ from .forms import CustomSignUpForm, SkillRequestForm, BarterProposalForm, Feedb
 from .models import CustomUser, Skill, Request, BarterProposal, Transaction, Rating, Schedule
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from django.contrib.auth.views import PasswordResetView
+from django.urls import reverse_lazy
 from django.http import JsonResponse
 
 # Real-time imports
@@ -719,3 +721,18 @@ def create_session(request):
             return redirect('schedule')
 
     return redirect('schedule')
+
+
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'ui/login.html'
+    success_url = reverse_lazy('login')
+
+    # Text version (Required fallback)
+    email_template_name = 'registration/password_reset_email_custom.html'
+
+    # HTML version (Required for the design you pasted)
+    html_email_template_name = 'registration/password_reset_email_custom.html'
+
+    def form_valid(self, form):
+        messages.success(self.request, "If an account exists with that email, we have sent a password reset link.")
+        return super().form_valid(form)

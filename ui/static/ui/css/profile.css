@@ -16,9 +16,9 @@ body {
 /* Profile Container with balanced spacing */
 .profile-container {
   min-height: calc(100vh - 120px);
-  padding: 30px; /* Consistent 30px padding around the content */
-  max-width: 1600px; /* Matches the wider layout of the reference page */
-  margin: 0 auto; /* Centers the container horizontally */
+  padding: 30px;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
 /* ========================================================== */
@@ -242,39 +242,112 @@ body {
 }
 
 /* ========================================================== */
-/* SUCCESS/ERROR MESSAGES - RIGHT SIDE NOTIFICATION */
+/* LOGOUT MODAL STYLES (NEW) */
 /* ========================================================== */
-/* Hide the default blue message bar - more specific selectors */
+.modal-overlay {
+  display: none; /* Hidden by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(3px);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border-top: 6px solid #800000; /* CIT Maroon Accent */
+  animation: modalScaleUp 0.2s ease-out;
+}
+
+.modal-icon {
+  font-size: 3rem;
+  color: #800000;
+  margin-bottom: 1rem;
+}
+
+.modal-title {
+  color: #800000;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.modal-text {
+  color: #666;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.modal-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  border: none;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-cancel {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-cancel:hover {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+.btn-confirm {
+  background-color: #ef4444; /* Matches sign-out red */
+  color: white;
+}
+
+.btn-confirm:hover {
+  background-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ========================================================== */
+/* SUCCESS/ERROR MESSAGES */
+/* ========================================================== */
+/* Hide default styles */
 div[style*="background-color: rgb(0, 188, 212)"],
-div[style*="background-color: #00bcd4"],
-div[style*="background: rgb(0, 188, 212)"],
-div[style*="background: #00bcd4"],
-div[style*="cyan"],
-.message-bar,
-.notification-bar,
-.alert-bar,
-.snackbar {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-}
-
-/* Target any cyan/blue colored div near the top */
-body > div[style*="background"],
-.profile-container > div[style*="background"] {
+div[style*="background: #00bcd4"] {
   display: none !important;
 }
 
-/* If it's a Django messages framework element */
-ul.messages,
-.messagelist,
-.django-messages {
-  display: none !important;
-}
-
-/* Style Django messages container for custom notification */
 .messages {
   position: fixed;
   top: 80px;
@@ -284,24 +357,7 @@ ul.messages,
   animation: slideInRight 0.4s ease-out;
 }
 
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* Success message styling - covers all Django message tags */
-.messages .alert,
-.messages .success,
-.messages .alert-success,
-.messages div[class*="success"],
-.success-message,
-.alert.alert-success {
+.messages .alert {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   padding: 1.25rem 1.5rem;
@@ -312,32 +368,10 @@ ul.messages,
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 0.95rem;
   font-weight: 500;
 }
 
-/* If message has no specific class, style it as success by default */
-.messages > div:not([class*="error"]):not([class*="warning"]):not([class*="info"]) {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  padding: 1.25rem 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1rem;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
-  border-left: 4px solid #059669;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-/* Add checkmark icon for success messages */
-.messages .alert::before,
-.messages .success::before,
-.messages .alert-success::before,
-.messages div[class*="success"]::before,
-.messages > div:not([class*="error"]):not([class*="warning"]):not([class*="info"])::before {
+.messages .alert::before {
   content: "✓";
   font-size: 1.5rem;
   font-weight: bold;
@@ -350,191 +384,15 @@ ul.messages,
   justify-content: center;
 }
 
-/* Error message styling */
-.messages .error,
-.messages .alert-error,
-.messages .alert-danger,
-.error-message {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  padding: 1.25rem 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1rem;
-  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
-  border-left: 4px solid #dc2626;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  animation: slideInRight 0.4s ease-out;
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
-/* Info message styling */
-.messages .info,
-.messages .alert-info,
-.info-message {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  padding: 1.25rem 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1rem;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
-  border-left: 4px solid #2563eb;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  animation: slideInRight 0.4s ease-out;
-}
-
-/* Warning message styling */
-.messages .warning,
-.messages .alert-warning,
-.warning-message {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  padding: 1.25rem 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1rem;
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
-  border-left: 4px solid #d97706;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  animation: slideInRight 0.4s ease-out;
-}
-
-/* Add icons before messages */
-.messages .success::before,
-.messages .alert-success::before {
-  content: "✓";
-  font-size: 1.5rem;
-  font-weight: bold;
-  width: 30px;
-  height: 30px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.messages .error::before,
-.messages .alert-error::before,
-.messages .alert-danger::before {
-  content: "✕";
-  font-size: 1.5rem;
-  font-weight: bold;
-  width: 30px;
-  height: 30px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.messages .info::before,
-.messages .alert-info::before {
-  content: "i";
-  font-size: 1.5rem;
-  font-weight: bold;
-  width: 30px;
-  height: 30px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.messages .warning::before,
-.messages .alert-warning::before {
-  content: "!";
-  font-size: 1.5rem;
-  font-weight: bold;
-  width: 30px;
-  height: 30px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Auto fade out animation */
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-
-/* Remove focus outlines */
-*:focus {
-  outline: none !important;
-}
-
-/* ========================================================== */
-/* RESPONSIVE DESIGN */
-/* ========================================================== */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .profile-container {
-    padding: 1rem;
-  }
-
-  .title {
-    font-size: 1.8rem;
-  }
-
-  .profile-header {
-    flex-direction: column;
-    text-align: center;
-    padding: 1.5rem;
-  }
-
-  .profile-info {
-    margin-left: 0;
-    margin-top: 1rem;
-  }
-
-  .profile-info .name {
-    font-size: 1.5rem;
-  }
-
-  .edit-btn {
-    margin-top: 1rem;
-  }
-
-  .info-section {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .info-box {
-    padding: 1.25rem;
-  }
-
-  .about-section {
-    padding: 1.25rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .profile-pic {
-    width: 100px;
-    height: 100px;
-  }
-
-  .profile-info .name {
-    font-size: 1.3rem;
-  }
+  .profile-container { padding: 1rem; }
+  .profile-header { flex-direction: column; text-align: center; }
+  .profile-info { margin-left: 0; margin-top: 1rem; }
+  .info-section { grid-template-columns: 1fr; }
 }
