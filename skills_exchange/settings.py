@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 # ---------------------------
 # Base directory
 # ---------------------------
+# Fixed typo: changed 'file' to '__file__'
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------------------------
@@ -25,8 +26,7 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() == "true"
 # ---------------------------
 # Allowed hosts configuration
 # ---------------------------
-ALLOWED_HOSTS = [h.strip() for h in
-                 os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
 
 # Backward compatibility with RENDER_EXTERNAL_HOSTNAME
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -40,8 +40,7 @@ if DEBUG and 'localhost' not in ALLOWED_HOSTS:
 # ---------------------------
 # CSRF Trusted Origins
 # ---------------------------
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in
-                        os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
 
 # ---------------------------
 # Installed apps
@@ -105,7 +104,7 @@ WSGI_APPLICATION = 'skills_exchange.wsgi.application'
 # Database configuration (Supabase PostgreSQL)
 # ---------------------------
 if DEBUG:
-    # LOCAL DEVELOPMENT - using individual Supabase credentials
+    # LOCAL DEVELOPMENT - Direct connection
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -120,19 +119,20 @@ if DEBUG:
             },
         }
     }
-    else:
-    # RENDER DEPLOYMENT
+else:
+    # RENDER DEPLOYMENT - Using Supabase Connection Pooler
     DATABASE_URL = os.environ.get("DATABASE_URL")
 
+    # 1. Apply CONN_MAX_AGE = 60 (Friend's suggestion)
     db_config = dj_database_url.config(
         default=DATABASE_URL,
-        conn_max_age=0,
+        conn_max_age=60,
         ssl_require=True
     )
 
-    # 🔴 THIS IS THE FIX FOR THE POOLER
-    # Disable server-side cursors (Prepared Statements) to work with Port 6543
-    db_config["DISABLE_SERVER_SIDE_CURSORS"] = True
+    # 2. Enable PgBouncer pooling by forcing Port 6543
+    # Supabase uses port 6543 for the Transaction Pooler
+    db_config['PORT'] = '6543'
 
     DATABASES = {
         'default': db_config
@@ -204,6 +204,7 @@ else:
             },
         },
     }
+
 # ---------------------------
 # Security settings (production)
 # ---------------------------
@@ -211,23 +212,24 @@ if not DEBUG:
     # Enable security features in production
     if os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "True").lower() == "true":
         SECURE_SSL_REDIRECT = True
-        SESSION_COOKIE_SECURE = True
-        CSRF_COOKIE_SECURE = True
-        SECURE_BROWSER_XSS_FILTER = True
-        SECURE_CONTENT_TYPE_NOSNIFF = True
 
-        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# ---------------------------
+# Email Configuration
+# ---------------------------
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-# Your real Gmail address
-EMAIL_HOST_USER = 'mgerardgrant@gmail.com'
+# Move these to Environment Variables on Render!
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'mgerardgrant@gmail.com')
+# I replaced the hardcoded password with an env getter for security
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
-# The 16-character App Password you just generated (NOT your login password)
-EMAIL_HOST_PASSWORD = 'maol ijal bydo sbnu'
-
-# Optional: Default "From" email
-DEFAULT_FROM_EMAIL = 'CIT-U Skills Exchange <your-email@gmail.com>'
+DEFAULT_FROM_EMAIL = 'CIT-U Skills Exchange <mgerardgrant@gmail.com>'
