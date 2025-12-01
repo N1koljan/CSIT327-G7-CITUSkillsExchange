@@ -101,6 +101,7 @@ TEMPLATES = [
 ]
 
 # ---------------------------
+
 # WSGI application
 # ---------------------------
 WSGI_APPLICATION = 'skills_exchange.wsgi.application'
