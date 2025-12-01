@@ -1,61 +1,62 @@
-{% extends 'ui/base.html' %}
-{% load static %}
+    {% extends 'ui/base.html' %}
+    {% load static %}
 
-{% block title %}Messages - CIT-U Skills Exchange{% endblock %}
+    {% block title %}Messages - CIT-U Skills Exchange{% endblock %}
 
-{% block styles %}
-  <link rel="stylesheet" href="{% static 'ui/css/chat.css' %}">
-{% endblock %}
+    {% block styles %}
+      <link rel="stylesheet" href="{% static 'ui/css/chat.css' %}">
+    {% endblock %}
 
-{% block content %}
-<div class="chat-page-container">
-    <aside class="chat-sidebar">
-        <div class="sidebar-header">
-            <h2>Messages</h2>
-            <button class="new-message-btn" title="New Message">
-                <i class="fa-solid fa-pen-to-square"></i>
-            </button>
-        </div>
-
-        <div class="sidebar-search-bar">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="contactSearch" placeholder="Search in messages...">
-        </div>
-
-        <div class="contact-list">
-            {% for conversation in conversations %}
-                <a href="{% url 'core:chat_page' conversation.other_user.username %}"
-                   class="contact-item {% if other_user and conversation.other_user.id == other_user.id %}active{% endif %}">
-                    <div class="contact-info">
-                        <span class="contact-name">{{ conversation.other_user.username }}</span>
-                        <span class="last-message">
-                            {% if conversation.last_message %}
-                                {{ conversation.last_message.content|truncatewords:5 }}
-                            {% else %}
-                                No messages yet
-                            {% endif %}
-                        </span>
-                    </div>
-                    {% if conversation.unread_count > 0 %}
-                        <span class="unread-count">{{ conversation.unread_count }}</span>
-                    {% endif %}
-                </a>
-            {% empty %}
-                <div class="contact-list-empty">
-                    <i class="fa-regular fa-comments"></i>
-                    <p>No conversations started yet.</p>
-                </div>
-            {% endfor %}
-        </div>
-    </aside>
-
-    <main class="chat-main">
-        {% if other_user %}
-            <div class="chat-header">
-                <h2>{{ other_user.username }}</h2>
+    {% block content %}
+    <div class="chat-page-container">
+        <aside class="chat-sidebar">
+            <div class="sidebar-header">
+                <h2>Messages</h2>
+                <button class="new-message-btn" title="New Message">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
             </div>
-            <div class="message-area" id="messageArea">
-                {% for message in messages %}
+
+            <div class="sidebar-search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="contactSearch" placeholder="Search in messages...">
+            </div>
+
+            <div class="contact-list">
+                {% for conversation in conversations %}
+                    <a href="{% url 'core:chat_page' conversation.other_user.username %}"
+                       class="contact-item {% if other_user and conversation.other_user.id == other_user.id %}active{% endif %}">
+                        <div class="contact-info">
+                            <span class="contact-name">{{ conversation.other_user.username }}</span>
+                            <span class="last-message">
+                                {% if conversation.last_message %}
+                                    {{ conversation.last_message.content|truncatewords:5 }}
+                                {% else %}
+                                    No messages yet
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if conversation.unread_count > 0 %}
+                            <span class="unread-count">{{ conversation.unread_count }}</span>
+                        {% endif %}
+                    </a>
+                {% empty %}
+                    <div class="contact-list-empty">
+                        <i class="fa-regular fa-comments"></i>
+                        <p>No conversations started yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </aside>
+
+        <main class="chat-main">
+            {% if other_user %}
+                <div class="chat-header">
+                    <h2>{{ other_user.username }}</h2>
+                </div>
+                <div class="message-area" id="messageArea">
+                <!-- 👇 CHANGE THIS VARIABLE NAME FROM 'messages' TO 'chat_messages' 👇 -->
+                {% for message in chat_messages %}
                     <div class="message-bubble
                                 {% if message.sender == request.user %}outgoing{% else %}incoming{% endif %}">
                         <p>{{ message.content }}</p>
@@ -72,217 +73,226 @@
                 {% endfor %}
             </div>
 
-            <form id="messageForm" style="display: contents;">
+                <form id="messageForm" style="display: contents;">
+                    {% csrf_token %}
+                    <div class="chat-input-area">
+                        <textarea id="messageInput" placeholder="Type a message..." required></textarea>
+                        <button type="submit" class="send-button">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="chat-header">
+                    <h2>Messages</h2>
+                </div>
+                <div class="message-area chat-empty-state-full">
+                    <i class="fa-solid fa-inbox"></i>
+                    <h3>Select a conversation</h3>
+                    <p>Choose from your existing conversations on the left to start chatting.</p>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <!-- New Message Modal -->
+    <div class="modal-overlay" id="newMessageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>New Message</h3>
+                <button class="modal-close" id="closeModal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="modal-subtitle">Start a new conversation with a peer</p>
+
+            <form class="new-message-form" id="newMessageForm">
                 {% csrf_token %}
-                <div class="chat-input-area">
-                    <textarea id="messageInput" placeholder="Type a message..." required></textarea>
-                    <button type="submit" class="send-button">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
+                <div class="form-group">
+                    <label for="recipientName">Recipient Username</label>
+                    <input type="text" id="recipientName" placeholder="Enter username..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="messageText">Message</label>
+                    <textarea id="messageText" placeholder="Type your message..." rows="4" required></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn-start-chat">Start Chat</button>
                 </div>
             </form>
-        {% else %}
-            <div class="chat-header">
-                <h2>Messages</h2>
-            </div>
-            <div class="message-area chat-empty-state-full">
-                <i class="fa-solid fa-inbox"></i>
-                <h3>Select a conversation</h3>
-                <p>Choose from your existing conversations on the left to start chatting.</p>
-            </div>
-        {% endif %}
-    </main>
-</div>
-
-<!-- New Message Modal -->
-<div class="modal-overlay" id="newMessageModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>New Message</h3>
-            <button class="modal-close" id="closeModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
         </div>
-        <p class="modal-subtitle">Start a new conversation with a peer</p>
-
-        <form class="new-message-form" id="newMessageForm">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="recipientName">Recipient Username</label>
-                <input type="text" id="recipientName" placeholder="Enter username..." required>
-            </div>
-
-            <div class="form-group">
-                <label for="messageText">Message</label>
-                <textarea id="messageText" placeholder="Type your message..." rows="4" required></textarea>
-            </div>
-
-            <div class="modal-actions">
-                <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
-                <button type="submit" class="btn-start-chat">Start Chat</button>
-            </div>
-        </form>
     </div>
-</div>
-{% endblock %}
+    {% endblock %}
 
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const messageArea = document.querySelector('.message-area');
-    const messageForm = document.getElementById('messageForm');
-    const messageInput = document.getElementById('messageInput');
-    const conversationId = "{{ conversation_id|default:'' }}";
-    const otherUsername = "{{ other_user.username|default:'' }}";
+    {% block scripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const messageArea = document.querySelector('.message-area');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const conversationId = "{{ conversation_id|default:'' }}";
+        const otherUsername = "{{ other_user.username|default:'' }}";
 
-    // Auto-scroll to bottom of messages
-    if (messageArea) {
-        messageArea.scrollTop = messageArea.scrollHeight;
-    }
+        // Auto-scroll to bottom of messages
+        if (messageArea) {
+            messageArea.scrollTop = messageArea.scrollHeight;
+        }
 
-    // WebSocket connection for real-time messages
-    let chatSocket = null;
-    if (conversationId) {
-        const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
-        const wsPath = `${wsScheme}://${window.location.host}/ws/chat/${conversationId}/`;
+        // WebSocket connection for real-time messages
+        let chatSocket = null;
+        if (conversationId) {
+            const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+            const wsPath = `${wsScheme}://${window.location.host}/ws/chat/${conversationId}/`;
 
-        chatSocket = new WebSocket(wsPath);
+            chatSocket = new WebSocket(wsPath);
 
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            appendMessage(data.message, data.sender_username, false);
-        };
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                appendMessage(data.message, data.sender_username, false);
+            };
 
-        chatSocket.onclose = function(e) {
-            console.error('Chat socket closed unexpectedly');
-        };
-    }
+            chatSocket.onclose = function(e) {
+                console.error('Chat socket closed unexpectedly');
+            };
+        }
 
-    // Handle message form submission
-    if (messageForm) {
-        messageForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Handle message form submission
+        if (messageForm) {
+            messageForm.addEventListener('submit', function(e) {
+                e.preventDefault();
 
-            const message = messageInput.value.trim();
-            if (!message) return;
+                const message = messageInput.value.trim();
+                if (!message) return;
 
-            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-                // Send via WebSocket
-                chatSocket.send(JSON.stringify({
-                    'message': message,
-                    'sender_username': '{{ request.user.username }}'
-                }));
+                if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                    // Send via WebSocket
+                    chatSocket.send(JSON.stringify({
+                        'message': message,
+                        'sender_username': '{{ request.user.username }}'
+                    }));
 
+                    appendMessage(message, '{{ request.user.username }}', true);
+                    messageInput.value = '';
+                } else {
+                    // Fallback to AJAX if WebSocket not available
+                    sendMessageAjax(message);
+                }
+            });
+        }
+
+        // AJAX fallback for sending messages
+        function sendMessageAjax(message) {
+        fetch(`/core/api/send-message/${otherUsername}/`, {  // ← Added /core/
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
                 appendMessage(message, '{{ request.user.username }}', true);
                 messageInput.value = '';
-            } else {
-                // Fallback to AJAX if WebSocket not available
-                sendMessageAjax(message);
             }
-        });
+        })
+        .catch(error => console.error('Error:', error));
     }
 
-    // AJAX fallback for sending messages
-    function sendMessageAjax(message) {
-    fetch(`/core/api/send-message/${otherUsername}/`, {  // ← Added /core/
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({ message: message })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            appendMessage(message, '{{ request.user.username }}', true);
-            messageInput.value = '';
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
+        // Append message to chat area
+        function appendMessage(content, senderUsername, isOutgoing) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble ${isOutgoing ? 'outgoing' : 'incoming'}`;
 
-    // Append message to chat area
-    function appendMessage(content, senderUsername, isOutgoing) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message-bubble ${isOutgoing ? 'outgoing' : 'incoming'}`;
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
 
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
+            messageDiv.innerHTML = `
+                <p>${escapeHtml(content)}</p>
+                <span class="timestamp">${timeString}</span>
+            `;
 
-        messageDiv.innerHTML = `
-            <p>${escapeHtml(content)}</p>
-            <span class="timestamp">${timeString}</span>
-        `;
+            // Remove empty state if exists
+            const emptyState = messageArea.querySelector('.chat-empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
 
-        // Remove empty state if exists
-        const emptyState = messageArea.querySelector('.chat-empty-state');
-        if (emptyState) {
-            emptyState.remove();
+            messageArea.appendChild(messageDiv);
+            messageArea.scrollTop = messageArea.scrollHeight;
         }
 
-        messageArea.appendChild(messageDiv);
-        messageArea.scrollTop = messageArea.scrollHeight;
-    }
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
 
-    // Escape HTML to prevent XSS
-    function escapeHtml(text) {
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, m => map[m]);
-    }
+        // New Message Modal
+        const newMessageBtn = document.querySelector('.new-message-btn');
+        const modal = document.getElementById('newMessageModal');
+        const closeModalBtn = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const newMessageForm = document.getElementById('newMessageForm');
 
-    // New Message Modal
-    const newMessageBtn = document.querySelector('.new-message-btn');
-    const modal = document.getElementById('newMessageModal');
-    const closeModalBtn = document.getElementById('closeModal');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const newMessageForm = document.getElementById('newMessageForm');
+        if (newMessageBtn && modal) {
+            newMessageBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.classList.add('active');
+            });
+        }
 
-    if (newMessageBtn && modal) {
-        newMessageBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            modal.classList.add('active');
-        });
-    }
+        function closeModalFunc() {
+            modal.classList.remove('active');
+            if (newMessageForm) newMessageForm.reset();
+        }
 
-    function closeModalFunc() {
-        modal.classList.remove('active');
-        if (newMessageForm) newMessageForm.reset();
-    }
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closeModalFunc);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModalFunc);
 
-    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModalFunc);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeModalFunc);
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModalFunc();
+            });
+        }
 
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) closeModalFunc();
-        });
-    }
-
-    // Handle new message form submission
-    if (newMessageForm) {
+        // Handle new message form submission
+        if (newMessageForm) {
         newMessageForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const recipientName = document.getElementById('recipientName').value.trim();
             const messageText = document.getElementById('messageText').value.trim();
+
+            // 👇 1. Get the button
+            const submitBtn = newMessageForm.querySelector('.btn-start-chat');
+            const originalText = submitBtn.innerText;
 
             if (!recipientName || !messageText) {
                 alert('Please fill in all fields');
                 return;
             }
 
-            // FIXED: Use the correct URL path with /core/ prefix
-            fetch(`/core/api/send-message/${recipientName}/`, {  // ← Added /core/
+            // 👇 2. Add Loading State (Disables button & changes text)
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Starting...';
+            submitBtn.style.opacity = '0.7';
+
+            // Use the correct URL path
+            fetch(`/core/api/send-message/${recipientName}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -293,50 +303,58 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = `/core/messages/${recipientName}/`;  // ← Added /core/
+                    window.location.href = `/core/messages/${recipientName}/`;
                 } else {
                     alert(data.error || 'Failed to send message');
-                 }
+                    // 👇 Reset button on error
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = originalText;
+                    submitBtn.style.opacity = '1';
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('Failed to send message');
+                // 👇 Reset button on error
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+                submitBtn.style.opacity = '1';
             });
         });
     }
 
-    function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+        function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
+        return cookieValue;
     }
-    return cookieValue;
-}
 
-    // Contact search functionality
-    const contactSearch = document.getElementById('contactSearch');
-    if (contactSearch) {
-        contactSearch.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const contacts = document.querySelectorAll('.contact-item');
+        // Contact search functionality
+        const contactSearch = document.getElementById('contactSearch');
+        if (contactSearch) {
+            contactSearch.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const contacts = document.querySelectorAll('.contact-item');
 
-            contacts.forEach(contact => {
-                const name = contact.querySelector('.contact-name').textContent.toLowerCase();
-                if (name.includes(searchTerm)) {
-                    contact.style.display = '';
-                } else {
-                    contact.style.display = 'none';
-                }
+                contacts.forEach(contact => {
+                    const name = contact.querySelector('.contact-name').textContent.toLowerCase();
+                    if (name.includes(searchTerm)) {
+                        contact.style.display = '';
+                    } else {
+                        contact.style.display = 'none';
+                    }
+                });
             });
-        });
-    }
-});
-</script>
-{% endblock %}
+        }
+    });
+    </script>
+    {% endblock %}
