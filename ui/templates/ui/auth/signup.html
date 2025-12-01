@@ -6,6 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Join CIT-U Skills Exchange</title>
     <link rel="stylesheet" href="{% static 'ui/css/signup.css' %}">
+    <style>
+        /* Add this temporarily to ensure errors are visible */
+        .error-msg {
+            color: #dc3545;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
+        }
+        .input-error {
+            border-color: #dc3545 !important;
+        }
+        .non-field-errors {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <div class="signup-container">
@@ -14,63 +34,108 @@
             <p>Create your account to start sharing and learning skills</p>
         </div>
 
-
         <form method="POST" action="">
             {% csrf_token %}
+
+            <!-- Global Errors (e.g. database down) -->
+            {% if form.non_field_errors %}
+                <div class="non-field-errors">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <div class="form-row">
                 <div class="form-group">
                     <label for="firstName">First Name</label>
-                    <input type="text" id="firstName" name="firstName" placeholder="Enter your first name" required>
+                    <input type="text" id="firstName" name="firstName"
+                           placeholder="Enter your first name"
+                           value="{{ form.firstName.value|default:'' }}"
+                           class="{% if form.firstName.errors %}input-error{% endif %}" required>
                 </div>
                 <div class="form-group">
                     <label for="lastName">Last Name</label>
-                    <input type="text" id="lastName" name="lastName" placeholder="Enter your last name" required>
+                    <input type="text" id="lastName" name="lastName"
+                           placeholder="Enter your last name"
+                           value="{{ form.lastName.value|default:'' }}"
+                           class="{% if form.lastName.errors %}input-error{% endif %}" required>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+                <input type="email" id="email" name="email"
+                       placeholder="Enter your email address"
+                       value="{{ form.email.value|default:'' }}"
+                       class="{% if form.email.errors %}input-error{% endif %}" required>
+                <!-- Show Email Errors -->
+                {% if form.email.errors %}
+                    <span class="error-msg">{{ form.email.errors.0 }}</span>
+                {% endif %}
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" placeholder="Choose a username" required>
+                    <input type="text" id="username" name="username"
+                           placeholder="Choose a username"
+                           value="{{ form.username.value|default:'' }}"
+                           class="{% if form.username.errors %}input-error{% endif %}" required>
+                    <!-- Show Username Errors -->
+                    {% if form.username.errors %}
+                        <span class="error-msg">{{ form.username.errors.0 }}</span>
+                    {% endif %}
                 </div>
                 <div class="form-group">
                     <label for="schoolId">School ID</label>
-                    <input type="text" id="schoolId" name="schoolId" placeholder="Enter your school ID" required>
+                    <input type="text" id="schoolId" name="schoolId"
+                           placeholder="Enter your school ID"
+                           value="{{ form.schoolId.value|default:'' }}"
+                           class="{% if form.schoolId.errors %}input-error{% endif %}" required>
+                    <!-- Show School ID Errors -->
+                    {% if form.schoolId.errors %}
+                        <span class="error-msg">{{ form.schoolId.errors.0 }}</span>
+                    {% endif %}
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="department">Department</label>
-                <select id="department" name="department" required>
+                <select id="department" name="department" required class="{% if form.department.errors %}input-error{% endif %}">
                     <option value="">Select your department</option>
-                    <option value="computer-science">Computer Science</option>
-                    <option value="information-technology">Information Technology</option>
-                    <option value="engineering">Engineering</option>
-                    <option value="business">Business Administration</option>
-                    <option value="education">Education</option>
-                    <option value="arts-sciences">Arts and Sciences</option>
-                    <option value="architecture">Architecture</option>
-                    <option value="nursing">Nursing</option>
-                    <option value="maritime">Maritime Studies</option>
-                    <option value="other">Other</option>
+                    {% for value, label in form.fields.department.choices %}
+                        <option value="{{ value }}" {% if form.department.value == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
                 </select>
+                {% if form.department.errors %}
+                    <span class="error-msg">{{ form.department.errors.0 }}</span>
+                {% endif %}
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Create a password" required>
+                    <input type="password" id="password" name="password"
+                           placeholder="Create a password"
+                           class="{% if form.password.errors %}input-error{% endif %}" required>
                 </div>
                 <div class="form-group">
                     <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+                    <input type="password" id="confirmPassword" name="confirmPassword"
+                           placeholder="Confirm your password"
+                           class="{% if form.confirmPassword.errors %}input-error{% endif %}" required>
                 </div>
             </div>
+
+            <!-- Show Password Mismatch Errors -->
+            {% if form.confirmPassword.errors %}
+                <div style="margin-bottom: 15px;">
+                     <span class="error-msg">{{ form.confirmPassword.errors.0 }}</span>
+                </div>
+            {% endif %}
 
             <button type="submit" class="signup-btn">Sign Up</button>
 

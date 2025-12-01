@@ -78,6 +78,14 @@ class CustomSignUpForm(forms.Form):
             raise forms.ValidationError("This email address is already in use.")
         return email
 
+    # 👇 THIS FIXES YOUR ERROR
+    def clean_schoolId(self):
+        schoolId = self.cleaned_data.get('schoolId')
+        # Check if the school_id already exists in the database
+        if CustomUser.objects.filter(school_id=schoolId).exists():
+            raise forms.ValidationError("A user with this School ID already exists.")
+        return schoolId
+
     def clean(self):
         # This method is for cross-field validation
         cleaned_data = super().clean()
