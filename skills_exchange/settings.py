@@ -49,10 +49,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
 
-    # 👇 CHANGED: Added Cloudinary Storage BEFORE staticfiles
+    # ❌ WRONG: Do not put it here.
+    # 'cloudinary_storage',
+
+    'django.contrib.staticfiles',  # <--- Static files must come FIRST
+
+    # ✅ CORRECT: Put it here, AFTER staticfiles
     'cloudinary_storage',
-    'django.contrib.staticfiles',
-    # 👇 CHANGED: Added Cloudinary library
     'cloudinary',
 
     'ui',
