@@ -58,8 +58,10 @@ class CustomSignUpForm(forms.Form):
     schoolId = forms.CharField(max_length=20, required=True)
 
     # The choices for this field must match the <option> values in your HTML
-    department = forms.ChoiceField(choices=[(k, v.replace('-', ' ').title()) for k, v in DEPARTMENT_MAPPING.items()],
-                                   required=True)
+    department = forms.ChoiceField(
+        choices=[(k, k.replace('-', ' ').title()) for k, v in DEPARTMENT_MAPPING.items()],
+        required=True
+    )
 
     password = forms.CharField(widget=forms.PasswordInput, required=True)
     confirmPassword = forms.CharField(widget=forms.PasswordInput, required=True)
