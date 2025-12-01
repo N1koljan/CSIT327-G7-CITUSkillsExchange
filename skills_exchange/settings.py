@@ -120,15 +120,22 @@ if DEBUG:
             },
         }
     }
-else:
-    # RENDER DEPLOYMENT - using DATABASE_URL
+    else:
+    # RENDER DEPLOYMENT
     DATABASE_URL = os.environ.get("DATABASE_URL")
+
+    db_config = dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=0,
+        ssl_require=True
+    )
+
+    # 🔴 THIS IS THE FIX FOR THE POOLER
+    # Disable server-side cursors (Prepared Statements) to work with Port 6543
+    db_config["DISABLE_SERVER_SIDE_CURSORS"] = True
+
     DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=0,
-            ssl_require=True
-        )
+        'default': db_config
     }
 
 # ---------------------------
