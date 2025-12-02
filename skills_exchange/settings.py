@@ -55,9 +55,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',  # <--- Static files must come FIRST
 
     # ✅ CORRECT: Put it here, AFTER staticfiles
-    'cloudinary_storage',
-    'cloudinary',
-
+ #   'cloudinary_storage',
+ #   'cloudinary',
+    'storages',
     'ui',
     'core',
     'channels',
@@ -170,14 +170,14 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # 👇 CHANGED: Cloudinary Configuration
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dvobk6ehs'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '278777249963586'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', '-aTTYbEcK04fJOV96KwrU7rGD10'),
-}
+#CLOUDINARY_STORAGE = {
+#    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dvobk6ehs'),
+#    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '278777249963586'),
+ #   'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', '-aTTYbEcK04fJOV96KwrU7rGD10'),
+#}
 
 # 👇 CHANGED: Tell Django to use Cloudinary for uploaded media
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # ---------------------------
 # Authentication
@@ -219,3 +219,20 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'mgerardgrant@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'CIT-U Skills Exchange <mgerardgrant@gmail.com>'
+
+# 2. SUPABASE STORAGE SETTINGS (Replaces Cloudinary)
+AWS_ACCESS_KEY_ID = os.environ.get('SUPABASE_PROJECT_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
+AWS_STORAGE_BUCKET_NAME = 'media'
+AWS_S3_ENDPOINT_URL = f'https://{AWS_ACCESS_KEY_ID}.supabase.co/storage/v1/s3'
+
+# Technical settings to make Supabase happy
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+AWS_DEFAULT_ACL = 'public-read'
+AWS_S3_REGION_NAME = 'us-east-1'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_FILE_OVERWRITE = False
+AWS_QUERYSTRING_AUTH = False  # <--- This makes the image links public (fixes the broken image icon)
+
+# Tell Django to use Supabase S3
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'

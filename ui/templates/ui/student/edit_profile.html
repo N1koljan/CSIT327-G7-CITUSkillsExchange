@@ -12,33 +12,35 @@
   <h1 class="title">Edit Profile</h1>
   <p class="subtitle">Update your account information and preferences</p>
 
-  <!-- IMPORTANT: Add method="post" and enctype -->
+  <!-- IMPORTANT: Add method="post" and enctype for file uploads -->
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %} <!-- Security token is required! -->
 
     <div class="profile-header">
       <div class="profile-pic-wrapper">
         <div class="profile-pic">
-          <!-- 👇 CHANGED: 'profile_picture' to 'profile_pic' -->
-          {% if user.profile_pic %}
-            <!-- 👇 ADDED: onerror fallback to save your presentation if image breaks -->
-            <img src="{{ user.profile_pic.url }}"
+          <!-- ✅ FIXED: Changed 'profile_pic' to 'profile_picture' (Matches your Model) -->
+          {% if user.profile_picture %}
+            <img src="{{ user.profile_picture.url }}"
                  alt="Profile Picture"
+                 id="preview-image"
                  onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ user.username }}&background=random';">
           {% else %}
             <!-- Fallback for users with no photo -->
-            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=random" alt="Profile Picture">
+            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=random"
+                 alt="Profile Picture"
+                 id="preview-image">
           {% endif %}
         </div>
 
-        <!-- 👇 CHANGED: for="id_profile_pic" (matches Django default ID) -->
-        <label for="id_profile_pic" class="camera-icon">
+        <!-- ✅ FIXED: for="id_profile_picture" (Matches the Django form ID) -->
+        <label for="id_profile_picture" class="camera-icon">
             <i class="fa-solid fa-camera"></i>
         </label>
 
-        <!-- 👇 CHANGED: 'form.profile_picture' to 'form.profile_pic' -->
-        <!-- This creates the actual file input. It was missing before! -->
-        {{ form.profile_pic }}
+        <!-- ✅ FIXED: Changed 'form.profile_pic' to 'form.profile_picture' -->
+        <!-- This creates the actual file input needed for the upload -->
+        {{ form.profile_picture }}
       </div>
 
       <div class="profile-form">
@@ -76,9 +78,25 @@
   </footer>
 </div>
 
+<!-- ✅ ADDED: JavaScript for Instant Image Preview -->
+<script>
+  // This script makes the image change immediately when you pick a file
+  document.getElementById('id_profile_picture').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        // Update the source of the image tag to the file you just picked
+        document.getElementById('preview-image').src = e.target.result;
+      }
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+
 <style>
-  /* Small CSS fix to hide the ugly default file input */
-  #id_profile_pic{
+  /* ✅ FIXED: Hide the default file input using the correct ID */
+  #id_profile_picture {
     display: none;
   }
 </style>

@@ -8,15 +8,17 @@ from core.models import CustomUser, Skill, Request
 class EditProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
+        # 👇 MUST BE 'profile_picture'
         fields = ('first_name', 'last_name', 'email', 'school_id', 'department', 'bio', 'profile_picture')
         widgets = {
-            # ... your widgets ...
             'first_name': forms.TextInput(attrs={'placeholder': 'First Name'}),
             'last_name': forms.TextInput(attrs={'placeholder': 'Last Name'}),
             'email': forms.EmailInput(attrs={'placeholder': 'Email'}),
             'school_id': forms.TextInput(attrs={'placeholder': 'School ID'}),
             'department': forms.Select(),
             'bio': forms.Textarea(attrs={'placeholder': 'Write something about yourself...', 'rows': 4}),
+
+            # 👇 MUST BE 'profile_picture'
             'profile_picture': forms.FileInput(),
         }
 
