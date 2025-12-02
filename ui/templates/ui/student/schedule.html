@@ -5,6 +5,25 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/schedule.css' %}">
+
+  <style>
+    /* Initials Avatar for Schedule List Items */
+    .initials-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #FEDC7D;
+        color: #800000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 20px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+        user-select: none;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
@@ -48,18 +67,17 @@
                         {% for session in confirmed_sessions %}
                             <div class="session-item schedule-item-layout">
                                 <div class="item-avatar">
+                                    <!-- MODIFIED: Initials Logic -->
                                     {% if session.requester == request.user %}
-                                        {% if session.skill.owner.profile_picture %}
-                                            <img src="{{ session.skill.owner.profile_picture.url }}" alt="{{ session.skill.owner.username }}'s profile">
-                                        {% else %}
-                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                                        {% endif %}
+                                        <!-- Show Provider's Initials -->
+                                        <div class="initials-avatar" title="{{ session.skill.owner.get_full_name }}">
+                                            {{ session.skill.owner.first_name|first }}{{ session.skill.owner.last_name|first }}
+                                        </div>
                                     {% else %}
-                                        {% if session.requester.profile_picture %}
-                                            <img src="{{ session.requester.profile_picture.url }}" alt="{{ session.requester.username }}'s profile">
-                                        {% else %}
-                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                                        {% endif %}
+                                        <!-- Show Requester's Initials -->
+                                        <div class="initials-avatar" title="{{ session.requester.get_full_name }}">
+                                            {{ session.requester.first_name|first }}{{ session.requester.last_name|first }}
+                                        </div>
                                     {% endif %}
                                 </div>
                                 <div class="item-content">
@@ -148,18 +166,17 @@
                         {% for req in pending_requests %}
                             <div class="request-item schedule-item-layout">
                                 <div class="item-avatar">
+                                    <!-- MODIFIED: Initials Logic -->
                                     {% if req.requester == request.user %}
-                                        {% if req.skill.owner.profile_picture %}
-                                            <img src="{{ req.skill.owner.profile_picture.url }}" alt="{{ req.skill.owner.username }}'s profile">
-                                        {% else %}
-                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                                        {% endif %}
+                                        <!-- Show Owner's Initials -->
+                                        <div class="initials-avatar" title="{{ req.skill.owner.get_full_name }}">
+                                            {{ req.skill.owner.first_name|first }}{{ req.skill.owner.last_name|first }}
+                                        </div>
                                     {% else %}
-                                        {% if req.requester.profile_picture %}
-                                            <img src="{{ req.requester.profile_picture.url }}" alt="{{ req.requester.username }}'s profile">
-                                        {% else %}
-                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                                        {% endif %}
+                                        <!-- Show Requester's Initials -->
+                                        <div class="initials-avatar" title="{{ req.requester.get_full_name }}">
+                                            {{ req.requester.first_name|first }}{{ req.requester.last_name|first }}
+                                        </div>
                                     {% endif %}
                                 </div>
                                 <div class="item-content">
@@ -337,59 +354,36 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // ====================
-// AUTO-REMOVE MESSAGES - ENHANCED
-// ====================
-// Function to remove blue notification bars
-function removeBlueNotifications() {
-    // Remove by background color
-    const allDivs = document.querySelectorAll('div');
-    allDivs.forEach(div => {
-        const bgColor = window.getComputedStyle(div).backgroundColor;
-        const styles = div.getAttribute('style') || '';
-
-        // Check for cyan/blue colors
-        if (bgColor.includes('0, 188, 212') ||
-            bgColor.includes('0, 172, 193') ||
-            bgColor.includes('rgb(0') && bgColor.includes('212') ||
-            styles.includes('rgb(0, 188, 212)') ||
-            styles.includes('#00bcd4') ||
-            styles.includes('cyan')) {
-            div.remove();
+        // AUTO-REMOVE MESSAGES - ENHANCED
+        // ====================
+        function removeBlueNotifications() {
+            const allDivs = document.querySelectorAll('div');
+            allDivs.forEach(div => {
+                const bgColor = window.getComputedStyle(div).backgroundColor;
+                if (bgColor.includes('0, 188, 212') || bgColor.includes('188')) {
+                    if (!div.classList.contains('messages') && !div.closest('.messages')) {
+                        div.remove();
+                    }
+                }
+            });
         }
-    });
-}
+        removeBlueNotifications();
+        setTimeout(removeBlueNotifications, 500);
 
-// Run immediately
-removeBlueNotifications();
-
-// Run again after a short delay
-setTimeout(removeBlueNotifications, 100);
-setTimeout(removeBlueNotifications, 500);
-
-// Auto-remove success messages after 5 seconds
-setTimeout(function() {
-    const messagesContainer = document.querySelector('.messages');
-    if (messagesContainer) {
-        messagesContainer.style.transition = 'opacity 0.5s, transform 0.5s';
-        messagesContainer.style.opacity = '0';
-        messagesContainer.style.transform = 'translateX(100%)';
         setTimeout(function() {
-            messagesContainer.remove();
-        }, 500);
-    }
-}, 5000);
+            const messagesContainer = document.querySelector('.messages');
+            if (messagesContainer) {
+                messagesContainer.style.transition = 'opacity 0.5s, transform 0.5s';
+                messagesContainer.style.opacity = '0';
+                setTimeout(function() { messagesContainer.remove(); }, 500);
+            }
+        }, 5000);
 
         // ====================
-        // SESSION DELETION LOGIC
+        // SESSION DELETION LOGIC (Unchanged)
         // ====================
-        let sessionToDelete = {
-            id: null,
-            name: null
-        };
+        let sessionToDelete = { id: null, name: null };
 
-        // ====================
-        // SESSION CARD CLICK TO VIEW DETAILS
-        // ====================
         const sessionCards = document.querySelectorAll('.schedule-session-card');
         sessionCards.forEach(card => {
             card.addEventListener('click', function() {
@@ -400,31 +394,23 @@ setTimeout(function() {
                 const description = descElement ? descElement.textContent.trim() : 'No description';
                 const scheduleId = this.dataset.scheduleId;
 
-                // Store session info for potential deletion
                 sessionToDelete.id = scheduleId;
                 sessionToDelete.name = title;
 
-                // Populate modal with session data
                 document.getElementById('modal-session-title').textContent = title;
                 document.getElementById('modal-session-date').textContent = dateElement;
                 document.getElementById('modal-session-time').textContent = timeElement;
                 document.getElementById('modal-session-description').textContent = description;
 
-                // Show modal
                 window.location.hash = 'view-session-modal';
             });
         });
 
-        // Handle Remove Session button click
         const removeSessionBtn = document.querySelector('.btn-delete-session');
         if (removeSessionBtn) {
             removeSessionBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-
-                // Close the view details modal
                 window.location.hash = '';
-
-                // Show delete confirmation modal after a brief delay
                 setTimeout(() => {
                     document.getElementById('delete-session-name').textContent = sessionToDelete.name;
                     document.getElementById('confirm-delete-form').action = `/schedule/delete/${sessionToDelete.id}/`;
@@ -433,7 +419,6 @@ setTimeout(function() {
             });
         }
 
-        // Handle cancel delete button
         const cancelDeleteBtn = document.querySelector('.btn-cancel-delete');
         if (cancelDeleteBtn) {
             cancelDeleteBtn.addEventListener('click', function(e) {
@@ -442,7 +427,6 @@ setTimeout(function() {
             });
         }
 
-        // Close delete modal when clicking background
         const deleteModalBg = document.querySelector('#delete-confirm-modal .modal-close-bg');
         if (deleteModalBg) {
             deleteModalBg.addEventListener('click', function(e) {
@@ -452,7 +436,7 @@ setTimeout(function() {
         }
 
         // ====================
-        // CALENDAR LOGIC
+        // CALENDAR LOGIC (Unchanged)
         // ====================
         const monthYearDisplay = document.getElementById('monthYearDisplay');
         const calendarGrid = document.getElementById('calendarGrid');
@@ -464,9 +448,6 @@ setTimeout(function() {
             let currentMonth = currentDate.getMonth();
             let currentYear = currentDate.getFullYear();
             const today = new Date();
-            const todayDate = today.getDate();
-            const todayMonth = today.getMonth();
-            const todayYear = today.getFullYear();
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
             function renderCalendar(year, month) {
@@ -490,12 +471,9 @@ setTimeout(function() {
                     const dayDiv = document.createElement('div');
                     dayDiv.classList.add('day');
                     dayDiv.textContent = day;
-                    if (day === todayDate && month === todayMonth && year === todayYear) {
+                    if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
                         dayDiv.classList.add('current-day');
                     }
-                    dayDiv.addEventListener('click', () => {
-                        console.log(`Clicked on: ${day}/${month + 1}/${year}`);
-                    });
                     calendarGrid.appendChild(dayDiv);
                 }
 

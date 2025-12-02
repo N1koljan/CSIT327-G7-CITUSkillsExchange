@@ -6,6 +6,33 @@
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/transaction.css' %}">
   <link rel="stylesheet" href="{% static 'ui/css/feedback_modal.css' %}">
+
+  <style>
+    /* Initials Avatar Style */
+    .initials-avatar {
+      width: 65px; /* Slightly larger for transaction cards */
+      height: 65px;
+      border-radius: 50%;
+      background: #FEDC7D;
+      color: #800000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 24px;
+      text-transform: uppercase;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    /* Ensure the container aligns correctly */
+    .card-avatar-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
@@ -36,18 +63,17 @@
                     <!-- Avatar Section -->
                     <div class="card-avatar-column">
                         <div class="user-profile-img">
+                            <!-- MODIFIED: Initials Avatar Logic -->
                             {% if request.user == tx.provider %}
-                                {% if tx.receiver.profile_picture %}
-                                    <img src="{{ tx.receiver.profile_picture.url }}" alt="{{ tx.receiver.username }}">
-                                {% else %}
-                                    <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                                {% endif %}
+                                <!-- You are Provider, show Receiver's Initials -->
+                                <div class="initials-avatar" title="{{ tx.receiver.get_full_name }}">
+                                    {{ tx.receiver.first_name|first }}{{ tx.receiver.last_name|first }}
+                                </div>
                             {% else %}
-                                {% if tx.provider.profile_picture %}
-                                    <img src="{{ tx.provider.profile_picture.url }}" alt="{{ tx.provider.username }}">
-                                {% else %}
-                                    <img src="{% static 'ui/img/profilepic.png' %}" alt="Default profile">
-                                {% endif %}
+                                <!-- You are Receiver, show Provider's Initials -->
+                                <div class="initials-avatar" title="{{ tx.provider.get_full_name }}">
+                                    {{ tx.provider.first_name|first }}{{ tx.provider.last_name|first }}
+                                </div>
                             {% endif %}
                         </div>
 

@@ -5,10 +5,26 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/profile.css' %}">
+
+  <style>
+    /* Initials avatar style */
+    .initials-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #FEDC7D;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: bold;
+      color: #800000;
+      text-transform: uppercase;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-  <!-- Messages Container -->
   {% if messages %}
     <div class="messages">
       {% for message in messages %}
@@ -26,11 +42,10 @@
     <!-- Header Section -->
     <div class="profile-header">
       <div class="profile-pic-container">
-        {% if user.profile_picture %}
-          <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-pic">
-        {% else %}
-          <img src="{% static 'ui/img/profilepic.png' %}" alt="Profile Picture" class="profile-pic">
-        {% endif %}
+        <!-- ALWAYS show initials -->
+        <div class="initials-avatar">
+          {{ user.first_name|first }}{{ user.last_name|first }}
+        </div>
       </div>
       <div class="profile-info">
         <h2 class="name">{{ user.get_full_name|default:user.username }}</h2>
@@ -97,56 +112,35 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // === 1. Message Cleanup Logic (Existing) ===
-    setTimeout(function() {
-        // Remove default blue notifications if any exist
-        const allDivs = document.querySelectorAll('div');
-        allDivs.forEach(div => {
-            const bgColor = window.getComputedStyle(div).backgroundColor;
-            if (bgColor.includes('0, 188, 212') || bgColor.includes('0, 172, 193')) {
-                div.remove();
-            }
-        });
-    }, 100);
-
-    // Auto-fade success messages
+    // === Message Cleanup Logic ===
     setTimeout(function() {
         const messagesContainer = document.querySelector('.messages');
         if (messagesContainer) {
             messagesContainer.style.transition = 'opacity 0.5s, transform 0.5s';
             messagesContainer.style.opacity = '0';
             messagesContainer.style.transform = 'translateX(100%)';
-            setTimeout(function() {
-                messagesContainer.remove();
-            }, 500);
+            setTimeout(function() { messagesContainer.remove(); }, 500);
         }
     }, 5000);
 
-    // === 2. Logout Modal Logic (New) ===
+    // === Logout Modal Logic ===
     const modal = document.getElementById('logoutModal');
     const triggerBtn = document.getElementById('triggerLogout');
     const cancelBtn = document.getElementById('cancelLogout');
 
-    // Open Modal
     if (triggerBtn) {
         triggerBtn.addEventListener('click', function(e) {
-            e.preventDefault(); // Stop immediate navigation
-            modal.style.display = 'flex'; // Show modal using Flex to center
+            e.preventDefault();
+            modal.style.display = 'flex';
         });
     }
 
-    // Close Modal on Cancel
     if (cancelBtn) {
-        cancelBtn.addEventListener('click', function() {
-            modal.style.display = 'none';
-        });
+        cancelBtn.addEventListener('click', function() { modal.style.display = 'none'; });
     }
 
-    // Close Modal on Click Outside
     window.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            modal.style.display = 'none';
-        }
+        if (e.target === modal) { modal.style.display = 'none'; }
     });
 });
 </script>

@@ -5,6 +5,24 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/feedback_history.css' %}">
+
+  <style>
+    /* Initials Avatar Style */
+    .initials-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #FEDC7D;
+      color: #800000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 20px;
+      text-transform: uppercase;
+      user-select: none;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
@@ -43,11 +61,10 @@
                             <div class="feedback-card-header">
                                 <div class="feedback-user-info">
                                     <div class="user-avatar">
-                                        {% if rating.rated_user.profile_picture %}
-                                            <img src="{{ rating.rated_user.profile_picture.url }}" alt="{{ rating.rated_user.username }}">
-                                        {% else %}
-                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default avatar">
-                                        {% endif %}
+                                        <!-- MODIFIED: Initials of the person you RATED -->
+                                        <div class="initials-avatar">
+                                            {{ rating.rated_user.first_name|first }}{{ rating.rated_user.last_name|first }}
+                                        </div>
                                     </div>
                                     <div class="user-details">
                                         <h3>{{ rating.skill.title }}</h3>
@@ -75,7 +92,7 @@
                                 </div>
                             </div>
 
-                            <!-- Card Footer (Optional - helpful count could be added later) -->
+                            <!-- Card Footer -->
                             <div class="feedback-card-footer">
                                 <span class="skill-category">
                                     <i class="fa-solid fa-folder"></i>
@@ -102,11 +119,10 @@
                             <div class="feedback-card-header">
                                 <div class="feedback-user-info">
                                     <div class="user-avatar">
-                                        {% if rating.rater.profile_picture %}
-                                            <img src="{{ rating.rater.profile_picture.url }}" alt="{{ rating.rater.username }}">
-                                        {% else %}
-                                            <img src="{% static 'ui/img/profilepic.png' %}" alt="Default avatar">
-                                        {% endif %}
+                                        <!-- MODIFIED: Initials of the person who RATED YOU -->
+                                        <div class="initials-avatar">
+                                            {{ rating.rater.first_name|first }}{{ rating.rater.last_name|first }}
+                                        </div>
                                     </div>
                                     <div class="user-details">
                                         <h3>{{ rating.skill.title }}</h3>

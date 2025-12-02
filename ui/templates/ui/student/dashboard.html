@@ -5,6 +5,37 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/dashboard.css' %}">
+
+  <style>
+    /* Initials Avatar Styles */
+    .initials-avatar {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: #FEDC7D;
+      color: #800000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      margin-right: 15px;
+      user-select: none;
+    }
+
+    /* Adjust items to align nicely with the avatar */
+    .activity-item, .session-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .activity-content, .session-content {
+      flex: 1;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
@@ -54,9 +85,17 @@
         {% if recent_transactions %}
           {% for transaction in recent_transactions %}
             <div class="activity-item">
-              <div class="activity-icon">
-                <i class="fa-solid fa-check-circle"></i>
-              </div>
+              <!-- Initials Avatar Logic -->
+              {% if transaction.provider == user %}
+                <div class="initials-avatar" title="{{ transaction.receiver.get_full_name }}">
+                  {{ transaction.receiver.first_name|first }}{{ transaction.receiver.last_name|first }}
+                </div>
+              {% else %}
+                <div class="initials-avatar" title="{{ transaction.provider.get_full_name }}">
+                  {{ transaction.provider.first_name|first }}{{ transaction.provider.last_name|first }}
+                </div>
+              {% endif %}
+
               <div class="activity-content">
                 <p class="activity-title">
                   {% if transaction.provider == user %}
@@ -75,7 +114,8 @@
         {% endif %}
       </div>
 
-      <button class="btn yellow full" onclick="location.href='{% url 'transaction' %}'">
+      <!-- 👇 FIXED URL: 'core:transaction_history' -->
+      <button class="btn yellow full" onclick="location.href='{% url 'core:transaction_history' %}'">
         View All Activities
       </button>
     </div>
@@ -90,9 +130,17 @@
           <!-- Show Accepted Requests -->
           {% for request in upcoming_requests %}
             <div class="session-item">
-              <div class="session-icon">
-                <i class="fa-solid fa-handshake"></i>
-              </div>
+              <!-- Initials Avatar Logic -->
+              {% if request.requester == user %}
+                <div class="initials-avatar" title="{{ request.skill.owner.get_full_name }}">
+                   {{ request.skill.owner.first_name|first }}{{ request.skill.owner.last_name|first }}
+                </div>
+              {% else %}
+                <div class="initials-avatar" title="{{ request.requester.get_full_name }}">
+                   {{ request.requester.first_name|first }}{{ request.requester.last_name|first }}
+                </div>
+              {% endif %}
+
               <div class="session-content">
                 <p class="session-title">{{ request.skill.title }}</p>
                 <p class="session-subtitle">
@@ -112,8 +160,9 @@
           <!-- Show Scheduled Sessions -->
           {% for schedule in upcoming_schedules %}
             <div class="session-item">
-              <div class="session-icon">
-                <i class="fa-solid fa-calendar-check"></i>
+              <!-- Calendar Icon for generic schedule -->
+              <div class="initials-avatar" style="background: #f0f0f0; color: #555;">
+                <i class="fa-solid fa-calendar-check" style="font-size: 20px;"></i>
               </div>
               <div class="session-content">
                 <p class="session-title">{{ schedule.title }}</p>
@@ -163,13 +212,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const messages = document.querySelectorAll('.messages li');
 
     messages.forEach(function(message, index) {
-        // Stagger the fade out if multiple messages
         setTimeout(function() {
             message.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
             message.style.opacity = '0';
             message.style.transform = 'translateX(-100%)';
-
-            // Remove from DOM after animation
             setTimeout(function() {
                 message.remove();
             }, 500);

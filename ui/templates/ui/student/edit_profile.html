@@ -5,6 +5,45 @@
 
 {% block styles %}
   <link rel="stylesheet" href="{% static 'ui/css/editProfile.css' %}">
+
+  <style>
+    /* Initials Avatar Style */
+    .initials-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #FEDC7D;
+      color: #800000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: bold;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    /* Styling for Form Fields in the header to ensure spacing */
+    .profile-form input {
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+    /* Error Message Styling */
+    .error-msg {
+        color: #d32f2f;
+        font-size: 0.85rem;
+        margin-top: -8px;
+        margin-bottom: 10px;
+        list-style: none;
+        padding: 0;
+    }
+    .error-msg ul {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
@@ -12,41 +51,54 @@
   <h1 class="title">Edit Profile</h1>
   <p class="subtitle">Update your account information and preferences</p>
 
-  <!-- IMPORTANT: Add method="post" and enctype for file uploads -->
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %} <!-- Security token is required! -->
+  <form method="post">
+    {% csrf_token %}
 
     <div class="profile-header">
       <div class="profile-pic-wrapper">
         <div class="profile-pic">
-          <!-- ✅ FIXED: Changed 'profile_pic' to 'profile_picture' (Matches your Model) -->
-          {% if user.profile_picture %}
-            <img src="{{ user.profile_picture.url }}"
-                 alt="Profile Picture"
-                 id="preview-image"
-                 onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ user.username }}&background=random';">
-          {% else %}
-            <!-- Fallback for users with no photo -->
-            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=random"
-                 alt="Profile Picture"
-                 id="preview-image">
-          {% endif %}
+          <!-- MODIFIED: Initials Avatar instead of Image -->
+          <div class="initials-avatar">
+            {{ user.first_name|first }}{{ user.last_name|first }}
+          </div>
         </div>
-
-        <!-- ✅ FIXED: for="id_profile_picture" (Matches the Django form ID) -->
-        <label for="id_profile_picture" class="camera-icon">
-            <i class="fa-solid fa-camera"></i>
-        </label>
-
-        <!-- ✅ FIXED: Changed 'form.profile_pic' to 'form.profile_picture' -->
-        <!-- This creates the actual file input needed for the upload -->
-        {{ form.profile_picture }}
       </div>
 
       <div class="profile-form">
-        {{ form.first_name }}
-        {{ form.last_name }}
-        {{ form.email }}
+        <!-- First Name -->
+        <div class="form-group">
+            <label for="{{ form.first_name.id_for_label }}">First Name</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}
+                <div class="error-msg">{{ form.first_name.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Last Name -->
+        <div class="form-group">
+            <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}
+                <div class="error-msg">{{ form.last_name.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Username (Replaced Email) -->
+        <div class="form-group">
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+
+            <!-- Unique Validation Display -->
+            {% if form.username.errors %}
+                <div class="error-msg">
+                    {{ form.username.errors }}
+                </div>
+            {% endif %}
+            <small style="color: #666; display: block; margin-top: -5px; margin-bottom: 10px;">
+                Required. 150 characters or fewer.
+            </small>
+        </div>
+
         <div class="buttons">
           <button type="submit" class="save-btn">Save Changes</button>
           <a href="{% url 'profile' %}" class="cancel-btn">Cancel</a>
@@ -57,13 +109,26 @@
     <div class="info-section">
       <div class="info-box">
         <h3>Contact Information</h3>
-        <div class="field"><i class="fa-solid fa-envelope"></i> {{ form.email }}</div>
-        <div class="field"><i class="fa-solid fa-location-dot"></i> {{ form.school_id }}</div>
+        <!-- Email is kept here as Read-Only or Editable depending on your form definition -->
+        <div class="field">
+            <i class="fa-solid fa-envelope"></i>
+            {{ form.email }}
+            {% if form.email.errors %}
+                <div class="error-msg">{{ form.email.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="field">
+            <i class="fa-solid fa-location-dot"></i>
+            {{ form.school_id }}
+        </div>
       </div>
 
       <div class="info-box">
         <h3>Academic Information</h3>
-        <div class="field"><i class="fa-solid fa-graduation-cap"></i> {{ form.department }}</div>
+        <div class="field">
+            <i class="fa-solid fa-graduation-cap"></i>
+            {{ form.department }}
+        </div>
       </div>
     </div>
 
@@ -71,33 +136,11 @@
       <h3>About Me</h3>
       {{ form.bio }}
     </div>
-  </form> {# End of the form #}
+  </form>
 
   <footer>
-    <p>Need help? Contact our support team at <a href="mailto:skills.exchange@cit.edu">skills.exchange@cit.edu</a></p>
+    <p>Need help? Contact our support team at
+    <a href="mailto:skills.exchange@cit.edu">skills.exchange@cit.edu</a></p>
   </footer>
 </div>
-
-<!-- ✅ ADDED: JavaScript for Instant Image Preview -->
-<script>
-  // This script makes the image change immediately when you pick a file
-  document.getElementById('id_profile_picture').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        // Update the source of the image tag to the file you just picked
-        document.getElementById('preview-image').src = e.target.result;
-      }
-      reader.readAsDataURL(file);
-    }
-  });
-</script>
-
-<style>
-  /* ✅ FIXED: Hide the default file input using the correct ID */
-  #id_profile_picture {
-    display: none;
-  }
-</style>
 {% endblock %}
