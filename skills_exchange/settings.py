@@ -236,3 +236,7 @@ AWS_QUERYSTRING_AUTH = False  # <--- This makes the image links public (fixes th
 
 # Tell Django to use Supabase S3
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# 👇 ADD THIS LINE
+# This forces the link to be the clean, public format
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_ACCESS_KEY_ID}.supabase.co/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}'
